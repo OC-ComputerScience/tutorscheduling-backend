@@ -1,140 +1,138 @@
 const db = require("../models");
-const Session = db.session;
+const PersonAppointment = db.personappointment;
 const Op = db.Sequelize.Op;
 
-// Create and Save a new Session
+// Create and Save a new PersonAppointment
 exports.create = (req, res) => {
     // Validate request
-    if (!req.body.token) {
+    if (!req.body.personId) {
       res.status(400).send({
         message: "Content can not be empty!"
       });
       return;
     }
   
-    // Create a Session
-    const session = {
+    // Create a PersonAppointment
+    const personappointment = {
       id: req.body.id,
       personId: req.body.personId,
-      token: req.body.token,
-      email: req.body.email,
-      expirationDate: req.body.expirationDate
+      appointmentId: req.body.appointmentId
     };
   
-    // Save Session in the database
-    Session.create(session)
+    // Save PersonAppointment in the database
+    PersonAppointment.create(personappointment)
       .then(data => {
         res.send(data);
       })
       .catch(err => {
         res.status(500).send({
           message:
-            err.message || "Some error occurred while creating the Session."
+            err.message || "Some error occurred while creating the PersonAppointment."
         });
       });
   };
 
-// Retrieve all Session from the database.
+// Retrieve all PersonAppointment from the database.
 exports.findAll = (req, res) => {
     const id = req.query.id;
     var condition = id ? { id: { [Op.like]: `%${id}%` } } : null;
   
-    Session.findAll({ where: condition })
+    PersonAppointment.findAll({ where: condition })
       .then(data => {
         res.send(data);
       })
       .catch(err => {
         res.status(500).send({
           message:
-            err.message || "Some error occurred while retrieving Session."
+            err.message || "Some error occurred while retrieving PersonAppointment."
         });
       });
   };
 
-// Find a single Session with an id
+// Find a single PersonAppointment with an id
 exports.findOne = (req, res) => {
     const id = req.params.id;
   
-    Session.findByPk(id)
+    PersonAppointment.findByPk(id)
       .then(data => {
         if (data) {
           res.send(data);
         } else {
           res.status(404).send({
-            message: `Cannot find Session with id=${id}.`
+            message: `Cannot find PersonAppointment with id=${id}.`
           });
         }
       })
       .catch(err => {
         res.status(500).send({
-          message: "Error retrieving Session with id=" + id
+          message: "Error retrieving PersonAppointment with id=" + id
         });
       });
   };
 
-// Update a Session by the id in the request
+// Update a PersonAppointment by the id in the request
 exports.update = (req, res) => {
     const id = req.params.id;
   
-    Session.update(req.body, {
+    PersonAppointment.update(req.body, {
       where: { id: id }
     })
       .then(num => {
         if (num == 1) {
           res.send({
-            message: "Session was updated successfully."
+            message: "PersonAppointment was updated successfully."
           });
         } else {
           res.send({
-            message: `Cannot update Session with id=${id}. Maybe Session was not found or req.body is empty!`
+            message: `Cannot update PersonAppointment with id=${id}. Maybe PersonAppointment was not found or req.body is empty!`
           });
         }
       })
       .catch(err => {
         res.status(500).send({
-          message: "Error updating Session with id=" + id
+          message: "Error updating PersonAppointment with id=" + id
         });
       });
   };
 
-// Delete a Session with the specified id in the request
+// Delete a PersonAppointment with the specified id in the request
 exports.delete = (req, res) => {
     const id = req.params.id;
   
-    Session.destroy({
+    PersonAppointment.destroy({
       where: { id: id }
     })
       .then(num => {
         if (num == 1) {
           res.send({
-            message: "Session was deleted successfully!"
+            message: "PersonAppointment was deleted successfully!"
           });
         } else {
           res.send({
-            message: `Cannot delete Session with id=${id}. Maybe Session was not found!`
+            message: `Cannot delete PersonAppointment with id=${id}. Maybe PersonAppointment was not found!`
           });
         }
       })
       .catch(err => {
         res.status(500).send({
-          message: "Could not delete Session with id=" + id
+          message: "Could not delete PersonAppointment with id=" + id
         });
       });
   };
 
-// Delete all Session from the database.
+// Delete all PersonAppointment from the database.
 exports.deleteAll = (req, res) => {
-    Session.destroy({
+    PersonAppointment.destroy({
       where: {},
       truncate: false
     })
       .then(nums => {
-        res.send({ message: `${nums} Session were deleted successfully!` });
+        res.send({ message: `${nums} PersonAppointment were deleted successfully!` });
       })
       .catch(err => {
         res.status(500).send({
           message:
-            err.message || "Some error occurred while removing all Session."
+            err.message || "Some error occurred while removing all PersonAppointment."
         });
       });
   };
