@@ -1,0 +1,36 @@
+{
+  "name": "sevtutoring-node",
+  "version": "1.0.0",
+  "description": "node.js with express, sequelize, & mysql",
+  "main": "server.js",
+  "dependencies": {
+    "body": "^5.1.0",
+    "cors": "^2.8.5",
+    "express": "^4.17.2",
+    "mysql": "^2.18.1",
+    "mysql2": "^2.3.3",
+    "parser": "^0.1.4",
+    "pug": "^3.0.2",
+    "sequelize": "^6.14.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ChloeSheasby/sevtutoring-node.git"
+  },
+  "keywords": [
+    "nodejs",
+    "express",
+    "sequelize",
+    "mysql"
+  ],
+  "author": "cs",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ChloeSheasby/sevtutoring-node/issues"
+  },
+  "homepage": "https://github.com/ChloeSheasby/sevtutoring-node#readme"
+}
