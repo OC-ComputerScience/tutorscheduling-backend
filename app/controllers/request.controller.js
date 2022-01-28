@@ -23,7 +23,7 @@ exports.create = (req, res) => {
     };
   
     // Save Request in the database
-    Request.create(topic)
+    Request.create(request)
       .then(data => {
         res.send(data);
       })

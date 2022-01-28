@@ -1,5 +1,5 @@
 const db = require("../models");
-const PersonTopic = db.personrole;
+const PersonTopic = db.persontopic;
 const Op = db.Sequelize.Op;
 
 // Create and Save a new PersonTopic
