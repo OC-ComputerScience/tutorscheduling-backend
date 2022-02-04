@@ -21,5 +21,5 @@ module.exports = app => {
     // Delete all PersonTopic
     router.delete("/", persontopic.deleteAll);
   
-    app.use('/api/persontopic', router);
+    app.use('/persontopic', router);
   };
