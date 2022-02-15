@@ -21,5 +21,5 @@ module.exports = app => {
     // Delete all Location
     router.delete("/", location.deleteAll);
   
-    app.use('/api/location', router);
+    app.use('/location', router);
   };

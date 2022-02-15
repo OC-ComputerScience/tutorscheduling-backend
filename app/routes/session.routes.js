@@ -21,5 +21,5 @@ module.exports = app => {
     // Delete all Session
     router.delete("/", session.deleteAll);
   
-    app.use('/api/session', router);
+    app.use('/session', router);
   };
