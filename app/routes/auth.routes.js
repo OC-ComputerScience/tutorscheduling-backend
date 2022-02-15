@@ -1,9 +1,13 @@
 module.exports = app => {
-    const auth = require("../controllers/authorization.controller.js");
+    const auth = require("../controllers/auth.controller.js");
   
+    var router = require("express").Router();
+
     // Login
-    app.post("/api/login", auth.login);
-  
+    router.post("/login", auth.login);
+
     // Logout
-    app.post("/api/logout", auth.logout);
-  };
+    router.post("/logout", auth.logout);
+
+    app.use('/tutoring-api', router);
+};
