@@ -21,5 +21,5 @@ module.exports = app => {
     // Delete all Availability
     router.delete("/", availability.deleteAll);
   
-    app.use('/api/availability', router);
+    app.use('/availability', router);
   };

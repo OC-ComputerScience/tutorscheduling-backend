@@ -21,5 +21,5 @@ module.exports = app => {
     // Delete all Appointment
     router.delete("/", appointment.deleteAll);
   
-    app.use('/api/appointment', router);
+    app.use('/appointment', router);
   };

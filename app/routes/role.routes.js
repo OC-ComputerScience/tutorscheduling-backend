@@ -21,5 +21,5 @@ module.exports = app => {
     // Delete all Roles
     router.delete("/", role.deleteAll);
   
-    app.use('/api/role', router);
+    app.use('/role', router);
   };
