@@ -21,5 +21,5 @@ module.exports = app => {
     // Delete all Request
     router.delete("/", request.deleteAll);
   
-    app.use('/api/request', router);
+    app.use('/request', router);
   };

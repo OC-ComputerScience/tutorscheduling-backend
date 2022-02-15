@@ -3,7 +3,7 @@ module.exports = {
     port: 3306,
     USER: 'admin',
     PASSWORD: 'seiv-t1-2021',
-    DB: 'student_course_db',
+    DB: 'tutor_scheduling_db',
     dialect: 'mysql',
     pool: {
         max: 5,
