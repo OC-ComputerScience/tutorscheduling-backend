@@ -9,5 +9,5 @@ module.exports = app => {
     // Logout
     router.post("/logout", auth.logout);
 
-    app.use('/tutoring-api', router);
+    app.use('', router);
 };
