@@ -23,17 +23,34 @@ exports.login = async (req, res) => {
     let lastName = payload['family_name'];
     let token = null;
 
-    console.log(email + ' ' + firstName + ' ' + lastName);
-
     await Person.findOne({
         where: {
           email: email
         }
     })
     .then(data => {
+        console.log("person found");
         let person = {};
         if(data != null) {
             person = data.dataValues;
+        }
+        else {
+            // create a new Person and save to database
+            person = {
+                fName: firstName,
+                lName: lastName,
+                email: email,
+                phoneNum: ''
+            }
+
+            Person.create(person)
+            .then(data => {
+                console.log("person was registered")
+                //res.send({ message: "Person was registered successfully!" });
+            })
+            .catch(err => {
+                res.status(500).send({ message: err.message });
+            });
         }
         
         // create a new Session with a token and save to database
@@ -51,11 +68,11 @@ exports.login = async (req, res) => {
         .then(data => {
             let userInfo = {
                 token : token,
-                email : email,
-                fName : firstName,
-                lName : lastName,
-                phoneNum : '',
-                role : '',
+                email : person.email,
+                fName : person.fName,
+                lName : person.lName,
+                phoneNum : person.phoneNum,
+                admin : '',
                 userID : person.id
             }
             res.send(userInfo);
@@ -65,49 +82,7 @@ exports.login = async (req, res) => {
         });
     })
     .catch(err => {
-        // create a new Person and save to database
-        const person = {
-            fName: firstName,
-            lName: lastName,
-            email: email,
-            phoneNum: ''
-        }
-
-        Person.create(person)
-        .then(data => {
-            //res.send({ message: "Person was registered successfully!" });
-        })
-        .catch(err => {
-            res.status(500).send({ message: err.message });
-        });
-
-        // create a new Session with a token and save to database
-        token = jwt.sign({ id:email }, authconfig.secret, {expiresIn: 86400});
-        let findExpirationDate = new Date();
-        findExpirationDate.setDate(findExpirationDate.getDate() + 1);
-        const session = {
-            token : token,
-            email : email,
-            personId : person.id,
-            expirationDate : findExpirationDate
-        }
-        
-        Session.create(session)
-        .then(data => {
-            let userInfo = {
-                token : token,
-                email : email,
-                fName : firstName,
-                lName : lastName,
-                phoneNum : '',
-                role : '',
-                userID : person.id
-            }
-            res.send(userInfo);
-        })
-        .catch(err => {
-            res.status(500).send({ message: err.message });
-        });
+        res.status(500).send({ message: err.message });
     });
 };
 
