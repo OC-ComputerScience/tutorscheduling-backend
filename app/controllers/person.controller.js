@@ -72,6 +72,27 @@ exports.findOne = (req, res) => {
       });
   };
 
+// Find a single Person with an email
+exports.findByEmail = (req, res) => {
+  const email = req.params.id;
+
+  Person.findByEmail(email)
+    .then(data => {
+      if (data) {
+        res.send(data);
+      } else {
+        res.status(404).send({
+          message: `Cannot find Person with email=${email}.`
+        });
+      }
+    })
+    .catch(err => {
+      res.status(500).send({
+        message: "Error retrieving Person with email=" + email
+      });
+    });
+};
+
 // Update a Person by the id in the request
 exports.update = (req, res) => {
     const id = req.params.id;
