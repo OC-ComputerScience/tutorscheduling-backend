@@ -13,10 +13,6 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.STRING,
         allowNull: false
       },
-      openDateTime: {
-        type: Sequelize.DATE,
-        allowNull: false
-      },
       building: {
         type: Sequelize.STRING,
         allowNull: false

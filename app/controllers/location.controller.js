@@ -17,9 +17,9 @@ exports.create = (req, res) => {
       id: req.body.id,
       name: req.body.name,
       type: req.body.type,
-      openDateTime: req.body.openDateTime,
       building: req.body.building,
-      description: req.body.description
+      description: req.body.description,
+      groupId: req.body.groupId
     };
   
     // Save Location in the database
@@ -95,6 +95,7 @@ exports.update = (req, res) => {
         res.status(500).send({
           message: "Error updating Location with id=" + id
         });
+        console.log("Error updating location" + err);
       });
   };
 
