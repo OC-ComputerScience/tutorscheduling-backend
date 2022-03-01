@@ -56,7 +56,7 @@ exports.findAll = (req, res) => {
 exports.findAllForPerson = (req, res) => {
   const id = req.params.personId;
 
-  Role.findAll({ where: {personId: id} })
+  PersonRole.findAll({ where: {personId: id} })
     .then(data => {
       res.send(data);
     })
