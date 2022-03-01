@@ -61,10 +61,24 @@ exports.login = async (req, res) => {
             .then(data => {
                 console.log("person was registered")
                 //res.send({ message: "Person was registered successfully!" });
+                // this lets us get the person id
+                // Person.findOne({
+                //     where: {
+                //         email: email
+                //     }
+                // })
+                // .then(data => {
+                //     if(data != null) {
+                //         person = data.dataValues;
+                //         console.log(person);
+                //     }
+                // })
             })
             .catch(err => {
                 res.status(500).send({ message: err.message });
             });
+
+            
         }
         
         // create a new Session with a token and save to database
