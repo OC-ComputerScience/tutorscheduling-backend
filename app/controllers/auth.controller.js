@@ -2,12 +2,13 @@ const db = require("../models");
 const authconfig = require("../config/auth.config");
 const Person = db.person;
 const Session = db.session;
-const Personrole = db.personrole;
+const PersonRole = db.personrole;
+const Role = db.role;
 
 const Op = db.Sequelize.Op;
 
 var jwt = require("jsonwebtoken");
-const { person } = require("../models");
+//const { person } = require("../models");
 
 exports.login = async (req, res) => {
     const {OAuth2Client} = require('google-auth-library');
@@ -22,6 +23,8 @@ exports.login = async (req, res) => {
     let firstName = payload['given_name'];
     let lastName = payload['family_name'];
     let token = null;
+    let person = {};
+    let admin = false;
 
     await Person.findOne({
         where: {
@@ -29,24 +32,8 @@ exports.login = async (req, res) => {
         }
     })
     .then(data => {
-        console.log("person found");
-        let person = {};
-        let admin = false;
         if(data != null) {
             person = data.dataValues;
-            // set if person is admin
-            // Personrole.findAllForPerson(person.id)
-            // .then((response) => {
-            //     console.log(response.data)
-            //     response.data.forEach(role => {
-            //         if(role.type.toLowerCase() === "admin")
-            //             admin = true;
-            //         console.log(admin);
-            //     })
-            // })
-            // .catch(err => {
-            //     res.status(500).send({ message: err.message });
-            // });
         }
         else {
             // create a new Person and save to database
@@ -56,58 +43,73 @@ exports.login = async (req, res) => {
                 email: email,
                 phoneNum: ''
             }
-
-            Person.create(person)
-            .then(data => {
-                console.log("person was registered")
-                //res.send({ message: "Person was registered successfully!" });
-                // this lets us get the person id
-                // Person.findOne({
-                //     where: {
-                //         email: email
-                //     }
-                // })
-                // .then(data => {
-                //     if(data != null) {
-                //         person = data.dataValues;
-                //         console.log(person);
-                //     }
-                // })
-            })
-            .catch(err => {
-                res.status(500).send({ message: err.message });
-            });
-
-            
         }
-        
-        // create a new Session with a token and save to database
-        token = jwt.sign({ id:email }, authconfig.secret, {expiresIn: 86400});
-        let findExpirationDate = new Date();
-        findExpirationDate.setDate(findExpirationDate.getDate() + 1);
-        const session = {
-            token : token,
-            email : email,
-            personId : person.id,
-            expirationDate : findExpirationDate
-        }
-        
-        Session.create(session)
+    })
+    .catch(err => {
+        res.status(500).send({ message: err.message });
+    });
+
+    // this lets us get the person id
+    if (person.id === undefined) {
+        console.log("need to get person's id")
+        await Person.create(person)
         .then(data => {
-            let userInfo = {
-                token : token,
-                email : person.email,
-                fName : person.fName,
-                lName : person.lName,
-                phoneNum : person.phoneNum,
-                admin: admin,
-                userID : person.id
-            }
-            res.send(userInfo);
+            console.log("person was registered")
+            person = data.dataValues
+            // res.send({ message: "Person was registered successfully!" });
         })
         .catch(err => {
             res.status(500).send({ message: err.message });
         });
+    }
+
+    // set if person is admin
+    await Role.findAll({
+        where: { '$personrole.personId$': person.id },
+        include: [ {
+            model: PersonRole, 
+            as: 'personrole',
+            right: true
+        } ]
+    })
+    .then((data) => {
+        //console.log(data)
+        for (let i = 0; i < data.length; i++) {
+            let role = data[i];
+            if(role.type.toLowerCase() === "admin")
+                admin = true;
+            //console.log(admin);
+        }
+    })
+    .catch(err => {
+        res.status(500).send({ message: err.message });
+    });
+
+    // create a new Session with a token and save to database
+    token = jwt.sign({ id:email }, authconfig.secret, {expiresIn: 86400});
+    let findExpirationDate = new Date();
+    findExpirationDate.setDate(findExpirationDate.getDate() + 1);
+    const session = {
+        token : token,
+        email : email,
+        personId : person.id,
+        expirationDate : findExpirationDate
+    }
+    
+    // not sending userinfo quick enough?
+    Session.create(session)
+    .then(() => {
+        let userInfo = {
+            token : token,
+            email : person.email,
+            fName : person.fName,
+            lName : person.lName,
+            phoneNum : person.phoneNum,
+            admin: admin,
+            userID : person.id
+        }
+        console.log(userInfo)
+        res.send(userInfo);
     })
     .catch(err => {
         res.status(500).send({ message: err.message });
