@@ -14,6 +14,9 @@ module.exports = app => {
 
     // Retrieve roles for a specific group
     router.get("/group/:groupId", role.findAllForGroup);
+
+    // Retrieve roles for a specific person including personrole
+    router.get("/person/:personId", role.findRoleForPerson);
   
     // Update a Role with id
     router.put("/:id", role.update);

@@ -1,5 +1,6 @@
 const db = require("../models");
 const Role = db.role;
+const PersonRole = db.personrole;
 const Op = db.Sequelize.Op;
 
 // Create and Save a new Role
@@ -64,6 +65,33 @@ exports.findAllForGroup = (req, res) => {
       });
     });
 };
+
+// Retrieve a role for a personrole for a specific person
+exports.findRoleForPerson = (req, res) => {
+  const id = req.params.personId;
+
+  Role.findAll({
+    where: { '$personrole.personId$': id },
+    include: [ {
+        model: PersonRole, 
+        as: 'personrole',
+        right: true
+    } ]
+  })
+  .then((data) => {
+      //console.log(data)
+      for (let i = 0; i < data.length; i++) {
+          let role = data[i];
+          if(role.type.toLowerCase() === "admin")
+              admin = true;
+          //console.log(admin);
+      }
+  })
+  .catch(err => {
+      res.status(500).send({ message: err.message });
+  });
+
+}
 
 // Find a single Role with an id
 exports.findOne = (req, res) => {

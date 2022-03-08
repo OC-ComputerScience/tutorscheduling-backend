@@ -2,12 +2,13 @@ const db = require("../models");
 const authconfig = require("../config/auth.config");
 const Person = db.person;
 const Session = db.session;
-const Personrole = db.personrole;
+const PersonRole = db.personrole;
+const Role = db.role;
 
 const Op = db.Sequelize.Op;
 
 var jwt = require("jsonwebtoken");
-const { person } = require("../models");
+//const { person } = require("../models");
 
 exports.login = async (req, res) => {
     const {OAuth2Client} = require('google-auth-library');
@@ -33,22 +34,6 @@ exports.login = async (req, res) => {
     .then(data => {
         if(data != null) {
             person = data.dataValues;
-            // set if person is admin
-            // Personrole.findAll({ where: {personId: person.id} })
-            // .then((data) => {
-            //     console.log(data)
-            //     data.forEach(role => {
-            //         if(role.type.toLowerCase() === "admin")
-            //             admin = true;
-            //         console.log(admin);
-            //     })
-            // })
-            // .catch(err => {
-            //     res.status(500).send({
-            //         message:
-            //         err.message || "Some error occurred while retrieving personroles for person."
-            //     });
-            // });
         }
         else {
             // create a new Person and save to database
@@ -78,6 +63,28 @@ exports.login = async (req, res) => {
         });
     }
 
+    // set if person is admin
+    await Role.findAll({
+        where: { '$personrole.personId$': person.id },
+        include: [ {
+            model: PersonRole, 
+            as: 'personrole',
+            right: true
+        } ]
+    })
+    .then((data) => {
+        //console.log(data)
+        for (let i = 0; i < data.length; i++) {
+            let role = data[i];
+            if(role.type.toLowerCase() === "admin")
+                admin = true;
+            //console.log(admin);
+        }
+    })
+    .catch(err => {
+        res.status(500).send({ message: err.message });
+    });
+
     // create a new Session with a token and save to database
     token = jwt.sign({ id:email }, authconfig.secret, {expiresIn: 86400});
     let findExpirationDate = new Date();
@@ -91,7 +98,7 @@ exports.login = async (req, res) => {
     
     // not sending userinfo quick enough?
     Session.create(session)
-    .then(data => {
+    .then(() => {
         let userInfo = {
             token : token,
             email : person.email,

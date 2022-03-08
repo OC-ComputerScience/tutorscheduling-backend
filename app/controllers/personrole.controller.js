@@ -52,7 +52,7 @@ exports.findAll = (req, res) => {
       });
   };
 
-// Retrieve all Person Roles for a person from the database.
+// Retrieve all Person Roles and their corresponding roles for a person from the database.
 exports.findAllForPerson = (req, res) => {
   const id = req.params.personId;
 
