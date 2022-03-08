@@ -2,7 +2,7 @@ const db = require("../models");
 const authconfig = require("../config/auth.config");
 const Person = db.person;
 const Session = db.session;
-const Role = db.role;
+const Personrole = db.personrole;
 
 const Op = db.Sequelize.Op;
 
@@ -31,8 +31,22 @@ exports.login = async (req, res) => {
     .then(data => {
         console.log("person found");
         let person = {};
+        let admin = false;
         if(data != null) {
             person = data.dataValues;
+            // set if person is admin
+            // Personrole.findAllForPerson(person.id)
+            // .then((response) => {
+            //     console.log(response.data)
+            //     response.data.forEach(role => {
+            //         if(role.type.toLowerCase() === "admin")
+            //             admin = true;
+            //         console.log(admin);
+            //     })
+            // })
+            // .catch(err => {
+            //     res.status(500).send({ message: err.message });
+            // });
         }
         else {
             // create a new Person and save to database
@@ -47,10 +61,24 @@ exports.login = async (req, res) => {
             .then(data => {
                 console.log("person was registered")
                 //res.send({ message: "Person was registered successfully!" });
+                // this lets us get the person id
+                // Person.findOne({
+                //     where: {
+                //         email: email
+                //     }
+                // })
+                // .then(data => {
+                //     if(data != null) {
+                //         person = data.dataValues;
+                //         console.log(person);
+                //     }
+                // })
             })
             .catch(err => {
                 res.status(500).send({ message: err.message });
             });
+
+            
         }
         
         // create a new Session with a token and save to database
@@ -72,7 +100,7 @@ exports.login = async (req, res) => {
                 fName : person.fName,
                 lName : person.lName,
                 phoneNum : person.phoneNum,
-                admin : '',
+                admin: admin,
                 userID : person.id
             }
             res.send(userInfo);
