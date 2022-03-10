@@ -9,6 +9,9 @@ module.exports = app => {
     // Retrieve all Availability
     router.get("/", availability.findAll);
   
+    // Retrieve availabilities for a specific person
+    router.get("/person/:personId", availability.findAllForPerson);
+
     // Retrieve a single Availability with id
     router.get("/:id", availability.findOne);
   
