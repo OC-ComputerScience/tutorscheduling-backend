@@ -8,6 +8,7 @@ const Role = db.role;
 const Op = db.Sequelize.Op;
 
 var jwt = require("jsonwebtoken");
+const { group } = require("../models");
 //const { person } = require("../models");
 
 exports.login = async (req, res) => {
@@ -24,7 +25,7 @@ exports.login = async (req, res) => {
     let lastName = payload['family_name'];
     let token = null;
     let person = {};
-    let admin = false;
+    let access = [];
 
     await Person.findOne({
         where: {
@@ -63,27 +64,43 @@ exports.login = async (req, res) => {
         });
     }
 
-    // set if person is admin
-    await Role.findAll({
-        where: { '$personrole.personId$': person.id },
-        include: [ {
-            model: PersonRole, 
-            as: 'personrole',
-            right: true
-        } ]
+    // sets access for user
+    await group.findAll({
+        include: [{
+            model: Role,
+            include: [ {
+                where: { '$role->personrole.personId$': person.id },
+                model: PersonRole, 
+                as: 'personrole',
+                required: true
+            } ],
+            as: 'role',
+            required: true
+        }]
     })
     .then((data) => {
-        //console.log(data)
         for (let i = 0; i < data.length; i++) {
-            let role = data[i];
-            if(role.type.toLowerCase() === "admin")
-                admin = true;
-            //console.log(admin);
+            let element = data[i].dataValues;
+            let roles = [];
+            //console.log(element)
+            for (let j = 0; j < element.role.length; j++) {
+                let item = element.role[j];
+                //console.log(item)
+                let role = item.type;
+                roles.push(role);
+            }
+            let group = {
+                name: element.name,
+                roles: roles
+            }
+            access.push(group);
         }
+        console.log(access);
     })
     .catch(err => {
         res.status(500).send({ message: err.message });
     });
+
 
     // create a new Session with a token and save to database
     token = jwt.sign({ id:email }, authconfig.secret, {expiresIn: 86400});
@@ -96,7 +113,6 @@ exports.login = async (req, res) => {
         expirationDate : findExpirationDate
     }
     
-    // not sending userinfo quick enough?
     Session.create(session)
     .then(() => {
         let userInfo = {
@@ -105,7 +121,7 @@ exports.login = async (req, res) => {
             fName : person.fName,
             lName : person.lName,
             phoneNum : person.phoneNum,
-            admin: admin,
+            access : access,
             userID : person.id
         }
         console.log(userInfo)
@@ -118,18 +134,37 @@ exports.login = async (req, res) => {
 
 exports.logout = async (req, res) => {
     // invalidate session -- delete token out of session table
-    Session.removeByToken(req.params.token, (err, data) => {
-        if (err) {
-            if (err.kind === "not_found") {
-              res.status(404).send({
-                message: `Not found Session with token "${req.params.token}".`
-              });
-            } else {
-              res.status(500).send({
-                message: "Could not delete Session with token " + req.params.token
-              });
-            }
-          } else res.send({ message: `Session was deleted successfully!` });
-    })
-    return;
+    let session = {};
+    await Session.findAll({ where: { token : req.body.token} })
+      .then(data => {
+        session = data[0].dataValues;
+      })
+      .catch(err => {
+        res.status(500).send({
+          message:
+            err.message || "Some error occurred while retrieving sessions."
+        });
+      });
+      
+    Session.destroy({
+        where: { id: session.id }
+      })
+        .then(num => {
+          if (num == 1) {
+              console.log("successfully logged out")
+            res.send({
+              message: "Session was deleted successfully and user has been logged out!"
+            });
+          } else {
+              console.log("failed");
+            res.send({
+              message: `Cannot delete session with id=${id}. Maybe session was not found!`
+            });
+          }
+        })
+        .catch(err => {
+          res.status(500).send({
+            message: "Could not delete session with session=" + session.id
+          });
+    });
 };

@@ -79,13 +79,7 @@ exports.findRoleForPerson = (req, res) => {
     } ]
   })
   .then((data) => {
-      //console.log(data)
-      for (let i = 0; i < data.length; i++) {
-          let role = data[i];
-          if(role.type.toLowerCase() === "admin")
-              admin = true;
-          //console.log(admin);
-      }
+      res.send(data);
   })
   .catch(err => {
       res.status(500).send({ message: err.message });
