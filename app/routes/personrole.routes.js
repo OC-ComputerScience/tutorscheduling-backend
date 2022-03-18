@@ -12,6 +12,9 @@ module.exports = app => {
     // Retrieve a single PersonRole with id
     router.get("/:id", personrole.findOne);
 
+    // Retrieve a single PersonRole with role and person
+    router.get("/person/:personId/role/:roleId", personrole.findOneForType);
+
     // Retrieve personroles for a specific person
     router.get("/person/:personId", personrole.findAllForPerson);
   

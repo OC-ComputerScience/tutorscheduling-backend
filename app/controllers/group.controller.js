@@ -1,5 +1,7 @@
 const db = require("../models");
 const Group = db.group;
+const Role = db.role;
+const PersonRole = db.personrole;
 const Op = db.Sequelize.Op;
 
 // Create and Save a new Group
@@ -48,6 +50,62 @@ exports.findAll = (req, res) => {
         });
       });
   };
+
+// Retrieve all Groups for a person from the database.
+exports.findAllForPerson = (req, res) => {
+  const id = req.params.personId;
+
+  Group.findAll({ 
+    include: [{
+      model: Role,
+      include: [ {
+          where: { '$role->personrole.personId$': id },
+          model: PersonRole, 
+          as: 'personrole',
+          required: true
+      } ],
+      as: 'role',
+      required: true
+    }]
+  })
+  .then(data => {
+    res.send(data);
+  })
+  .catch(err => {
+    res.status(500).send({
+      message:
+        err.message || "Some error occurred while retrieving groups."
+    });
+  });
+};
+
+// Retrieve all Groups for a person from the database.
+exports.findAllIncompleteForPerson = (req, res) => {
+  const id = req.params.personId;
+
+  Group.findAll({ 
+    include: [{
+      model: Role,
+      include: [ {
+          where: { '$role->personrole.personId$': id, '$role->personrole.agree$': false },
+          model: PersonRole, 
+          as: 'personrole',
+          required: true
+      } ],
+      as: 'role',
+      required: true
+    }]
+  })
+  .then(data => {
+    res.send(data);
+  })
+  .catch(err => {
+    res.status(500).send({
+      message:
+        err.message || "Some error occurred while retrieving groups."
+    });
+  });
+};
 
 // Find a single Group with an id
 exports.findOne = (req, res) => {
