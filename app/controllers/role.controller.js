@@ -87,6 +87,27 @@ exports.findRoleForPerson = (req, res) => {
 
 }
 
+// Retrieve a role for a personrole for a specific person
+exports.findIncompleteRoleForPerson = (req, res) => {
+  const id = req.params.personId;
+
+  Role.findAll({
+    where: { '$personrole.personId$': id, '$personrole.agree$': false },
+    include: [ {
+        model: PersonRole, 
+        as: 'personrole',
+        right: true
+    } ]
+  })
+  .then((data) => {
+      res.send(data);
+  })
+  .catch(err => {
+      res.status(500).send({ message: err.message });
+  });
+
+}
+
 // Find a single Role with an id
 exports.findOne = (req, res) => {
     const id = req.params.id;

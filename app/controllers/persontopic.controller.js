@@ -50,6 +50,22 @@ exports.findAll = (req, res) => {
       });
   };
 
+  // Retrieve all Person Topics for a person from the database.
+exports.findAllForPerson = (req, res) => {
+  const id = req.params.personId;
+
+  PersonTopic.findAll({ where: {personId: id} })
+    .then(data => {
+      res.send(data);
+    })
+    .catch(err => {
+      res.status(500).send({
+        message:
+          err.message || "Some error occurred while retrieving persontopics for person."
+      });
+    });
+};
+
 // Find a single PersonTopic with an id
 exports.findOne = (req, res) => {
     const id = req.params.id;

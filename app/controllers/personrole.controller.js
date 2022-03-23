@@ -89,6 +89,23 @@ exports.findOne = (req, res) => {
       });
   };
 
+  // Find a single PersonRole with a personId and a role type
+exports.findOneForType = (req, res) => {
+  const personId = req.params.personId;
+  const roleId = req.params.roleId;
+
+  PersonRole.findAll({ where: {personId: personId, roleId: roleId} })
+    .then(data => {
+      res.send(data);
+    })
+    .catch(err => {
+      res.status(500).send({
+        message:
+          err.message || "Some error occurred while retrieving personroles for person and role."
+      });
+    });
+};
+
 // Update a PersonRole by the id in the request
 exports.update = (req, res) => {
     const id = req.params.id;
