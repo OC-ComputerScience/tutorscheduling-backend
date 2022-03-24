@@ -1,5 +1,6 @@
 const db = require("../models");
 const Topic = db.topic;
+const PersonTopic = db.persontopic;
 const Op = db.Sequelize.Op;
 
 // Create and Save a new Topic
@@ -49,6 +50,43 @@ exports.findAll = (req, res) => {
         });
       });
   };
+
+// Retrieve all Topics for a group from the database.
+exports.findAllForGroup = (req, res) => {
+  const id = req.params.groupId;
+
+  Topic.findAll({ where: {groupId: id} })
+    .then(data => {
+      res.send(data);
+    })
+    .catch(err => {
+      res.status(500).send({
+        message:
+          err.message || "Some error occurred while retrieving topics for group."
+      });
+    });
+};
+
+// Retrieve a topic for a persontopic for a specific person
+exports.findTopicForPerson = (req, res) => {
+  const id = req.params.personId;
+
+  Topic.findAll({
+    where: { '$persontopic.personId$': id },
+    include: [ {
+        model: PersonTopic, 
+        as: 'persontopic',
+        right: true
+    } ]
+  })
+  .then((data) => {
+      res.send(data);
+  })
+  .catch(err => {
+      res.status(500).send({ message: err.message });
+  });
+
+}
 
 // Find a single Topic with an id
 exports.findOne = (req, res) => {
