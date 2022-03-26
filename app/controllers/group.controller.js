@@ -2,6 +2,8 @@ const db = require("../models");
 const Group = db.group;
 const Role = db.role;
 const PersonRole = db.personrole;
+const Topic = db.topic;
+const PersonTopic = db.persontopic;
 const Op = db.Sequelize.Op;
 
 // Create and Save a new Group
@@ -95,6 +97,48 @@ exports.findAllIncompleteForPerson = (req, res) => {
       as: 'role',
       required: true
     }]
+  })
+  .then(data => {
+    res.send(data);
+  })
+  .catch(err => {
+    res.status(500).send({
+      message:
+        err.message || "Some error occurred while retrieving groups."
+    });
+  });
+};
+
+// Retrieve all Groups and topics for a person from the database.
+exports.findAllTopicsForTutor = (req, res) => {
+  const id = req.params.personId;
+
+  Group.findAll({ 
+    include: [
+      {
+        model: Topic,
+        include: [ {
+            where: { '$topic->persontopic.personId$': id },
+            model: PersonTopic, 
+            as: 'persontopic',
+            required: true
+        } ],
+        as: 'topic',
+        required: false
+      },
+      {
+        model: Role,
+        include: [ {
+            where: { '$role->personrole.personId$': id },
+            model: PersonRole, 
+            as: 'personrole',
+            required: true
+        } ],
+        as: 'role',
+        where: { '$role.type$': 'Tutor' },
+        required: true,
+      }
+    ]
   })
   .then(data => {
     res.send(data);
