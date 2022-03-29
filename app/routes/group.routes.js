@@ -14,6 +14,9 @@ module.exports = app => {
 
     // Retrieve all incomplete Groups for a person
     router.get("/personIn/:personId", group.findAllIncompleteForPerson);
+
+    // Retrieve all Groups and topics for a person
+    router.get("/personT/:personId", group.findAllTopicsForTutor);
   
     // Retrieve a single Group with id
     router.get("/:id", group.findOne);
