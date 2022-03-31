@@ -19,7 +19,8 @@ exports.create = (req, res) => {
       topicId: req.body.topicId,
       courseNum: req.body.courseNum,
       description: req.body.description,
-      status: req.body.status
+      status: req.body.status,
+      problem: req.body.problem,
     };
   
     // Save Request in the database
