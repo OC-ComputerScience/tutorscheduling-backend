@@ -16,7 +16,7 @@ exports.create = (req, res) => {
     const appointment = {
       id: req.body.id,
       groupId: req.body.groupId,
-      topidId: req.body.topicId,
+      topicId: req.body.topicId,
       locationId: req.body.locationId,
       date: req.body.date,
       startTime: req.body.startTime,
