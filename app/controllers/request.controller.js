@@ -33,6 +33,7 @@ exports.create = (req, res) => {
           message:
             err.message || "Some error occurred while creating the Request."
         });
+        console.log(err.message);
       });
   };
 
@@ -41,7 +42,7 @@ exports.findAll = (req, res) => {
     const id = req.query.id;
     var condition = id ? { id: { [Op.like]: `%${id}%` } } : null;
   
-    Request.findAll({ where: condition })
+    Request.findAll({ where: condition, include: ["topic","person"] } )
       .then(data => {
         res.send(data);
       })
@@ -73,6 +74,7 @@ exports.findOne = (req, res) => {
         });
       });
   };
+
 
 // Update a Request by the id in the request
 exports.update = (req, res) => {
