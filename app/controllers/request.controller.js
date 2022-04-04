@@ -75,6 +75,21 @@ exports.findOne = (req, res) => {
       });
   };
 
+    // Retrieve all requests for a group from the database.
+exports.findAllForGroup = (req, res) => {
+  const id = req.params.groupId;
+
+  Request.findAll({ where: {groupId: id} })
+    .then(data => {
+      res.send(data);
+    })
+    .catch(err => {
+      res.status(500).send({
+        message:
+          err.message || "Some error occurred while retrieving requests for group."
+      });
+    });
+};
 
 // Update a Request by the id in the request
 exports.update = (req, res) => {
