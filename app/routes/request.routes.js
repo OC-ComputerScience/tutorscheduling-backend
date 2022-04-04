@@ -11,6 +11,9 @@ module.exports = app => {
   
     // Retrieve a single Request with id
     router.get("/:id", request.findOne);
+
+    // Retrieve requests for a specific group
+    router.get("/group/:groupId", request.findAllForGroup);
   
     // Update a Request with id
     router.put("/:id", request.update);

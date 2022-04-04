@@ -51,6 +51,22 @@ exports.findAll = (req, res) => {
       });
   };
 
+  // Retrieve all Roles for a group from the database.
+exports.findAllForPerson = (req, res) => {
+  const id = req.params.personId;
+
+  Availability.findAll({ where: {personId: id} })
+    .then(data => {
+      res.send(data);
+    })
+    .catch(err => {
+      res.status(500).send({
+        message:
+          err.message || "Some error occurred while retrieving availabilities for person."
+      });
+    });
+};
+
 // Find a single Availability with an id
 exports.findOne = (req, res) => {
     const id = req.params.id;
