@@ -19,7 +19,8 @@ exports.create = (req, res) => {
       topicId: req.body.topicId,
       courseNum: req.body.courseNum,
       description: req.body.description,
-      status: req.body.status
+      status: req.body.status,
+      problem: req.body.problem,
     };
   
     // Save Request in the database
@@ -32,6 +33,7 @@ exports.create = (req, res) => {
           message:
             err.message || "Some error occurred while creating the Request."
         });
+        console.log(err.message);
       });
   };
 
@@ -40,7 +42,7 @@ exports.findAll = (req, res) => {
     const id = req.query.id;
     var condition = id ? { id: { [Op.like]: `%${id}%` } } : null;
   
-    Request.findAll({ where: condition })
+    Request.findAll({ where: condition, include: ["topic","person"] } )
       .then(data => {
         res.send(data);
       })
