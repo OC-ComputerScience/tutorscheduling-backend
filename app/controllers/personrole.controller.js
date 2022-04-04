@@ -40,7 +40,7 @@ exports.findAll = (req, res) => {
     const id = req.query.id;
     var condition = id ? { id: { [Op.like]: `%${id}%` } } : null;
   
-    PersonRole.findAll({ where: condition })
+    PersonRole.findAll({ where: condition, include: ["person"] })
       .then(data => {
         res.send(data);
       })
