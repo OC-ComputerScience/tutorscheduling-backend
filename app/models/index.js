@@ -62,9 +62,9 @@ db.location.belongsTo(db.group, { as: 'group'}, { foreignKey: { allowNull: false
 
 // foreign keys for request
 db.person.hasMany(db.request, { as: 'request'}, { foreignKey: { allowNull: false }, onDelete: 'CASCADE' });
-db.topic.hasMany(db.request, { as: 'request'}, { foreignKey: { allowNull: false }, onDelete: 'CASCADE' });
+db.group.hasMany(db.request, { as: 'request'}, { foreignKey: { allowNull: false }, onDelete: 'CASCADE' });
 db.request.belongsTo(db.person, { as: 'person'}, { foreignKey: { allowNull: false }, onDelete: 'CASCADE' });
-db.request.belongsTo(db.topic, { as: 'topic'}, { foreignKey: { allowNull: false }, onDelete: 'CASCADE' });
+db.request.belongsTo(db.group, { as: 'group'}, { foreignKey: { allowNull: false }, onDelete: 'CASCADE' });
 
 // foreign keys for appointment
 db.group.hasMany(db.appointment, { as: 'appointment'}, { foreignKey: { allowNull: false }, onDelete: 'CASCADE' });

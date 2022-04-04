@@ -11,6 +11,9 @@ module.exports = app => {
   
     // Retrieve a single Location with id
     router.get("/:id", location.findOne);
+
+    // Retrieve locations for a specific group
+    router.get("/group/:groupId", location.findAllForGroup);
   
     // Update a Location with id
     router.put("/:id", location.update);

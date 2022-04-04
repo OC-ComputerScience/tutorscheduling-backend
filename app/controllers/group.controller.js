@@ -53,6 +53,22 @@ exports.findAll = (req, res) => {
       });
   };
 
+// Retrieve all Groups from the database.
+exports.findOneByName = (req, res) => {
+  const name = req.params.name;
+
+  Group.findAll({ where: { name : name} })
+    .then(data => {
+      res.send(data);
+    })
+    .catch(err => {
+      res.status(500).send({
+        message:
+          err.message || "Some error occurred while retrieving group by name."
+      });
+    });
+};
+
 // Retrieve all Groups for a person from the database.
 exports.findAllForPerson = (req, res) => {
   const id = req.params.personId;

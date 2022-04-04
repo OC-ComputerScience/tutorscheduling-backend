@@ -9,6 +9,9 @@ module.exports = app => {
     // Retrieve all Groups
     router.get("/", group.findAll);
 
+    // Retrieve Group by name
+    router.get("/name/:name", group.findOneByName);
+
     // Retrieve all Groups for a person
     router.get("/person/:personId", group.findAllForPerson);
 
