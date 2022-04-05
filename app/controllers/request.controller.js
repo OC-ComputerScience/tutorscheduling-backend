@@ -16,6 +16,7 @@ exports.create = (req, res) => {
     const request = {
       id: req.body.id,
       personId: req.body.personId,
+      groupId: req.body.groupId,
       topicId: req.body.topicId,
       courseNum: req.body.courseNum,
       description: req.body.description,
