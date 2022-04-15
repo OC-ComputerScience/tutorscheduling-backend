@@ -66,6 +66,28 @@ exports.findAllForGroup = (req, res) => {
     });
 };
 
+// Retrieve roles per group for personroles for a specific person
+exports.findRoleByGroupForPerson = (req, res) => {
+  const personId = req.params.personId;
+  const groupId = req.params.groupId;
+
+  Role.findAll({
+    where: { '$personrole.personId$': personId, groupId: groupId },
+    include: [ {
+        model: PersonRole, 
+        as: 'personrole',
+        right: true
+    } ]
+  })
+  .then((data) => {
+      res.send(data);
+  })
+  .catch(err => {
+      res.status(500).send({ message: err.message });
+  });
+
+}
+
 // Retrieve a role for a personrole for a specific person
 exports.findRoleForPerson = (req, res) => {
   const id = req.params.personId;
