@@ -62,6 +62,47 @@ exports.findAll = (req, res) => {
       });
   };
 
+  // Retrieve all appointments for a person for a group from the database.
+exports.findAllForPersonForGroup = (req, res) => {
+  const personId = req.params.personId;
+  const groupId = req.params.groupId;
+
+  Appointment.findAll({ 
+    where: {groupId: groupId},
+    include: [{
+      where: { '$personappointment.personId$': personId },
+      model: PersonAppointment,
+      as: 'personappointment',
+      required: true
+    }]
+  })
+    .then(data => {
+      res.send(data);
+    })
+    .catch(err => {
+      res.status(500).send({
+        message:
+          err.message || "Some error occurred while retrieving appointments for person for group."
+      });
+    });
+};
+
+  // Retrieve all appointments for a person for a group from the database.
+  exports.findAllForGroup = (req, res) => {
+    const groupId = req.params.groupId;
+  
+    Appointment.findAll({ where: {groupId: groupId} })
+      .then(data => {
+        res.send(data);
+      })
+      .catch(err => {
+        res.status(500).send({
+          message:
+            err.message || "Some error occurred while retrieving appointments for group."
+        });
+      });
+  };
+
   // Retrieve all Appointments for a person from the database.
 exports.findAllForPerson = (req, res) => {
   const id = req.params.personId;
