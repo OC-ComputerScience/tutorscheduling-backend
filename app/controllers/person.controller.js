@@ -120,6 +120,32 @@ exports.findAllForGroup = (req, res) => {
   });
 };
 
+// Find pending tutors for group
+exports.findPendingTutorsForGroup = (req, res) => {
+  const groupId = req.params.groupId;
+
+  Person.findAll({
+    include: [ {
+        model: PersonRole, 
+        as: 'personrole',
+        required: true,
+        where: { '$personrole.status$': "applied"},
+        include: [ {
+          model: Role, 
+          as: 'role',
+          required: true,
+          where: { '$personrole->role.groupId$': groupId, '$personrole->role.type$': "Tutor"}
+      }]
+    }]
+  })
+  .then((data) => {
+      res.send(data);
+  })
+  .catch(err => {
+      res.status(500).send({ message: err.message });
+  });
+};
+
 // Update a Person by the id in the request
 exports.update = (req, res) => {
     const id = req.params.id;
