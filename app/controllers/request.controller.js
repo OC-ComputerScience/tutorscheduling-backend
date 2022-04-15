@@ -1,5 +1,7 @@
 const db = require("../models");
 const Request = db.request;
+const Person = db.person;
+const Topic = db.topic;
 const Op = db.Sequelize.Op;
 
 // Create and Save a new Request
@@ -43,7 +45,7 @@ exports.findAll = (req, res) => {
     const id = req.query.id;
     var condition = id ? { id: { [Op.like]: `%${id}%` } } : null;
   
-    Request.findAll({ where: condition, include: ["topic","person"] } )
+    Request.findAll({ where: condition } )
       .then(data => {
         res.send(data);
       })
@@ -80,7 +82,20 @@ exports.findOne = (req, res) => {
 exports.findAllForGroup = (req, res) => {
   const id = req.params.groupId;
 
-  Request.findAll({ where: {groupId: id} })
+  Request.findAll({ 
+    where: {groupId: id},
+    include: [ {
+      model: Person, 
+      as: 'person',
+      required: true 
+    },
+    {
+      model: Topic, 
+      as: 'topic',
+      required: true 
+    } 
+  ]
+  })
     .then(data => {
       res.send(data);
     })

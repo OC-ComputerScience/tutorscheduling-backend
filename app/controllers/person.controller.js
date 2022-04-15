@@ -1,5 +1,7 @@
 const db = require("../models");
 const Person = db.person;
+const PersonRole = db.personrole;
+const Role = db.role;
 const Op = db.Sequelize.Op;
 
 // Create and Save a new Person
@@ -91,6 +93,31 @@ exports.findByEmail = (req, res) => {
         message: "Error retrieving Person with email=" + email
       });
     });
+};
+
+// Find a single Person with an email
+exports.findAllForGroup = (req, res) => {
+  const groupId = req.params.groupId;
+
+  Person.findAll({
+    include: [ {
+        model: PersonRole, 
+        as: 'personrole',
+        required: true,
+        include: [ {
+          model: Role, 
+          as: 'role',
+          required: true,
+          where: { '$personrole->role.groupId$': groupId}
+      }]
+    }]
+  })
+  .then((data) => {
+      res.send(data);
+  })
+  .catch(err => {
+      res.status(500).send({ message: err.message });
+  });
 };
 
 // Update a Person by the id in the request

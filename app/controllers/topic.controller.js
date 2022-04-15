@@ -67,6 +67,28 @@ exports.findAllForGroup = (req, res) => {
     });
 };
 
+// Retrieve topics per group for persontopics for a specific person
+exports.findTopicByGroupForPerson = (req, res) => {
+  const personId = req.params.personId;
+  const groupId = req.params.groupId;
+
+  Topic.findAll({
+    where: { '$persontopic.personId$': personId, groupId: groupId },
+    include: [ {
+        model: PersonTopic, 
+        as: 'persontopic',
+        right: true
+    } ]
+  })
+  .then((data) => {
+      res.send(data);
+  })
+  .catch(err => {
+      res.status(500).send({ message: err.message });
+  });
+
+}
+
 // Retrieve a topic for a persontopic for a specific person
 exports.findTopicForPerson = (req, res) => {
   const id = req.params.personId;

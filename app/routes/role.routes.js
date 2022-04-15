@@ -18,6 +18,9 @@ module.exports = app => {
     // Retrieve roles for a specific person including personrole
     router.get("/person/:personId", role.findRoleForPerson);
 
+    // Retrieve roles by group for a specific person including personroles
+    router.get("/group/:groupId/person/:personId", role.findRoleByGroupForPerson);
+
     // Retrieve incomplete roles for a specific person including personrole
     router.get("/personIn/:personId", role.findIncompleteRoleForPerson);
   
