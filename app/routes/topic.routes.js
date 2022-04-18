@@ -12,8 +12,11 @@ module.exports = app => {
     // Retrieve topics for a specific group
     router.get("/group/:groupId", topic.findAllForGroup);
 
-    // Retrieve roles for a specific person including personrole
+    // Retrieve topics for a specific person including persontopics
     router.get("/person/:personId", topic.findTopicForPerson);
+
+    // Retrieve topics by group for a specific person including persontopics
+    router.get("/group/:groupId/person/:personId", topic.findTopicByGroupForPerson);
   
     // Retrieve a single Topic with id
     router.get("/:id", topic.findOne);
