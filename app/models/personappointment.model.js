@@ -4,7 +4,11 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.INTEGER,
         autoIncrement: true,
         primaryKey: true
-      }
+      },
+      isTutor: {
+        type: Sequelize.BOOLEAN,
+        allowNull: false
+      },
     });
   
     return PersonAppointment;

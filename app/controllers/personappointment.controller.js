@@ -15,6 +15,7 @@ exports.create = (req, res) => {
     // Create a PersonAppointment
     const personappointment = {
       id: req.body.id,
+      isTutor: req.body.isTutor,
       personId: req.body.personId,
       appointmentId: req.body.appointmentId
     };
