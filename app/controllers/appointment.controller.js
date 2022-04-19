@@ -152,6 +152,11 @@ exports.findAllForPersonForGroup = (req, res) => {
           model: Topic,
           as: 'topic',
           required: true
+        },
+        {
+          model: PersonAppointment,
+          as: 'personappointment',
+          required: true
         }] 
       })
       .then(data => {
