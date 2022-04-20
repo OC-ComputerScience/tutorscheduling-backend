@@ -71,7 +71,7 @@ exports.findAllUpcomingForPersonForGroup = (req, res) => {
   const date = new Date();
 
   Appointment.findAll({ 
-    where: {groupId: groupId, date: { $gte: date }},
+    where: {groupId: groupId, date: { [Op.gte]: date }},
     include: [{
       where: { '$personappointment.personId$': personId },
       model: PersonAppointment,
@@ -103,6 +103,11 @@ exports.findAllForPersonForGroup = (req, res) => {
       model: PersonAppointment,
       as: 'personappointment',
       required: true
+    },
+    {
+      model: Topic,
+      as: 'topic',
+      required: true
     }]
   })
     .then(data => {
@@ -124,7 +129,7 @@ exports.findAllForPersonForGroup = (req, res) => {
   
     Appointment.findAll({ where: { 
                             groupId: groupId, 
-                            date: { $gte: date }
+                            date: { [Op.gte]: date }
                         }})
       .then(data => {
         res.send(data);
