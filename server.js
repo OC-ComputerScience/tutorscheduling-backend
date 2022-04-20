@@ -39,7 +39,6 @@ require("./app/routes/persontopic.routes")(app);
 require("./app/routes/request.routes")(app);
 require("./app/routes/role.routes")(app);
 require("./app/routes/topic.routes")(app);
-require("./app/routes/twilio.routes")(app);
 
 // set port, listen for requests
 const PORT = process.env.PORT || 3002;
