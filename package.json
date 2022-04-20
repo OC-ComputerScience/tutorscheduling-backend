@@ -7,6 +7,7 @@
     "body": "^5.1.0",
     "cors": "^2.8.5",
     "debug": "^4.3.3",
+    "dotenv": "^16.0.0",
     "express": "^4.17.2",
     "google-auth-library": "^7.11.0",
     "jsonwebtoken": "^8.5.1",
@@ -14,7 +15,8 @@
     "mysql2": "^2.3.3",
     "parser": "^0.1.4",
     "pug": "^3.0.2",
-    "sequelize": "^6.15.1"
+    "sequelize": "^6.15.1",
+    "twilio": "^3.76.1"
   },
   "devDependencies": {},
   "scripts": {
