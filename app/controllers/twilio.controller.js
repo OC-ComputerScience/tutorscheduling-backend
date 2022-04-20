@@ -7,7 +7,7 @@ const client = require('twilio')(accountSid, authToken);
 exports.findAll = (req, res) => {
     client.messages
       .create({
-        body: "You have signed up for the following appointmwent:" + req.body.message,
+        body: req.body.message,
         from: phoneNum,
         to: req.body.phoneNum
       })
