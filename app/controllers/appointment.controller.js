@@ -1,6 +1,8 @@
 const db = require("../models");
 const Appointment = db.appointment;
 const PersonAppointment = db.personappointment;
+const Location = db.location;
+const Topic = db.topic;
 const Op = db.Sequelize.Op;
 
 // Create and Save a new Appointment
@@ -62,6 +64,33 @@ exports.findAll = (req, res) => {
       });
   };
 
+    // Retrieve all upcoming appointments for a person for a group from the database.
+exports.findAllUpcomingForPersonForGroup = (req, res) => {
+  const personId = req.params.personId;
+  const groupId = req.params.groupId;
+  const date = new Date();
+
+  Appointment.findAll({ 
+    where: {groupId: groupId, date: { $gte: date }},
+    include: [{
+      where: { '$personappointment.personId$': personId },
+      model: PersonAppointment,
+      as: 'personappointment',
+      required: true
+    }]
+  })
+    .then(data => {
+      res.send(data);
+    })
+    .catch(err => {
+      res.status(500).send({
+        message:
+          err.message || "Some error occurred while retrieving appointments for person for group."
+      });
+    });
+};
+
+
   // Retrieve all appointments for a person for a group from the database.
 exports.findAllForPersonForGroup = (req, res) => {
   const personId = req.params.personId;
@@ -88,10 +117,48 @@ exports.findAllForPersonForGroup = (req, res) => {
 };
 
   // Retrieve all appointments for a person for a group from the database.
+  exports.findAllUpcomingForGroup = (req, res) => {
+    const groupId = req.params.groupId;
+    const date = new Date();
+    // const time = date.toLocaleTimeString('en-US', { hour12: false });
+  
+    Appointment.findAll({ where: { 
+                            groupId: groupId, 
+                            date: { $gte: date }
+                        }})
+      .then(data => {
+        res.send(data);
+      })
+      .catch(err => {
+        res.status(500).send({
+          message:
+            err.message || "Some error occurred while retrieving appointments for group."
+        });
+      });
+  };
+
+  // Retrieve all appointments for a person for a group from the database.
   exports.findAllForGroup = (req, res) => {
     const groupId = req.params.groupId;
   
-    Appointment.findAll({ where: {groupId: groupId} })
+    Appointment.findAll({ 
+        where: {groupId: groupId},
+        include: [{
+          model: Location,
+          as: 'location',
+          required: true
+        },
+        {
+          model: Topic,
+          as: 'topic',
+          required: true
+        },
+        {
+          model: PersonAppointment,
+          as: 'personappointment',
+          required: true
+        }] 
+      })
       .then(data => {
         res.send(data);
       })
