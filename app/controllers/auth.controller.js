@@ -42,7 +42,8 @@ exports.login = async (req, res) => {
                 fName: firstName,
                 lName: lastName,
                 email: email,
-                phoneNum: ''
+                phoneNum: '',
+                googleToken: ''
             }
         }
     })
