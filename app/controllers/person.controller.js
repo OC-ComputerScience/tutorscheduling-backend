@@ -1,6 +1,8 @@
 const db = require("../models");
 const Person = db.person;
 const PersonRole = db.personrole;
+const PersonAppointment = db.personappointment;
+const Appointment = db.appointment;
 const Role = db.role;
 const Op = db.Sequelize.Op;
 
@@ -20,7 +22,8 @@ exports.create = (req, res) => {
       fName: req.body.fName,
       lName: req.body.lName,
       email: req.body.email,
-      phoneNum: req.body.phoneNum
+      phoneNum: req.body.phoneNum,
+      googleToken: req.body.googleToken
     };
   
     // Save Person in the database
@@ -52,6 +55,34 @@ exports.findAll = (req, res) => {
         });
       });
   };
+
+// Find the first tutor for an appointment to get google token
+exports.findFirstTutorForAppointment = (req, res) => {
+const appId = req.params.appointmentId;
+
+  Person.findAll({
+    include: [ {
+        model: PersonAppointment, 
+        as: 'personappointment',
+        required: true,
+        where: { isTutor: true },
+        include: [ {
+          model: Appointment, 
+          as: 'appointment',
+          required: true,
+          where: { '$personappointment->appointment.id$': appId}
+      }]
+    }]
+  })
+  .then((data) => {
+    // only need to send the first tutor in the appointment to be the organizer
+    //console.log(data[0])
+      res.send(data[0]);
+  })
+  .catch(err => {
+      res.status(500).send({ message: err.message });
+  });
+};
 
 // Find a single Person with an id
 exports.findOne = (req, res) => {

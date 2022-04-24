@@ -20,6 +20,10 @@ module.exports = (sequelize, Sequelize) => {
       phoneNum: {
         type: Sequelize.STRING
       },
+      googleToken: {
+        type: Sequelize.STRING,
+        allowNull: true
+      },
     });
 
     Person.findByEmail = (email, result) => {
