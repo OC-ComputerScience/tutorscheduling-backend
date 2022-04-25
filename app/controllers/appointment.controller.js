@@ -539,13 +539,15 @@ async function findFirstTutorForAppointment(id) {
   const {client_secret, client_id, redirect_uris} = credentials.web;
   const oAuth2Client = new google.auth.OAuth2(
       client_id, client_secret, redirect_uris[0]);
+     
+  getAccessToken(oAuth2Client, callback, data);
 
   // Check if we have previously stored a token.
-  fs.readFile(TOKEN_PATH, (err, token) => {
-    if (err) return getAccessToken(oAuth2Client, callback, data);
-    oAuth2Client.setCredentials(JSON.parse(token));
-    callback(oAuth2Client, data);
-  });
+  //fs.readFile(TOKEN_PATH, (err, token) => {
+    //if (err) return getAccessToken(oAuth2Client, callback, data);
+    //oAuth2Client.setCredentials(JSON.parse(token));
+    //callback(oAuth2Client, data);
+  //});
 }
 
 /**
