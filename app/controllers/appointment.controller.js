@@ -555,11 +555,11 @@ async function findFirstTutorForAppointment(id) {
  * @param {getEventsCallback} callback The callback for the authorized client.
  */
  async function getAccessToken(oAuth2Client, callback, data) {
-  const authUrl = oAuth2Client.generateAuthUrl({
-    access_type: 'offline',
-    scope: SCOPES,
-  });
-  console.log('Authorize this app by visiting this url:', authUrl);
+  //const authUrl = oAuth2Client.generateAuthUrl({
+    //access_type: 'offline',
+    //scope: SCOPES,
+  //});
+  //console.log('Authorize this app by visiting this url:', authUrl);
   // const rl = readline.createInterface({
   //   input: process.stdin,
   //   output: process.stdout,
