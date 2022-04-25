@@ -15,9 +15,7 @@ const SCOPES = ['https://www.googleapis.com/auth/calendar'];
 const TOKEN_PATH = 'token.json';
 const { google } = require("googleapis");
 const fs = require('fs');
-let code = '';
-let currentPersonId = 0;
-let currentPerson = {};
+let token = {};
 
 // Create and Save a new Appointment
 exports.create = (req, res) => {
@@ -498,8 +496,10 @@ async function findFirstTutorForAppointment(id) {
       // only need to send the first tutor in the appointment to be the organizer
       //console.log(data[0])
         //res.send(data[0]);
-        code = data[0].googleToken;
-        currentPersonId = data[0].id;
+        token.access_token = data[0].access_token;
+        token.scope = SCOPES;
+        token.token_type = data[0].token_type;
+        token.expiry_date = data[0].expiry_date;
     })
     .catch(err => {
         console.log({ message: err.message });
@@ -567,25 +567,27 @@ async function findFirstTutorForAppointment(id) {
   //   output: process.stdout,
   // });
   await findFirstTutorForAppointment(data[0].id);
-  console.log(code)
+  console.log(token)
   // if the person doesn't have a google token code, get one from google
-  if(code === '' || code === null) {
-    const authUrl = oAuth2Client.generateAuthUrl({
-      access_type: 'offline',
-      scope: SCOPES,
-    });
-    console.log('Authorize this app by visiting this url:', authUrl);
-  }
-  oAuth2Client.getToken(code, (err, token) => {
-    if (err) return console.error('Error retrieving access token', err);
-    oAuth2Client.setCredentials(token);
-    // Store the token to disk for later program executions
-    fs.writeFile(TOKEN_PATH, JSON.stringify(token), (err) => {
-      if (err) return console.error(err);
-      console.log('Token stored to', TOKEN_PATH);
-    });
-    callback(oAuth2Client, data);
-  });
+  // if(token === null) {
+  //   const authUrl = oAuth2Client.generateAuthUrl({
+  //     access_type: 'offline',
+  //     scope: SCOPES,
+  //   });
+  //   console.log('Authorize this app by visiting this url:', authUrl);
+  //}
+  // oAuth2Client.getToken(code, (err, token) => {
+  //   if (err) return console.error('Error retrieving access token', err);
+  //   oAuth2Client.setCredentials(token);
+  //   // Store the token to disk for later program executions
+  //   fs.writeFile(TOKEN_PATH, JSON.stringify(token), (err) => {
+  //     if (err) return console.error(err);
+  //     console.log('Token stored to', TOKEN_PATH);
+  //   });
+  //   callback(oAuth2Client, data);
+  // });
+  oAuth2Client.setCredentials(token);
+  callback(oAuth2Client, data);
 }
 
   // Open google cal token page for user
