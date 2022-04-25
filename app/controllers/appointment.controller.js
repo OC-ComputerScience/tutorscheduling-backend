@@ -540,7 +540,7 @@ async function findFirstTutorForAppointment(id) {
   const oAuth2Client = new google.auth.OAuth2(
       client_id, client_secret, redirect_uris[0]);
      
-  getAccessToken(oAuth2Client, callback, data);
+  return getAccessToken(oAuth2Client, callback, data);
 
   // Check if we have previously stored a token.
   //fs.readFile(TOKEN_PATH, (err, token) => {
