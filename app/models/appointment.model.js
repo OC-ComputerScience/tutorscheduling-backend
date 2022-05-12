@@ -34,12 +34,6 @@ module.exports = (sequelize, Sequelize) => {
       URL: {
         type: Sequelize.STRING
       },
-      tutorFeedback: {
-        type: Sequelize.STRING
-      },
-      studentFeedback: {
-        type: Sequelize.STRING
-      },
       preSessionInfo: {
         type: Sequelize.STRING
       }

@@ -43,8 +43,6 @@ exports.create = (req, res) => {
       tutorStart: req.body.tutorStart,
       tutorEnd: req.body.tutorEnd,
       URL: req.body.URL,
-      tutorFeedback: req.body.tutorFeedback,
-      studentFeedback: req.body.studentFeedback,
       preSessionInfo: req.body.preSessionInfo
     };
   
@@ -211,6 +209,29 @@ exports.findAllForPerson = (req, res) => {
     });
   });
 };
+
+  // Retrieve all Appointments for a person from the database.
+  exports.findAllUnapprovedForPerson = (req, res) => {
+    const id = req.params.personId;
+  
+    Appointment.findAll({ 
+      include: [{
+        where: { '$personappointment.personId$': id, '$personappointment.appointment$':'approved' },
+        model: PersonAppointment,
+        as: 'personappointment',
+        required: true
+      }]
+    })
+    .then(data => {
+      res.send(data);
+    })
+    .catch(err => {
+      res.status(500).send({
+        message:
+          err.message || "Some error occurred while retrieving appointments."
+      });
+    });
+  };
 
 // Find a single Appointment with an id
 exports.findOne = (req, res) => {
