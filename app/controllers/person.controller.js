@@ -23,7 +23,9 @@ exports.create = (req, res) => {
       lName: req.body.lName,
       email: req.body.email,
       phoneNum: req.body.phoneNum,
-      googleToken: req.body.googleToken
+      access_token: req.body.access_token,
+      token_type: req.body.token_type,
+      expiry_date: req.body.expiry_date
     };
   
     // Save Person in the database

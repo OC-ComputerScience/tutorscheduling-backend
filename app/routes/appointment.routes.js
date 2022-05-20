@@ -9,9 +9,6 @@ module.exports = app => {
     // Retrieve all Appointment
     router.get("/", appointment.findAll);
 
-    // Open google calendar auth page for user
-    router.get("/googlecal", appointment.openGoogleCalPage);
-
     // Retrieve all Appointment
     router.get("/person/:personId", appointment.findAllForPerson);
 

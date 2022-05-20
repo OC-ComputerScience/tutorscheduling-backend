@@ -12,12 +12,9 @@ const SCOPES = ['https://www.googleapis.com/auth/calendar'];
 // The file token.json stores the user's access and refresh tokens, and is
 // created automatically when the authorization flow completes for the first
 // time.
-const TOKEN_PATH = 'token.json';
 const { google } = require("googleapis");
 const fs = require('fs');
-let code = '';
-let currentPersonId = 0;
-let currentPerson = {};
+let token = {};
 
 // Create and Save a new Appointment
 exports.create = (req, res) => {
@@ -519,35 +516,15 @@ async function findFirstTutorForAppointment(id) {
       // only need to send the first tutor in the appointment to be the organizer
       //console.log(data[0])
         //res.send(data[0]);
-        code = data[0].googleToken;
-        currentPersonId = data[0].id;
+        token.access_token = data[0].access_token;
+        token.scope = SCOPES;
+        token.token_type = data[0].token_type;
+        token.expiry_date = data[0].expiry_date;
     })
     .catch(err => {
         console.log({ message: err.message });
     });
   };
-
-  // async function updatePersonToken(id) {
-  //   await Person.update(this.currentPerson, {
-  //     where: { id: id }
-  //   })
-  //     .then(num => {
-  //       if (num == 1) {
-  //         res.send({
-  //           message: "Person was updated successfully."
-  //         });
-  //       } else {
-  //         res.send({
-  //           message: `Cannot update Person with id=${id}. Maybe Person was not found or req.body is empty!`
-  //         });
-  //       }
-  //     })
-  //     .catch(err => {
-  //       res.status(500).send({
-  //         message: "Error updating Person with id=" + id
-  //       });
-  //     });
-  // };
 
 /**
  * Create an OAuth2 client with the given credentials, and then execute the
@@ -555,63 +532,15 @@ async function findFirstTutorForAppointment(id) {
  * @param {Object} credentials The authorization client credentials.
  * @param {function} callback The callback to call with the authorized client.
  */
- function authorize(credentials, callback, data) {
-   //console.log(credentials);
+ async function authorize(credentials, callback, data) {
   const {client_secret, client_id, redirect_uris} = credentials.web;
   const oAuth2Client = new google.auth.OAuth2(
       client_id, client_secret, redirect_uris[0]);
 
-  // Check if we have previously stored a token.
-  fs.readFile(TOKEN_PATH, (err, token) => {
-    if (err) return getAccessToken(oAuth2Client, callback, data);
-    oAuth2Client.setCredentials(JSON.parse(token));
-    callback(oAuth2Client, data);
-  });
-}
-
-/**
- * Get and store new token after prompting for user authorization, and then
- * execute the given callback with the authorized OAuth2 client.
- * @param {google.auth.OAuth2} oAuth2Client The OAuth2 client to get token for.
- * @param {getEventsCallback} callback The callback for the authorized client.
- */
- async function getAccessToken(oAuth2Client, callback, data) {
-  const authUrl = oAuth2Client.generateAuthUrl({
-    access_type: 'offline',
-    scope: SCOPES,
-  });
-  console.log('Authorize this app by visiting this url:', authUrl);
-  // const rl = readline.createInterface({
-  //   input: process.stdin,
-  //   output: process.stdout,
-  // });
   await findFirstTutorForAppointment(data[0].id);
-  console.log(code)
-  // if the person doesn't have a google token code, get one from google
-  if(code === '' || code === null) {
-    const authUrl = oAuth2Client.generateAuthUrl({
-      access_type: 'offline',
-      scope: SCOPES,
-    });
-    console.log('Authorize this app by visiting this url:', authUrl);
-  }
-  oAuth2Client.getToken(code, (err, token) => {
-    if (err) return console.error('Error retrieving access token', err);
-    oAuth2Client.setCredentials(token);
-    // Store the token to disk for later program executions
-    fs.writeFile(TOKEN_PATH, JSON.stringify(token), (err) => {
-      if (err) return console.error(err);
-      console.log('Token stored to', TOKEN_PATH);
-    });
-    callback(oAuth2Client, data);
-  });
-}
+  console.log(token)
 
-  // Open google cal token page for user
-  exports.openGoogleCalPage = (req, res) => {
-    const authUrl = oAuth2Client.generateAuthUrl({
-      access_type: 'offline',
-      scope: SCOPES,
-    });
-    res.send(authUrl)
-  };
+  oAuth2Client.setCredentials(token);
+  callback(oAuth2Client, data);
+     
+}

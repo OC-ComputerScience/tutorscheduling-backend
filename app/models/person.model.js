@@ -20,8 +20,16 @@ module.exports = (sequelize, Sequelize) => {
       phoneNum: {
         type: Sequelize.STRING
       },
-      googleToken: {
+      access_token: {
         type: Sequelize.STRING,
+        allowNull: true
+      },
+      token_type: {
+        type: Sequelize.STRING,
+        allowNull: true
+      },
+      expiry_date: {
+        type: Sequelize.BIGINT,
         allowNull: true
       },
     });

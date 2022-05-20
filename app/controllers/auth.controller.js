@@ -12,6 +12,8 @@ const { group } = require("../models");
 //const { person } = require("../models");
 
 exports.login = async (req, res) => {
+    console.log(req)
+    console.log(req.body)
     const {OAuth2Client} = require('google-auth-library');
     const client = new OAuth2Client('158532899975-5qk486rajjjb3dqrdbp4h86a65l997ab.apps.googleusercontent.com');
     console.log("idToken:"+JSON.stringify(req.body))
@@ -24,6 +26,7 @@ exports.login = async (req, res) => {
     let email = payload['email'];
     let firstName = payload['given_name'];
     let lastName = payload['family_name'];
+    let googleToken = req.body.token;
     let token = null;
     let person = {};
     let access = [];
@@ -44,7 +47,9 @@ exports.login = async (req, res) => {
                 lName: lastName,
                 email: email,
                 phoneNum: '',
-                googleToken: ''
+                access_token: googleToken.access_token,
+                token_type: googleToken.token_type,
+                expiry_date: googleToken.expiry_date
             }
         }
     })
@@ -63,6 +68,34 @@ exports.login = async (req, res) => {
         })
         .catch(err => {
             res.status(500).send({ message: err.message });
+        });
+    }
+    // else update accessToken
+    else {
+        console.log(person)
+        person.access_token = googleToken.access_token;
+        person.token_type = googleToken.token_type;
+        person.expiry_date = googleToken.expiry_date;
+        console.log(person)
+        await Person.update(person, { where: { id: person.id } })
+        .then(num => {
+            if (num == 1) {
+                console.log("updated person's google token")
+            // res.send({
+            //     message: "Person was updated successfully."
+            // });
+            } else {
+                console.log(`Cannot update Person with id=${person.id}. Maybe Person was not found or req.body is empty!`)
+            // res.send({
+            //     message: `Cannot update Person with id=${person.id}. Maybe Person was not found or req.body is empty!`
+            // });
+            }
+        })
+        .catch(err => {
+            console.log("Error updating Person with id=" + person.id + " " + err)
+            // res.status(500).send({
+            // message: "Error updating Person with id=" + person.id
+            // });
         });
     }
 
