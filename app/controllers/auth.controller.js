@@ -14,8 +14,9 @@ const { group } = require("../models");
 exports.login = async (req, res) => {
     const {OAuth2Client} = require('google-auth-library');
     const client = new OAuth2Client('158532899975-5qk486rajjjb3dqrdbp4h86a65l997ab.apps.googleusercontent.com');
+    console.log("idToken:"+JSON.stringify(req.body))
     const ticket = await client.verifyIdToken({
-        idToken: req.body.accessToken,
+        idToken: req.body.idToken,
         audience: '158532899975-5qk486rajjjb3dqrdbp4h86a65l997ab.apps.googleusercontent.com'
     });
     const payload= ticket.getPayload();
