@@ -17,7 +17,9 @@ exports.create = (req, res) => {
       id: req.body.id,
       isTutor: req.body.isTutor,
       personId: req.body.personId,
-      appointmentId: req.body.appointmentId
+      appointmentId: req.body.appointmentId,
+      feedbacknumber: req.body.feedbacknumber,
+      feedbacktext: req.body.feedbacktext
     };
   
     // Save PersonAppointment in the database

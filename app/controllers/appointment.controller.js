@@ -40,8 +40,6 @@ exports.create = (req, res) => {
       tutorStart: req.body.tutorStart,
       tutorEnd: req.body.tutorEnd,
       URL: req.body.URL,
-      tutorFeedback: req.body.tutorFeedback,
-      studentFeedback: req.body.studentFeedback,
       preSessionInfo: req.body.preSessionInfo
     };
   
@@ -208,7 +206,6 @@ exports.findAllForPerson = (req, res) => {
     });
   });
 };
-
 // Find a single Appointment with an id
 exports.findOne = (req, res) => {
     const id = req.params.id;
