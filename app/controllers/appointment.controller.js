@@ -206,8 +206,6 @@ exports.findAllForPerson = (req, res) => {
     });
   });
 };
-
-
 // Find a single Appointment with an id
 exports.findOne = (req, res) => {
     const id = req.params.id;
