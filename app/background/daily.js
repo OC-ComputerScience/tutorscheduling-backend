@@ -9,9 +9,9 @@ const Op = db.Sequelize.Op;
 
   exports.dailyTasks = () =>{
 // for prod, runs at 12:01 am.
-//      cron.schedule('01 00 * * *', function() {
+       cron.schedule('01 00 * * *', function() {
 // for testing, runs every minute
-      cron.schedule('* * * * *', function() {
+//      cron.schedule('* * * * *', function() {
         console.log('Start running a task every day at 12:01 am');
         deletePastAppointments();
         })
