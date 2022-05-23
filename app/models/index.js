@@ -47,7 +47,7 @@ db.personrole.belongsTo(db.person, { as: 'person' }, { foreignKey: { allowNull: 
 
 // foreign key for availability
 db.person.hasMany(db.availability, { as: 'availability'}, { foreignKey: { allowNull: false }, onDelete: 'CASCADE' });
-db.availability.belongsTo(db.person, { as: 'person'}, { foreignKey: { allowNull: false }, onDelete: 'CASCADE' });
+db.availability.belongsTo(db.person, { as: 'person'}, { foreignKey: { allowNull: false }, onDelete: 'CASCADE', });
 
 // foreign key for topic
 db.group.hasMany(db.topic, { as: 'topic'}, { foreignKey: { allowNull: false }, onDelete: 'CASCADE' });
@@ -80,9 +80,9 @@ db.appointment.belongsTo(db.topic, { as: 'topic'}, { foreignKey: { allowNull: fa
 db.appointment.belongsTo(db.location, { as: 'location'}, { foreignKey: { allowNull: false }, onDelete: 'CASCADE' });
 
 // foreign keys for personappointment
-db.appointment.hasMany(db.personappointment, { as: 'personappointment'}, { foreignKey: { allowNull: false }, onDelete: 'CASCADE' });
+db.appointment.hasMany(db.personappointment, { as: 'appointpersonappointment'}, { onDelete: 'cascade', foreignKey: { allowNull: false }, hooks: true });
 db.person.hasMany(db.personappointment, { as: 'personappointment'}, { foreignKey: { allowNull: false }, onDelete: 'CASCADE' });
-db.personappointment.belongsTo(db.appointment, { as: 'appointment'}, { foreignKey: { allowNull: false }, onDelete: 'CASCADE' });
+db.personappointment.belongsTo(db.appointment, { as: 'appointment'}, { onDelete: 'cascade', foreignKey: { allowNull: false }, hooks: true});
 db.personappointment.belongsTo(db.person, { as: 'person'}, { foreignKey: { allowNull: false }, onDelete: 'CASCADE' });
 
 // foreign key for session
