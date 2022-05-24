@@ -8,8 +8,8 @@ const Op = db.Sequelize.Op;
 // From : https://www.digitalocean.com/community/tutorials/nodejs-cron-jobs-by-examples
 
   exports.dailyTasks = () =>{
-// for prod, runs at 12:01 am.
-       cron.schedule('01 00 * * *', function() {
+// for prod, runs at ever hour at 55 minute past the hour.
+       cron.schedule('55 * * * *', function() {
 // for testing, runs every minute
 //      cron.schedule('* * * * *', function() {
         console.log('Start running a task every day at 12:01 am');
