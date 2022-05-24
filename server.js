@@ -43,8 +43,8 @@ require("./app/routes/topic.routes")(app);
 require("./app/routes/twilio.routes")(app);
 
 // start background tasks
-const tasks = require ("./app/background/daily.js");
-tasks.dailyTasks();
+const tasks = require ("./app/background/hourly.js");
+tasks.hourlyTasks();
 
 // set port, listen for requests
 const PORT = process.env.PORT || 3002;
