@@ -12,7 +12,7 @@ const Op = db.Sequelize.Op;
        cron.schedule('55 * * * *', function() {
 // for testing, runs every minute
 //      cron.schedule('* * * * *', function() {
-        console.log('Start running a task every day at 12:01 am');
+        console.log('Start running a task every day at 55 min past the hour');
         deletePastAppointments();
         })
 }
