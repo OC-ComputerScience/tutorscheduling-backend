@@ -1,3 +1,4 @@
+const { Sequelize } = require("../models");
 const db = require("../models");
 const Person = db.person;
 const PersonRole = db.personrole;
@@ -163,6 +164,33 @@ exports.findPendingTutorsForGroup = (req, res) => {
         as: 'personrole',
         required: true,
         where: { '$personrole.status$': "applied"},
+        include: [ {
+          model: Role, 
+          as: 'role',
+          required: true,
+          where: { '$personrole->role.groupId$': groupId, '$personrole->role.type$': "Tutor"}
+      }]
+    }]
+  })
+  .then((data) => {
+      res.send(data);
+  })
+  .catch(err => {
+      res.status(500).send({ message: err.message });
+  });
+};
+
+// Find approved tutors for group
+exports.findApprovedTutorsForGroup = (req, res) => {
+  const groupId = req.params.groupId;
+
+  Person.findAll({
+    include: [ {
+        model: PersonRole, 
+        as: 'personrole',
+        required: true,
+        where: Sequelize.or({'$personrole.status$': "approved"},
+                            {'$personrole.status$': "Approved"}),
         include: [ {
           model: Role, 
           as: 'role',

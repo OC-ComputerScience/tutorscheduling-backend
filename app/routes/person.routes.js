@@ -18,6 +18,9 @@ module.exports = app => {
    // Retrieve all pending tutors for group
    router.get("/tutor/:groupId", person.findPendingTutorsForGroup);
 
+  // Retrieve all approved tutors for group
+  router.get("/appTutor/:groupId", person.findApprovedTutorsForGroup);
+
   // Retrieve a single Person with id
   router.get("/:id", person.findOne);
 
