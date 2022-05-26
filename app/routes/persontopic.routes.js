@@ -15,6 +15,9 @@ module.exports = app => {
     // Retrieve personroles for a specific person
     router.get("/person/:personId", persontopic.findAllForPerson);
 
+    // Retrieve all topics for tutor from a certain group
+    router.get("/group/:groupId/person/:personId", persontopic.getTopicForPersonGroup);
+
     // Update a PersonTopic with id
     router.put("/:id", persontopic.update);
   
