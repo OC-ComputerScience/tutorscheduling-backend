@@ -14,6 +14,7 @@ const SCOPES = ['https://www.googleapis.com/auth/calendar'];
 // time.
 const { google } = require("googleapis");
 const fs = require('fs');
+const { Sequelize, personappointment } = require("../models");
 let token = {};
 
 // Create and Save a new Appointment
@@ -119,6 +120,37 @@ exports.findAllForPersonForGroup = (req, res) => {
       required: true
     }]
   })
+    .then(data => {
+      res.send(data);
+    })
+    .catch(err => {
+      res.status(500).send({
+        message:
+          err.message || "Some error occurred while retrieving appointments for person for group."
+      });
+    });
+};
+
+// Retrieve all appointments for a person for a group from the database.
+exports.getTutorForAppointment = (req, res) => {
+  //const personId = req.params.personId;
+  //const groupId = req.params.groupId;
+  const appId = req.params.id;
+
+  Person.findOne({ 
+      include: [ {
+          model: PersonAppointment, 
+          as: 'personappointment',
+          required: true,
+          where: { isTutor: true, appointmentId: appId},
+
+      }/*,
+      {
+        model: Topic,
+        as: 'topic',
+        required: true
+      }*/]
+    })
     .then(data => {
       res.send(data);
     })
