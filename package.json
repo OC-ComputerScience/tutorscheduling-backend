@@ -15,12 +15,12 @@
     "jsonwebtoken": "^8.5.1",
     "mysql": "^2.18.1",
     "mysql2": "^2.3.3",
+    "node-cron": "^3.0.0",
     "parser": "^0.1.4",
     "pug": "^3.0.2",
     "sequelize": "^6.15.1",
     "twilio": "^3.76.1"
   },
-  "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
