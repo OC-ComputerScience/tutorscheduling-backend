@@ -1,5 +1,8 @@
+
 const db = require("../models");
 const Availability = db.availability;
+const Appointment = db.appointment;
+const PersonAppointment = db.personappointment;
 const Op = db.Sequelize.Op;
 
 // Create and Save a new Availability
@@ -114,28 +117,77 @@ exports.update = (req, res) => {
   };
 
 // Delete a Availability with the specified id in the request
+// and delete any available appointents for the tutor in tthe availabilty time window
 exports.delete = (req, res) => {
     const id = req.params.id;
-  
-    Availability.destroy({
-      where: { id: id }
-    })
-      .then(num => {
-        if (num == 1) {
-          res.send({
-            message: "Availability was deleted successfully!"
-          });
+    Availability.findByPk(id)
+      .then(data => {
+        if (data) {
+          let availability=data.dataValues;
+          Availability.destroy({
+            where: { id: id }
+          })
+            .then(num => {
+              if (num == 1) {
+                let tutorId = availability.personId;
+                let date = availability.date;
+                date.setHours(date.getHours() + 5);
+                let startTime = availability.startTime;
+                console.log(tutorId);
+                let endTime = availability.endTime;
+                console.log(date);
+                Appointment.destroy({
+                  where: { 
+                    id : {[Op.in]:  db.sequelize.literal("(SELECT appointmentId FROM personappointments where personID="+tutorId+" AND isTutor='1')")},
+                    status : 'available',
+                    date : {[Op.eq]: date},
+                    startTime : {[Op.gte]: startTime},
+                    endTime: {[Op.lte]: endTime}
+                   }
+                })
+                .then (()=>{
+                  PersonAppointment.destroy({
+                    where: { 
+                      appointmentId : null
+                    }
+                  })
+                  .catch(err => {
+                    console.log("Could not delete past PersonAppointments"+ err);
+                    });
+                  res.send({
+                    message: "Availability/Appointments were deleted successfully!"
+                  })
+                })
+                .catch(err => {
+                  res.status(500).send({
+                    message: "Error deleteing Appointments for Availability with id=" + id
+                  });
+                })
+              }
+              else {
+                res.send({
+                  message: `Cannot delete Availability with id=${id}. Maybe Availability was not found!`
+                });
+              }
+            })
+            .catch(err => {
+              res.status(500).send({
+                message: "Could not delete Availability with id=" + id +" :"+ err
+              });
+            });
         } else {
-          res.send({
-            message: `Cannot delete Availability with id=${id}. Maybe Availability was not found!`
+          res.status(404).send({
+            message: `Cannot find Availability with id=${id}.`
           });
         }
       })
       .catch(err => {
         res.status(500).send({
-          message: "Could not delete Availability with id=" + id
+          message: "Error retrieving Availability with id=" + id
         });
       });
+  
+    
   };
 
 // Delete all Availability from the database.
