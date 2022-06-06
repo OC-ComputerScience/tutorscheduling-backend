@@ -1,3 +1,5 @@
+const { person } = require("../models/index.js");
+
 module.exports = app => {
     const personappointment = require("../controllers/personappointment.controller.js");
   
@@ -12,6 +14,9 @@ module.exports = app => {
     // Retrieve a single PersonAppointment with id
     router.get("/:id", personappointment.findOne);
   
+    // Retrieve personappointments for a specific person
+    router.get("/person/:personId", personappointment.findAllForPerson);
+
     // Update a PersonAppointment with id
     router.put("/:id", personappointment.update);
   
