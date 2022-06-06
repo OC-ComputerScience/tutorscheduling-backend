@@ -15,7 +15,7 @@
     "jsonwebtoken": "^8.5.1",
     "mysql": "^2.18.1",
     "mysql2": "^2.3.3",
-    "node-cron": "^3.0.0",
+    "node-cron": "^3.0.1",
     "parser": "^0.1.4",
     "pug": "^3.0.2",
     "sequelize": "^6.15.1",
