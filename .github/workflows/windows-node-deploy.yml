@@ -16,6 +16,17 @@ jobs:
             - uses: actions/setup-node@v1
             - run: npm install
             - run: npm run bundle
+            - name: Copy folder content recursively to remote
+            uses: garygrossgarten/github-action-scp@release
+            with:
+                      local: 'deploy/'
+                      remote: 'c:/nodeapps/tutor-backend'
+                      dotfiles: true
+                      rmRemote: true
+                      privateKey : ${{ secrets.DEV_WIN_SERVER_SSH_KEY }}
+                      host: 'tutorschedulingdev.oc.edu'
+                      username: 'david.north'
+  
             - name: Deploy to Server
               uses: easingthemes/ssh-deploy@v2.1.1
               env:
