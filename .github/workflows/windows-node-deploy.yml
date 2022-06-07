@@ -27,15 +27,7 @@ jobs:
                       host: 'tutorschedulingdev.oc.edu'
                       username: 'david.north'
   
-            - name: Deploy to Server
-              uses: easingthemes/ssh-deploy@v2.1.1
-              env:
-                  SSH_PRIVATE_KEY: ${{ secrets.DEV_WIN_SERVER_SSH_KEY }}
-                  ARGS: '-rltgoDzvO --delete'
-                  SOURCE: 'deploy/'
-                  REMOTE_HOST: 'tutorschedulingdev.oc.edu'
-                  REMOTE_USER: david.north
-                  TARGET: 'c:/nodeapps/tutor-backend'
+
             - name: Execute SSH commmands on remote server
               uses: JimCronqvist/action-ssh@master
               env:
