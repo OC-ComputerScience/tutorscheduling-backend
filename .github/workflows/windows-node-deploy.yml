@@ -17,8 +17,8 @@ jobs:
             - run: npm install
             - run: npm run bundle
             - name: Copy folder content recursively to remote
-            uses: garygrossgarten/github-action-scp@release
-            with:
+              uses: garygrossgarten/github-action-scp@release
+              with:
                       local: 'deploy/'
                       remote: 'c:/nodeapps/tutor-backend'
                       dotfiles: true
