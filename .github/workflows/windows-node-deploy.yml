@@ -17,8 +17,8 @@ jobs:
             - run: npm install
             - run: npm run bundle
             - name: Copy folder content recursively to remote test 1 
-                uses: garygrossgarten/github-action-scp@release
-                with:
+              uses: garygrossgarten/github-action-scp@release
+              with:
                   local: 'deploy/'
                   remote: 'c:/nodeapps/tutor-backend'
                   dotfiles: true
@@ -29,10 +29,10 @@ jobs:
   
 
             - name: Execute SSH commmands on remote server
-                uses: JimCronqvist/action-ssh@master
-                env:
+              uses: JimCronqvist/action-ssh@master
+              env:
                     NAME: 'Root'
-                with:
+              with:
                     hosts: 'david.north@tutorschedulingdev.oc.edu'
                     privateKey: ${{ secrets.DEV_WIN_SERVER_SSH_KEY }}
                     debug: false
