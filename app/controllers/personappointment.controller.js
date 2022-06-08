@@ -104,12 +104,12 @@ exports.findOne = (req, res) => {
       });
   };
 
-  // Find a single PersonRole with a personId and a role type
-  exports.findOneForType = (req, res) => {
+  // Find a single PersonAppointment with a personId and a appointment
+  exports.findPersonAppointmentByPersonAndAppointment = (req, res) => {
     const personId = req.params.personId;
     const appointmentId = req.params.appointmentId;
   
-    PersonAppointment.findAll({ where: {personId: personId, appointmentId: appointmentId} })
+    PersonAppointment.findOne({ where: {personId: personId, appointmentId: appointmentId} })
       .then(data => {
         res.send(data);
       })

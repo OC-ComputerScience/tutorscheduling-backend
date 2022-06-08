@@ -11,8 +11,8 @@ module.exports = app => {
     // Retrieve all PersonAppointment
     router.get("/", personappointment.findAll);
   
-    // Retrieve a single PersonAppointment with role and person
-    router.get("/person/:personId/appointment/:appointmentId", personappointment.findOneForType);
+    // Retrieve a single PersonAppointment with appointment and person
+    router.get("/person/:personId/appointment/:appointmentId", personappointment.findPersonAppointmentByPersonAndAppointment);
 
     // Retrieve personappointments for a specific person
     router.get("/person/:personId", personappointment.findAllForPerson);
