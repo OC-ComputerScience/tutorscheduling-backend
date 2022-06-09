@@ -89,6 +89,38 @@ exports.findOne = (req, res) => {
       });
   };
 
+  exports.findAllForPerson = (req, res) => {
+    const id = req.params.personId;
+  
+    PersonAppointment.findAll({ where: {personId: id} })
+      .then(data => {
+        res.send(data);
+      })
+      .catch(err => {
+        res.status(500).send({
+          message:
+            err.message || "Some error occurred while retrieving personroles for person."
+        });
+      });
+  };
+
+  // Find a single PersonAppointment with a personId and a appointment
+  exports.findPersonAppointmentByPersonAndAppointment = (req, res) => {
+    const personId = req.params.personId;
+    const appointmentId = req.params.appointmentId;
+  
+    PersonAppointment.findOne({ where: {personId: personId, appointmentId: appointmentId} })
+      .then(data => {
+        res.send(data);
+      })
+      .catch(err => {
+        res.status(500).send({
+          message:
+            err.message || "Some error occurred while retrieving personroles for person and role."
+        });
+      });
+  };
+
 // Update a PersonAppointment by the id in the request
 exports.update = (req, res) => {
     const id = req.params.id;
