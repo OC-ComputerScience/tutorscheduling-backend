@@ -551,7 +551,7 @@ function addEvent(auth, data) {
     .then((event) => console.log('Event created: %s', event))
     .catch((error) => {
       console.log('Some error occured', error)
-      console.log(error.response.data.error.errors);
+      // console.log(error.response.data.error.errors);
     });
 }
 
