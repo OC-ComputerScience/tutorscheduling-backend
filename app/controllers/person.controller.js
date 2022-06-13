@@ -121,9 +121,10 @@ exports.findByEmail = (req, res) => {
       if (data) {
         res.send(data);
       } else {
-        res.status(404).send({
+        res.send({email: 'not found'});
+        /*res.status(404).send({
           message: `Cannot find Person with email=${email}.`
-        });
+        });*/
       }
     })
     .catch(err => {
