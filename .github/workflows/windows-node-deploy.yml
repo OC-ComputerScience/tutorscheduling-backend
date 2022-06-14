@@ -18,14 +18,14 @@ jobs:
             - run: npm run bundle
 
             - name: copy file via ssh key
-            uses: appleboy/scp-action@master
-            with:
-              host: 'tutorschedulingdev.oc.edu'
-              username: 'david.north'
-              port: '22'
-              key: ${{ secrets.DEV_WIN_SERVER_SSH_KEY  }}
-              source: 'deploy/'
-              target: 'c:/nodeapps/tutor-backend'
+              uses: appleboy/scp-action@master
+              with:
+                host: 'tutorschedulingdev.oc.edu'
+                username: 'david.north'
+                port: '22'
+                key: ${{ secrets.DEV_WIN_SERVER_SSH_KEY  }}
+                source: 'deploy/'
+                target: 'c:/nodeapps/tutor-backend'
 
             - name: Execute SSH commmands on remote server
               uses: JimCronqvist/action-ssh@master
