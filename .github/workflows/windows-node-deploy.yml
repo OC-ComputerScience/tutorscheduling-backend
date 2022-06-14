@@ -26,6 +26,7 @@ jobs:
                 key: ${{ secrets.DEV_WIN_SERVER_SSH_KEY  }}
                 source: 'deploy/'
                 target: 'c:/nodeapps/tutor-backend'
+                use_insecure_cipher: true
 
             - name: Execute SSH commmands on remote server
               uses: JimCronqvist/action-ssh@master
