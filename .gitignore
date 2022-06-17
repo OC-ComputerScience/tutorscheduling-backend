@@ -3,7 +3,7 @@ bin/
 node_modules
 #deployment
 deploy
-
+.env
 # Logs
 logs
 *.log

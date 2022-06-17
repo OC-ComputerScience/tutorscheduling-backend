@@ -1,4 +1,5 @@
-
+require('dotenv').config();
+//require('dotenv').config({path: '\\nodeapps\\tutor-backend\\.env'});
 const express = require("express");
 const cors = require("cors");
 
@@ -25,7 +26,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // simple route
 app.get("/", (req, res) => {
-  res.json({ message: "Welcome to tutoring node application." });
+  res.json({ message: "Welcome to tutoring node application!" });
 });
 
 require("./app/routes/appointment.routes")(app);

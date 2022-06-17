@@ -110,16 +110,21 @@ exports.findOne = (req, res) => {
 
 // Find a single Person with an email
 exports.findByEmail = (req, res) => {
-  const email = req.params.id;
+  const email = req.params.email;
 
-  Person.findByEmail(email)
+  Person.findOne({ 
+    where: {
+      email: email 
+    }
+  })
     .then(data => {
       if (data) {
         res.send(data);
       } else {
-        res.status(404).send({
+        res.send({email: 'not found'});
+        /*res.status(404).send({
           message: `Cannot find Person with email=${email}.`
-        });
+        });*/
       }
     })
     .catch(err => {
