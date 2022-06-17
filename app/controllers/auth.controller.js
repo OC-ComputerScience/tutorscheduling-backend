@@ -14,30 +14,18 @@ exports.login = async (req, res) => {
     console.log(req)
     console.log(req.body)
 
-    var jwt = req.body;
-    var base64Url = jwt.split('.')[1];
-    var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    var jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
-    
-    var googleUser = JSON.parse(jsonPayload);
+    var jwt = req.body.credential;
+    var base64Payload = jwt.split('.')[1];
+    var payload = Buffer.from(base64Payload, 'base64');
+    var googleUser = JSON.parse(payload);
     console.log(googleUser);
 
-    // const {OAuth2Client} = require('google-auth-library');
-    // const client = new OAuth2Client('158532899975-5qk486rajjjb3dqrdbp4h86a65l997ab.apps.googleusercontent.com');
-   
-    // const ticket = await client.verifyIdToken({
-    //     idToken: req.body.idToken,
-    //     audience: '158532899975-5qk486rajjjb3dqrdbp4h86a65l997ab.apps.googleusercontent.com'
-    // });
-    // const payload= ticket.getPayload();
-    // console.log('Google payload is '+JSON.stringify(payload));
-    // let email = payload['email'];
-    // let firstName = payload['given_name'];
-    // let lastName = payload['family_name'];
     // let googleToken = req.body.token;
-    let token = null;
+
+    let email = googleUser.email;
+    let firstName = googleUser.given_name;
+    let lastName = googleUser.family_name;
+    
     let person = {};
     let access = [];
 
@@ -147,12 +135,11 @@ exports.login = async (req, res) => {
     });
 
 
-    // create a new Session with a token and save to database
-    // token = jwt.sign({ id:email }, authconfig.secret, {expiresIn: 86400});
+    // create a new Session with an expiration date and save to database
     let findExpirationDate = new Date();
     findExpirationDate.setDate(findExpirationDate.getDate() + 1);
     const session = {
-        token : token,
+        token : jwt,
         email : email,
         personId : person.id,
         expirationDate : findExpirationDate
@@ -161,7 +148,7 @@ exports.login = async (req, res) => {
     Session.create(session)
     .then(() => {
         let userInfo = {
-            token : token,
+            token : jwt,
             email : person.email,
             fName : person.fName,
             lName : person.lName,
