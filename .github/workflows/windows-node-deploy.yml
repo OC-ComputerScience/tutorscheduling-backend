@@ -47,14 +47,13 @@ jobs:
                   privateKey: ${{ secrets.DEV_WIN_SERVER_SSH_KEY  }}
                   password: ${{ secrets.PASSWORD }}
 
-            - name: Commands via ssh
-              uses: fifsky/ssh-action@master
-              with:
-                command: |
-                  cd /nodeapps/tutor-backend
-                  npm install
 
-                host: ${{ secrets.HOST }}
-                user: root
-                key: ${{ secrets.PRIVATE_KEY}}
+            - name: Command via ssh
+              uses: garygrossgarten/github-action-ssh@release
+              with:
+                command: './c:\nodeapps\deploy-backend'
+                host: 'tutorschedulingdev.oc.edu'
+                username: 'david.north'
+                privateKey: ${{ secrets.DEV_WIN_SERVER_SSH_KEY  }}
+  
 
