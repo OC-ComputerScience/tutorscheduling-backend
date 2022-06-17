@@ -9,13 +9,7 @@ on:
 jobs:
     windows-deploy:
         runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v2
-              with:
-                  ref: dev
-            - uses: actions/setup-node@v1
-            - run: npm install
-            env:
+        env:
                   DB_HOST: ${{ secrets.DEV_DB_HOST }}
                   DB_PW: ${{ secrets.DEV_DB_PW}}
                   DB_USER: ${{ secrets.DEV_DB_USER }}
@@ -23,7 +17,14 @@ jobs:
                   TWILIO_ACCOUNT_SID : ${{TWILIO_ACCOUNT_SID}}
                   TWILIO_AUTH_TOKEN1 : ${{TWILIO_AUTH_TOKEN2}}
                   TWILIO_AUTH_TOKEN2 :  ${{TWILIO_AUTH_TOKEN2}}
-                  TWILIO_NUMBER :${{TWILIO_NUMBER}}
+                  TWILIO_NUMBER : ${{TWILIO_NUMBER}}
+        steps:
+            - uses: actions/checkout@v2
+              with:
+                  ref: dev
+            - uses: actions/setup-node@v1
+            - run: npm install
+
             - run: |
                     touch .env
                     echo db_host="$DB_HOST" >> .env
