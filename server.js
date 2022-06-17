@@ -1,4 +1,5 @@
-
+require('dotenv').config();
+//require('dotenv').config({path: '\\nodeapps\\tutor-backend\\.env'});
 const express = require("express");
 const cors = require("cors");
 
