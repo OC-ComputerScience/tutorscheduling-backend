@@ -21,7 +21,7 @@ jobs:
         steps:
             - uses: actions/checkout@v2
               with:
-                  ref: dev
+                  ref: main
             - uses: actions/setup-node@v1
             - run: npm install
 
@@ -47,14 +47,12 @@ jobs:
                   username: 'david.north'
                   privateKey: ${{ secrets.PROD_WIN_SERVER_SSH_KEY  }}
 
-
-
             - name: Command via ssh
               uses: garygrossgarten/github-action-ssh@release
               with:
                 command: '.\deploy-backend'
                 host: 'tutorscheduling.oc.edu'
                 username: 'david.north'
-                privateKey: ${{ secrets.DEV_WIN_SERVER_SSH_KEY  }}
+                privateKey: ${{ secrets.PROD_WIN_SERVER_SSH_KEY  }}
   
 
