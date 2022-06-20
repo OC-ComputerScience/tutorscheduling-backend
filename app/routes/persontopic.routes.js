@@ -29,3 +29,4 @@ module.exports = app => {
   
     app.use('/persontopic', router);
   };
+  

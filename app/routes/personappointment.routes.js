@@ -34,3 +34,4 @@ module.exports = app => {
   
     app.use('/personappointment', router);
   };
+  
