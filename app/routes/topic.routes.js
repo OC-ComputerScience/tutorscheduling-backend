@@ -32,3 +32,4 @@ module.exports = app => {
   
     app.use('/topic', router);
   };
+  

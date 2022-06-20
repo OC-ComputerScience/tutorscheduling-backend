@@ -26,3 +26,4 @@ module.exports = app => {
   
     app.use('/availability', router);
   };
+  
