@@ -1,4 +1,4 @@
-name: Deploy to Windows Dev
+name: Deploy to Windows Prod
 
 on:
     pull_request:
