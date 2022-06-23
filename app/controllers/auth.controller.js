@@ -15,10 +15,20 @@ exports.login = async (req, res) => {
     console.log(req.body)
 
     var jwt = req.body.credential;
-    var base64Payload = jwt.split('.')[1];
-    var payload = Buffer.from(base64Payload, 'base64');
-    var googleUser = JSON.parse(payload);
-    console.log(googleUser);
+    // var base64Payload = jwt.split('.')[1];
+    // var payload = Buffer.from(base64Payload, 'base64');
+    // var googleUser = JSON.parse(payload);
+    // console.log(googleUser);
+
+    const {OAuth2Client} = require('google-auth-library');
+    const client = new OAuth2Client('158532899975-5qk486rajjjb3dqrdbp4h86a65l997ab.apps.googleusercontent.com');
+   
+    const ticket = await client.verifyIdToken({
+        idToken: jwt,
+        audience: '158532899975-5qk486rajjjb3dqrdbp4h86a65l997ab.apps.googleusercontent.com'
+    });
+    const googleUser = ticket.getPayload();
+    console.log('Google payload is '+JSON.stringify(googleUser));
 
     // let googleToken = req.body.token;
 
@@ -45,9 +55,12 @@ exports.login = async (req, res) => {
                 lName: lastName,
                 email: email,
                 phoneNum: '',
-                access_token: googleToken.access_token,
-                token_type: googleToken.token_type,
-                expiry_date: googleToken.expiry_date
+                access_token : '',
+                token_type: '',
+                expiry_date: ''
+                // access_token: googleToken.access_token,
+                // token_type: googleToken.token_type,
+                // expiry_date: googleToken.expiry_date
             }
         }
     })
@@ -71,9 +84,9 @@ exports.login = async (req, res) => {
     // else update accessToken
     else {
         console.log(person)
-        person.access_token = googleToken.access_token;
-        person.token_type = googleToken.token_type;
-        person.expiry_date = googleToken.expiry_date;
+        // person.access_token = googleToken.access_token;
+        // person.token_type = googleToken.token_type;
+        // person.expiry_date = googleToken.expiry_date;
         console.log(person)
         await Person.update(person, { where: { id: person.id } })
         .then(num => {
@@ -144,6 +157,8 @@ exports.login = async (req, res) => {
         personId : person.id,
         expirationDate : findExpirationDate
     }
+
+    console.log(session)
     
     Session.create(session)
     .then(() => {
