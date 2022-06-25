@@ -84,6 +84,9 @@ exports.login = async (req, res) => {
     // else update accessToken
     else {
         console.log(person)
+        // doing this to ensure that the person's name is the one listed with Google
+        person.fName = firstName;
+        person.lName = lastName;
         // person.access_token = googleToken.access_token;
         // person.token_type = googleToken.token_type;
         // person.expiry_date = googleToken.expiry_date;

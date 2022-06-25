@@ -50,3 +50,4 @@ module.exports = app => {
   
     app.use('/appointment', router);
   };
+  
