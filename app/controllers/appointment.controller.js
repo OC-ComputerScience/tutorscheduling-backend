@@ -82,7 +82,7 @@ exports.findAllUpcomingForPersonForGroup = (req, res) => {
 
   Appointment.findAll({
     where: { groupId: groupId, date: { [Op.gte]: date }, 
-      $or: [
+      [Op.and]: [
         {
             status: { [Op.not]: "cancelled" }
         }, 
