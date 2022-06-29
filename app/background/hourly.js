@@ -3,6 +3,7 @@ const db = require("../models");
 const Appointment = db.appointment;
 const PersonAppointment = db.personappointment;
 const Person = db.person;
+const Location = db.location;
 const sms = require("../controllers/twilio.controller.js");
 const Op = db.Sequelize.Op;
 const accountSid = process.env.TWILIO_ACCOUNT_SID; 
@@ -155,21 +156,24 @@ const client = require('twilio')(accountSid, authToken);
           personAppointments.forEach((personAppoint) => {
             Person.findByPk(personAppoint.personId).then((person) => {
               Appointment.findByPk(personAppoint.appointmentId).then((appoint) => {
-                let message = {
-                  message: "You have an upcoming tutoring appointment:\n    Type: " + appoint.type + "\n    Time: " + appoint.startTime + "\n    Location: " + appoint.locationId,
-                  phoneNum: person.phoneNum,
-                }
-                client.messages
-                  .create({
-                    body: message.message,
-                    from: phoneNum,
-                    to: message.phoneNum
-                  })
-                  .then(message => console.log("sent" + message.sid))
-                  .catch(err => {
-                    console.log("Could not send messsage"+ err);
-                  });
-
+                Location.findByPk(appoint.locationId).then((location) => {
+                  let time = calcTime(appoint.startTime);
+                  let message = {
+                    message: "You have an upcoming tutoring appointment:\n    Type: " + 
+                      appoint.type + "\n    Time: " + time + "\n    Location: " + location.name,
+                    phoneNum: person.phoneNum,
+                  }
+                  client.messages
+                    .create({
+                      body: message.message,
+                      from: phoneNum,
+                      to: message.phoneNum
+                    })
+                    .then(message => console.log("sent" + message.sid))
+                    .catch(err => {
+                      console.log("Could not send messsage"+ err);
+                    });
+                })
               })
             })
 
@@ -185,6 +189,21 @@ const client = require('twilio')(accountSid, authToken);
       .catch(err => {
         console.log("Could not work 3"+ err);
       });
+  }
+  function calcTime(time) {
+    if(time == null)
+    {
+      return null;
+    }
+    let temp = time.split(":")
+    let milHours = parseInt(temp[0])
+    let minutes = temp[1]
+    let hours = milHours % 12
+    if (hours == 0) {
+      hours = 12
+    }
+    let dayTime = (~~(milHours / 12) > 0 ? "PM":"AM")
+    return "" + hours + ":" + minutes + " " + dayTime
   }
 
 
