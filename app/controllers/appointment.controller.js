@@ -81,7 +81,18 @@ exports.findAllUpcomingForPersonForGroup = (req, res) => {
   const date = new Date();
 
   Appointment.findAll({
-    where: { groupId: groupId, date: { [Op.gte]: date } },
+    where: { groupId: groupId, date: { [Op.gte]: date }, 
+      [Op.and]: [
+        {
+            status: { [Op.not]: "cancelled" }
+        }, 
+        {
+            status: { [Op.not]: "studentCancel" }
+        }, 
+        {
+            status: { [Op.not]: "tutorCancel" }
+        }
+      ] },
     include: [{
       where: { '$personappointment.personId$': personId },
       model: PersonAppointment,
