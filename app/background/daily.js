@@ -13,8 +13,8 @@ const client = require('twilio')(accountSid, authToken);
 
 // Schedule tasks to be run on the server 12:01 am.
 // From : https://www.digitalocean.com/community/tutorials/nodejs-cron-jobs-by-examples
-//  exports.dailyTasks = () =>{
-  exports.hourlyTasks = () =>{
+
+  exports.dailyTasks = () =>{
 // for prod, runs at ever hour at 55 minute past the hour.
 //       cron.schedule('55 * * * *', function() {
 // for testing, runs every minute
@@ -25,10 +25,9 @@ const client = require('twilio')(accountSid, authToken);
 }
 
 async function notifyForFeedback() {
-  let date = new Date().setHours(0,0,0);
-  let endDate = new Date();
-  endDate.setHours(endDate.getHours() + 1);
-  let endTime = endDate.toLocaleTimeString('it-IT');
+  let date = new Date();
+  date.setHours(date.getHours() - (date.getTimezoneOffset()/60))
+  date.setHours(0,0,0);
   let personAppointments = [];
   //get all of the appointments for today that start before now
   await PersonAppointment.findAll({ // if appointment is passed and status != complete -> if appoint is complete and feedbacknumber == 0 and istutor = 0
@@ -40,8 +39,7 @@ async function notifyForFeedback() {
       as: 'appointment',
       where: {
         status: 'booked',
-        date : {[Op.lte]: date},
-        endTime : {[Op.lt]: endTime},
+        date : {[Op.lt]: date},
       },
       required: true
     }]
@@ -57,11 +55,10 @@ async function notifyForFeedback() {
         as: 'personAppointment',
         where: {
           [Op.and]: [
-            {appointmentId : {[Op.in]:  db.sequelize.literal("(SELECT appointmentId FROM personappointments where appointmentId=personAppointment.appointmentId AND feedbacknumber IS NULL)")},
-          },
-          {feedbackNumber: null}
+            {appointmentId : {[Op.in]:  db.sequelize.literal("(SELECT appointmentId FROM personappointments where appointmentId=personAppointment.appointmentId AND feedbacknumber IS NULL)")}},
+            {feedbackNumber: null},
           ]
-        },
+          }
       })
       .then((morePap)=> {
         console.log(morePap.length+" students found without feedback");
@@ -74,7 +71,7 @@ async function notifyForFeedback() {
           Person.findByPk(personAppoint.personId).then((person) => {
             Appointment.findByPk(personAppoint.appointmentId).then((appoint) => {
                 let time = calcTime(appoint.startTime);
-                let date = appoint.date.toString().substring(5,10) + "-" + appoint.date.toString().substring(0,4)
+                let date = appoint.date//.toString().substring(5,10) + "-" + appoint.date.toString().substring(0,4)
                 // dev
                 let url = 'http://tutorschedulingdev.oc.edu/';
                 // prod
@@ -125,6 +122,11 @@ function calcTime(time) {
   return "" + hours + ":" + minutes + " " + dayTime
 }
 
+function getLocalDateString() {
+  let date = new Date();
+  date.setHours(date.getHours() - (date.getTimezoneOffset()/60));
+  return date.toISOString().slice(0,10);
+}
 
 
 
