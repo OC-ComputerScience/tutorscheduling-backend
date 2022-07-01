@@ -23,11 +23,11 @@ exports.login = async (req, res) => {
     // console.log(googleUser);
 
     const {OAuth2Client} = require('google-auth-library');
-    const client = new OAuth2Client('158532899975-5qk486rajjjb3dqrdbp4h86a65l997ab.apps.googleusercontent.com');
+    const client = new OAuth2Client(GOOGLE_AUDIENCE);
     async function verify() {
         const ticket = await client.verifyIdToken({
             idToken: jwt,
-            audience: '158532899975-5qk486rajjjb3dqrdbp4h86a65l997ab.apps.googleusercontent.com'
+            audience: GOOGLE_AUDIENCE
         });
         googleUser = ticket.getPayload();
         console.log('Google payload is '+JSON.stringify(googleUser));
