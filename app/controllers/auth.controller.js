@@ -7,6 +7,8 @@ const Role = db.role;
 
 const Op = db.Sequelize.Op;
 
+let googleUser = {};
+
 const { group } = require("../models");
 //const { person } = require("../models");
 
@@ -22,19 +24,23 @@ exports.login = async (req, res) => {
 
     const {OAuth2Client} = require('google-auth-library');
     const client = new OAuth2Client('158532899975-5qk486rajjjb3dqrdbp4h86a65l997ab.apps.googleusercontent.com');
-   
-    const ticket = await client.verifyIdToken({
-        idToken: jwt,
-        audience: '158532899975-5qk486rajjjb3dqrdbp4h86a65l997ab.apps.googleusercontent.com'
-    });
-    const googleUser = ticket.getPayload();
-    console.log('Google payload is '+JSON.stringify(googleUser));
+    async function verify() {
+        const ticket = await client.verifyIdToken({
+            idToken: jwt,
+            audience: '158532899975-5qk486rajjjb3dqrdbp4h86a65l997ab.apps.googleusercontent.com'
+        });
+        googleUser = ticket.getPayload();
+        console.log('Google payload is '+JSON.stringify(googleUser));
+    }
+    await verify().catch(console.error);
 
     // let googleToken = req.body.token;
 
     let email = googleUser.email;
     let firstName = googleUser.given_name;
     let lastName = googleUser.family_name;
+
+    console.log(lastName)
     
     let person = {};
     let access = [];
@@ -57,7 +63,7 @@ exports.login = async (req, res) => {
                 phoneNum: '',
                 access_token : '',
                 token_type: '',
-                expiry_date: ''
+                expiry_date: 0
                 // access_token: googleToken.access_token,
                 // token_type: googleToken.token_type,
                 // expiry_date: googleToken.expiry_date
@@ -71,6 +77,7 @@ exports.login = async (req, res) => {
     // this lets us get the person id
     if (person.id === undefined) {
         console.log("need to get person's id")
+        console.log(person)
         await Person.create(person)
         .then(data => {
             console.log("person was registered")
