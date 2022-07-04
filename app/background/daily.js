@@ -15,8 +15,8 @@ const client = require('twilio')(accountSid, authToken);
 // From : https://www.digitalocean.com/community/tutorials/nodejs-cron-jobs-by-examples
 
   exports.dailyTasks = () =>{
-// for prod, runs at ever hour at 55 minute past the hour.
-//       cron.schedule('55 * * * *', function() {
+// for prod, runs at every day at 9am.
+//       cron.schedule('* 09 * * *', function() {
 // for testing, runs every minute
       cron.schedule('* * * * *', function() {
         console.log('Start running a task every day at 12:01 am');
@@ -30,7 +30,7 @@ async function notifyForFeedback() {
   date.setHours(0,0,0);
   let personAppointments = [];
   //get all of the appointments for today that start before now
-  await PersonAppointment.findAll({ // if appointment is passed and status != complete -> if appoint is complete and feedbacknumber == 0 and istutor = 0
+  await PersonAppointment.findAll({ // add notifcations for group appointments once feedback is added for them
     where: {
       isTutor: true
     },
@@ -46,7 +46,7 @@ async function notifyForFeedback() {
   })
     .then(pap => {
       console.log(pap.length+" tutors found with feedback needed");
-      if (pap.length >0) {
+      if (pap.length > 0) {
         pap.forEach((pa) => {
           personAppointments.push(pa);
         })
@@ -55,7 +55,7 @@ async function notifyForFeedback() {
         as: 'personAppointment',
         where: {
           [Op.and]: [
-            {appointmentId : {[Op.in]:  db.sequelize.literal("(SELECT appointmentId FROM personappointments where appointmentId=personAppointment.appointmentId AND feedbacknumber IS NULL)")}},
+            {appointmentId : {[Op.in]:  db.sequelize.literal("(SELECT appointmentID FROM personappointments WHERE feedbackNumber IS NOT NULL AND isTutor = true)")}},
             {feedbackNumber: null},
           ]
           }
@@ -71,7 +71,7 @@ async function notifyForFeedback() {
           Person.findByPk(personAppoint.personId).then((person) => {
             Appointment.findByPk(personAppoint.appointmentId).then((appoint) => {
                 let time = calcTime(appoint.startTime);
-                let date = appoint.date//.toString().substring(5,10) + "-" + appoint.date.toString().substring(0,4)
+                let date = appoint.date.toString().slice(0,15)// + "-" + appoint.date.toString().substring(0,4)
                 // dev
                 let url = 'http://tutorschedulingdev.oc.edu/';
                 // prod
