@@ -5,6 +5,8 @@ const Session = db.session;
 const PersonRole = db.personrole;
 const Role = db.role;
 
+const googleAud = process.env.GOOGLE_AUDIENCE;
+
 const Op = db.Sequelize.Op;
 
 let googleUser = {};
@@ -23,11 +25,11 @@ exports.login = async (req, res) => {
     // console.log(googleUser);
 
     const {OAuth2Client} = require('google-auth-library');
-    const client = new OAuth2Client(GOOGLE_AUDIENCE);
+    const client = new OAuth2Client(googleAud);
     async function verify() {
         const ticket = await client.verifyIdToken({
             idToken: jwt,
-            audience: GOOGLE_AUDIENCE
+            audience: googleAud
         });
         googleUser = ticket.getPayload();
         console.log('Google payload is '+JSON.stringify(googleUser));
