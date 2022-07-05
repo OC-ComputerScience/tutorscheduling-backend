@@ -9,6 +9,8 @@ const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN1 + process.env.TWILIO_AUTH_TOKEN2;
 const phoneNum = process.env.TWILIO_NUMBER;
 const client = require('twilio')(accountSid, authToken);
+const url = process.env.url;
+
 
 
 // Schedule tasks to be run on the server 12:01 am.
@@ -16,9 +18,9 @@ const client = require('twilio')(accountSid, authToken);
 
   exports.dailyTasks = () =>{
 // for prod, runs at every day at 9am.
-//       cron.schedule('* 09 * * *', function() {
+       cron.schedule('* 09 * * *', function() {
 // for testing, runs every minute
-      cron.schedule('* * * * *', function() {
+//      cron.schedule('* * * * *', function() {
         console.log('Start running a task every day at 12:01 am');
         notifyForFeedback();
         })
@@ -32,13 +34,17 @@ async function notifyForFeedback() {
   //get all of the appointments for today that start before now
   await PersonAppointment.findAll({ // add notifcations for group appointments once feedback is added for them
     where: {
-      isTutor: true
+      isTutor: true,
+      feedbackNumber: null,
     },
     include: [{
       model: Appointment,
       as: 'appointment',
       where: {
-        status: 'booked',
+        [Op.or]: [
+          {status: 'booked'},
+          {type: 'Group'}
+        ],
         date : {[Op.lt]: date},
       },
       required: true
@@ -71,11 +77,7 @@ async function notifyForFeedback() {
           Person.findByPk(personAppoint.personId).then((person) => {
             Appointment.findByPk(personAppoint.appointmentId).then((appoint) => {
                 let time = calcTime(appoint.startTime);
-                let date = appoint.date.toString().slice(0,15)// + "-" + appoint.date.toString().substring(0,4)
-                // dev
-                let url = 'http://tutorschedulingdev.oc.edu/';
-                // prod
-                //let url = 'http://tutorscheduling.oc.edu/';
+                let date = appoint.date.toString().slice(0,15)
                 let message = {
                   message: "Please leave feedback on your appointment from " + date + " at " + time + " " + url,
                   phoneNum: person.phoneNum,
