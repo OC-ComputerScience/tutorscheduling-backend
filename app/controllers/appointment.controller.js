@@ -121,7 +121,10 @@ exports.findAllPassedForPersonForGroupTutor = (req, res) => {
   date.setHours(0,0,0);
 
   Appointment.findAll({
-    where: { groupId: groupId, date: { [Op.lte]: date }, endTime: { [Op.lt]: endTime }, [Op.or]: [{ status: {[Op.like]: "booked" }, type: { [Op.like]: "Group" }}], },
+    where: { groupId: groupId, 
+            date: { [Op.lte]: date }, 
+            endTime: { [Op.lt]: endTime }, 
+            [Op.or]: [{ status: {[Op.like]: "booked" }}, {type: { [Op.like]: "Group" }}] },
     include: [{
       where: { '$personappointment.personId$': personId, feedbacknumber: { [Op.eq]: null }, feedbacktext: { [Op.eq]: null } },
       model: PersonAppointment,
