@@ -116,11 +116,12 @@ exports.findAllPassedForPersonForGroupTutor = (req, res) => {
   const personId = req.params.personId;
   const groupId = req.params.groupId;
   let date = new Date();
+  let endTime = date.toLocaleTimeString('it-IT')
   date.setHours(date.getHours() - (date.getTimezoneOffset()/60))
   date.setHours(0,0,0);
 
   Appointment.findAll({
-    where: { groupId: groupId, date: { [Op.lte]: date }, endTime: { [Op.lt]: date }, [Op.or]: [{ status: {[Op.like]: "booked" }, type: { [Op.like]: "Group" }}], },
+    where: { groupId: groupId, date: { [Op.lte]: date }, endTime: { [Op.lt]: endTime }, [Op.or]: [{ status: {[Op.like]: "booked" }, type: { [Op.like]: "Group" }}], },
     include: [{
       where: { '$personappointment.personId$': personId, feedbacknumber: { [Op.eq]: null }, feedbacktext: { [Op.eq]: null } },
       model: PersonAppointment,
