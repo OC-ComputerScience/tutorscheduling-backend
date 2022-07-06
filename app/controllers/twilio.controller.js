@@ -3,14 +3,17 @@ const authToken = process.env.TWILIO_AUTH_TOKEN1 + process.env.TWILIO_AUTH_TOKEN
 const phoneNum = process.env.TWILIO_NUMBER;
 const client = require('twilio')(accountSid, authToken);
 
-exports.findAll = (req, res) => {
+exports.send = (req, res) => {
     client.messages
       .create({
         body: req.body.message,
         from: phoneNum,
         to: req.body.phoneNum
       })
-      .then(message => console.log(message.sid));
+      .then(message => console.log("sent" + message.sid))
+      .catch(err => {
+        console.log("Could not send messsage"+ err);
+      });
   
 }
  
