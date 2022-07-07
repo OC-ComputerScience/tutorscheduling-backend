@@ -124,6 +124,8 @@ exports.findAllPassedForPersonForGroupTutor = (req, res) => {
     where: { groupId: groupId, 
             date: { [Op.lte]: date }, 
             endTime: { [Op.lt]: endTime }, 
+            status: { [Op.notLike]: "tutorCancel"},
+            status: { [Op.notLike]: "studentCancel"},
             [Op.or]: [{ status: {[Op.like]: "booked" }}, {type: { [Op.like]: "Group" }}] },
     include: [{
       where: { '$personappointment.personId$': personId, feedbacknumber: { [Op.eq]: null }, feedbacktext: { [Op.eq]: null } },
