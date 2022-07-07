@@ -6,7 +6,7 @@ module.exports = (sequelize, Sequelize) => {
         primaryKey: true
       },
       token: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(3000),
         allowNull: false
       },
       email: {
