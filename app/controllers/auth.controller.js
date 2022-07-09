@@ -191,6 +191,10 @@ exports.login = async (req, res) => {
     });
 };
 
+exports.authorize = async (req, res) => {
+    console.log(req)
+};
+
 exports.logout = async (req, res) => {
     // invalidate session -- delete token out of session table
     let session = {};
