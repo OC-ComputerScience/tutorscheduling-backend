@@ -200,7 +200,7 @@ exports.logout = async (req, res) => {
     let session = {};
     await Session.findAll({ where: { token : req.body.token} })
       .then(data => {
-        session = data[0].dataValues;
+        session = data[0];
       })
       .catch(err => {
         res.status(500).send({
@@ -208,6 +208,7 @@ exports.logout = async (req, res) => {
             err.message || "Some error occurred while retrieving sessions."
         });
       });
+  
       
     Session.destroy({
         where: { id: session.id }
@@ -226,6 +227,7 @@ exports.logout = async (req, res) => {
           }
         })
         .catch(err => {
+          console.log(err)
           res.status(500).send({
             message: "Could not delete session with session=" + session.id
           });
