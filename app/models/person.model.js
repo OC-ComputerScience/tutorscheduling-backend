@@ -24,10 +24,6 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.STRING,
         allowNull: true
       },
-      token_type: {
-        type: Sequelize.STRING,
-        allowNull: true
-      },
       expiry_date: {
         type: Sequelize.BIGINT,
         allowNull: true

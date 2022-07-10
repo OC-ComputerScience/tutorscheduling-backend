@@ -25,7 +25,6 @@ exports.create = (req, res) => {
       email: req.body.email,
       phoneNum: req.body.phoneNum,
       access_token: req.body.access_token,
-      token_type: req.body.token_type,
       expiry_date: req.body.expiry_date
     };
   

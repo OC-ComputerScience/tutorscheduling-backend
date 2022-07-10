@@ -6,6 +6,7 @@ const PersonRole = db.personrole;
 const Role = db.role;
 
 const googleAud = process.env.GOOGLE_AUDIENCE;
+const {google} = require('googleapis');
 
 const Op = db.Sequelize.Op;
 
@@ -19,10 +20,6 @@ exports.login = async (req, res) => {
     console.log(req.body)
 
     var jwt = req.body.credential;
-    // var base64Payload = jwt.split('.')[1];
-    // var payload = Buffer.from(base64Payload, 'base64');
-    // var googleUser = JSON.parse(payload);
-    // console.log(googleUser);
 
     const {OAuth2Client} = require('google-auth-library');
     const client = new OAuth2Client(googleAud);
@@ -35,8 +32,6 @@ exports.login = async (req, res) => {
         console.log('Google payload is '+JSON.stringify(googleUser));
     }
     await verify().catch(console.error);
-
-    // let googleToken = req.body.token;
 
     let email = googleUser.email;
     let firstName = googleUser.given_name;
@@ -63,12 +58,6 @@ exports.login = async (req, res) => {
                 lName: lastName,
                 email: email,
                 phoneNum: '',
-                access_token : '',
-                token_type: '',
-                expiry_date: 0
-                // access_token: googleToken.access_token,
-                // token_type: googleToken.token_type,
-                // expiry_date: googleToken.expiry_date
             }
         }
     })
@@ -90,35 +79,22 @@ exports.login = async (req, res) => {
             res.status(500).send({ message: err.message });
         });
     }
-    // else update accessToken
     else {
         console.log(person)
         // doing this to ensure that the person's name is the one listed with Google
         person.fName = firstName;
         person.lName = lastName;
-        // person.access_token = googleToken.access_token;
-        // person.token_type = googleToken.token_type;
-        // person.expiry_date = googleToken.expiry_date;
         console.log(person)
         await Person.update(person, { where: { id: person.id } })
         .then(num => {
             if (num == 1) {
-                console.log("updated person's google token")
-            // res.send({
-            //     message: "Person was updated successfully."
-            // });
+                console.log("updated person's name")
             } else {
                 console.log(`Cannot update Person with id=${person.id}. Maybe Person was not found or req.body is empty!`)
-            // res.send({
-            //     message: `Cannot update Person with id=${person.id}. Maybe Person was not found or req.body is empty!`
-            // });
             }
         })
         .catch(err => {
             console.log("Error updating Person with id=" + person.id + " " + err)
-            // res.status(500).send({
-            // message: "Error updating Person with id=" + person.id
-            // });
         });
     }
 
@@ -140,10 +116,9 @@ exports.login = async (req, res) => {
         for (let i = 0; i < data.length; i++) {
             let element = data[i].dataValues;
             let roles = [];
-            //console.log(element)
+
             for (let j = 0; j < element.role.length; j++) {
                 let item = element.role[j];
-                //console.log(item)
                 let role = item.type;
                 roles.push(role);
             }
@@ -158,7 +133,6 @@ exports.login = async (req, res) => {
     .catch(err => {
         res.status(500).send({ message: err.message });
     });
-
 
     // create a new Session with an expiration date and save to database
     let findExpirationDate = new Date();
@@ -175,7 +149,6 @@ exports.login = async (req, res) => {
     Session.create(session)
     .then(() => {
         let userInfo = {
-            token : jwt,
             email : person.email,
             fName : person.fName,
             lName : person.lName,
@@ -193,6 +166,20 @@ exports.login = async (req, res) => {
 
 exports.authorize = async (req, res) => {
     console.log(req)
+    
+    const oauth2Client = new google.auth.OAuth2(
+        process.env.GOOGLE_AUDIENCE,
+        process.env.CLIENT_SECRET,
+        'postmessage'
+    );
+
+    
+
+    // Get access and refresh tokens (if access_type is offline)
+    let { tokens } = await oauth2Client.getToken(req.body.code);
+    oauth2Client.setCredentials(tokens);
+    console.log(tokens)
+    console.log(oauth2Client)
 };
 
 exports.logout = async (req, res) => {
