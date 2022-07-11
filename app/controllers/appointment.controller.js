@@ -258,22 +258,7 @@ exports.findAllForGroup = (req, res) => {
   const groupId = req.params.groupId;
 
   Appointment.findAll({
-    where: { groupId: groupId },
-    include: [{
-      model: Location,
-      as: 'location',
-      required: true
-    },
-    {
-      model: Topic,
-      as: 'topic',
-      required: true
-    },
-    {
-      model: PersonAppointment,
-      as: 'personappointment',
-      required: true
-    }]
+    where: { groupId: groupId }
   })
     .then(data => {
       res.send(data);
