@@ -15,6 +15,9 @@ module.exports = app => {
     // Retrieve all Appointment
     router.get("/group/:groupId", appointment.findAllForGroup);
 
+    // Retrieve all Appointment
+    router.get("/allGroup/:groupId", appointment.findAppointmentsForGroup);
+
     // Retrieve all upcoming Appointment
     router.get("/upGroup/:groupId", appointment.findAllUpcomingForGroup);
 

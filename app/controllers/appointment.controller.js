@@ -74,6 +74,26 @@ exports.findAll = (req, res) => {
     });
 };
 
+// Retrieve all Appointment from the database.
+exports.findAppointmentsForGroup = (req, res) => {
+  const groupId = req.params.groupId;
+
+  Appointment.findAll({ 
+    where: { 
+      groupId: groupId 
+    }
+  })
+    .then(data => {
+      res.send(data);
+    })
+    .catch(err => {
+      res.status(500).send({
+        message:
+          err.message || "Some error occurred while retrieving Appointment."
+      });
+    });
+};
+
 // Retrieve all upcoming appointments for a person for a group from the database.
 exports.findAllUpcomingForPersonForGroup = (req, res) => {
   const personId = req.params.personId;
