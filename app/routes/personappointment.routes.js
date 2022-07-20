@@ -1,36 +1,35 @@
-const { person } = require("../models/index.js");
-
 module.exports = app => {
     const personappointment = require("../controllers/personappointment.controller.js");
+    const { authenticate,isAdmin} = require("../authorization/authorization.js");
   
     var router = require("express").Router();
   
     // Create a new PersonAppointment
-    router.post("/", personappointment.create);
+    router.post("/", [authenticate],personappointment.create);
   
     // Retrieve all PersonAppointment
-    router.get("/", personappointment.findAll);
+    router.get("/", [authenticate],personappointment.findAll);
   
     // Retrieve a single PersonAppointment with appointment and person
-    router.get("/person/:personId/appointment/:appointmentId", personappointment.findPersonAppointmentByPersonAndAppointment);
+    router.get("/person/:personId/appointment/:appointmentId", [authenticate],personappointment.findPersonAppointmentByPersonAndAppointment);
 
     // Retrieve personappointments for a specific person
-    router.get("/person/:personId", personappointment.findAllForPerson);
+    router.get("/person/:personId", [authenticate],personappointment.findAllForPerson);
 
     // Retrieve a single PersonAppointment with id
-    router.get("/:id", personappointment.findOne);
+    router.get("/:id", [authenticate],personappointment.findOne);
   
     // Retrieve personappointments for a specific person
-    router.get("/person/:personId", personappointment.findAllForPerson);
+    router.get("/person/:personId", [authenticate],personappointment.findAllForPerson);
 
     // Update a PersonAppointment with id
-    router.put("/:id", personappointment.update);
+    router.put("/:id", [authenticate],personappointment.update);
   
     // Delete a PersonAppointment with id
-    router.delete("/:id", personappointment.delete);
+    router.delete("/:id", [authenticate],personappointment.delete);
   
     // Delete all PersonAppointment
-    router.delete("/", personappointment.deleteAll);
+    router.delete("/", [authenticate],personappointment.deleteAll);
   
     app.use('/personappointment', router);
   };
