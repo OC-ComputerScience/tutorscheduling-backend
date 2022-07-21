@@ -26,7 +26,7 @@ module.exports = app => {
     router.get("/group/:groupId/person/:personId",[authenticate], appointment.findAllForPersonForGroup);
 
     // Retrieve all upcoming Appointment
-    router.get("/upGroup/:groupId/person/:personId", [authenticate],[authenticate],appointment.findAllUpcomingForPersonForGroup);
+    router.get("/upGroup/:groupId/person/:personId", [authenticate],appointment.findAllUpcomingForPersonForGroup);
 
     // Retrieve all upcoming Appointment
     router.get("/passGroupTutor/:groupId/person/:personId", [authenticate],appointment.findAllPassedForPersonForGroupTutor);
