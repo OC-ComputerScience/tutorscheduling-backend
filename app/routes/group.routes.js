@@ -5,7 +5,7 @@ module.exports = app => {
     var router = require("express").Router();
   
     // Create a new Group
-    router.post("/", [authenticate],group.create);
+    router.post("/", [authenticate,isSuperAdmin],group.create);
   
     // Retrieve all Groups
     router.get("/", [authenticate],group.findAll);
@@ -26,13 +26,13 @@ module.exports = app => {
     router.get("/:id", [authenticate],group.findOne);
   
     // Update a Group with id
-    router.put("/:id", [authenticate],group.update);
+    router.put("/:id", [authenticate,isSuperAdmin],group.update);
   
     // Delete a Group with id
-    router.delete("/:id", [authenticate],[authenticate],group.delete);
+    router.delete("/:id", [authenticate,isSuperAdmin],[authenticate],group.delete);
   
     // Delete all Group
-    router.delete("/", [authenticate],group.deleteAll);
+    router.delete("/", [authenticate,isSuperAdmin],group.deleteAll);
   
     app.use('/group', router);
   };
