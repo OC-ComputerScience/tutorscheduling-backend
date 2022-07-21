@@ -74,6 +74,26 @@ exports.findAll = (req, res) => {
     });
 };
 
+// Retrieve all Appointment from the database.
+exports.findAppointmentsForGroup = (req, res) => {
+  const groupId = req.params.groupId;
+
+  Appointment.findAll({ 
+    where: { 
+      groupId: groupId 
+    }
+  })
+    .then(data => {
+      res.send(data);
+    })
+    .catch(err => {
+      res.status(500).send({
+        message:
+          err.message || "Some error occurred while retrieving Appointment."
+      });
+    });
+};
+
 // Retrieve all upcoming appointments for a person for a group from the database.
 exports.findAllUpcomingForPersonForGroup = (req, res) => {
   const personId = req.params.personId;
@@ -115,10 +135,17 @@ exports.findAllUpcomingForPersonForGroup = (req, res) => {
 exports.findAllPassedForPersonForGroupTutor = (req, res) => {
   const personId = req.params.personId;
   const groupId = req.params.groupId;
-  const date = new Date();
+  let date = new Date();
+  let endTime = date.toLocaleTimeString('it-IT')
+  date.setHours(date.getHours() - (date.getTimezoneOffset()/60))
+  date.setHours(0,0,0);
 
   Appointment.findAll({
-    where: { groupId: groupId, date: { [Op.lte]: date }, status: { [Op.like]: "booked" }},
+    where: { groupId: groupId, 
+            date: { [Op.lte]: date }, 
+            endTime: { [Op.lt]: endTime }, 
+            [Op.and]: [{status: {[Op.notLike]: "tutorCancel"}}, {status: { [Op.notLike]: "studentCancel"}}],
+            [Op.or]: [{ status: {[Op.like]: "booked" }}, {type: { [Op.like]: "Group" }}] },
     include: [{
       where: { '$personappointment.personId$': personId, feedbacknumber: { [Op.eq]: null }, feedbacktext: { [Op.eq]: null } },
       model: PersonAppointment,

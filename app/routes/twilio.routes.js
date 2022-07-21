@@ -5,7 +5,7 @@ module.exports = app => {
     var router = require("express").Router();
 
     // Create a new Tutorial
-    router.post("/sendMessage", sms.findAll);
+    router.post("/sendMessage", sms.send);
 
     app.use('/twilio', router);
   }; 
