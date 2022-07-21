@@ -18,7 +18,8 @@ jobs:
                   TWILIO_AUTH_TOKEN1 : ${{secrets.TWILIO_AUTH_TOKEN1}}
                   TWILIO_AUTH_TOKEN2 :  ${{secrets.TWILIO_AUTH_TOKEN2}}
                   TWILIO_NUMBER : ${{secrets.TWILIO_NUMBER}}
-        steps
+                  
+        steps:
             - uses: actions/checkout@v2
               with:
                   ref: dev
