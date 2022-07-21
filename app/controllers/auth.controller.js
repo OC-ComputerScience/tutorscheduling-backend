@@ -16,7 +16,6 @@ const { group } = require("../models");
 //const { person } = require("../models");
 
 exports.login = async (req, res) => {
-    console.log(req)
     console.log(req.body)
 
     var jwt = req.body.credential;
@@ -172,8 +171,6 @@ exports.authorize = async (req, res) => {
         process.env.CLIENT_SECRET,
         'postmessage'
     );
-
-    
 
     // Get access and refresh tokens (if access_type is offline)
     let { tokens } = await oauth2Client.getToken(req.body.code);
