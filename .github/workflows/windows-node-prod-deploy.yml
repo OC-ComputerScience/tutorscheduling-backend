@@ -15,7 +15,7 @@ jobs:
                   DB_USER: ${{ secrets.PROD_DB_USER }}
                   DB_NAME: ${{ secrets.PROD_DB_NAME }}
                   TWILIO_ACCOUNT_SID : ${{secrets.TWILIO_ACCOUNT_SID}}
-                  TWILIO_AUTH_TOKEN1 : ${{secrets.TWILIO_AUTH_TOKEN2}}
+                  TWILIO_AUTH_TOKEN1 : ${{secrets.TWILIO_AUTH_TOKEN1}}
                   TWILIO_AUTH_TOKEN2 :  ${{secrets.TWILIO_AUTH_TOKEN2}}
                   TWILIO_NUMBER : ${{secrets.TWILIO_NUMBER}}
         steps:
