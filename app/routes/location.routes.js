@@ -1,28 +1,29 @@
 module.exports = app => {
     const location = require("../controllers/location.controller.js");
+    const { authenticate,isAdmin} = require("../authorization/authorization.js");
   
     var router = require("express").Router();
   
     // Create a new Location
-    router.post("/", location.create);
+    router.post("/", [authenticate,isAdmin],location.create);
   
     // Retrieve all Location
-    router.get("/", location.findAll);
+    router.get("/", [authenticate],location.findAll);
   
     // Retrieve a single Location with id
-    router.get("/:id", location.findOne);
+    router.get("/:id", [authenticate],location.findOne);
 
     // Retrieve locations for a specific group
-    router.get("/group/:groupId", location.findAllForGroup);
+    router.get("/group/:groupId", [authenticate],location.findAllForGroup);
   
     // Update a Location with id
-    router.put("/:id", location.update);
+    router.put("/:id", [authenticate,isAdmin],location.update);
   
     // Delete a Location with id
-    router.delete("/:id", location.delete);
+    router.delete("/:id", [authenticate,isAdmin],location.delete);
   
     // Delete all Location
-    router.delete("/", location.deleteAll);
+    router.delete("/", [authenticate,isAdmin],location.deleteAll);
   
     app.use('/location', router);
   };

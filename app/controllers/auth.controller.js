@@ -9,17 +9,18 @@ const Op = db.Sequelize.Op;
 
 var jwt = require("jsonwebtoken");
 const { group } = require("../models");
-//const { person } = require("../models");
+
+const google_id = process.env.GOOGLE_AUDIENCE;
 
 exports.login = async (req, res) => {
     console.log(req)
     console.log(req.body)
     const {OAuth2Client} = require('google-auth-library');
-    const client = new OAuth2Client('158532899975-5qk486rajjjb3dqrdbp4h86a65l997ab.apps.googleusercontent.com');
+    const client = new OAuth2Client(google_id);
    
     const ticket = await client.verifyIdToken({
         idToken: req.body.idToken,
-        audience: '158532899975-5qk486rajjjb3dqrdbp4h86a65l997ab.apps.googleusercontent.com'
+        audience: google_id
     });
     const payload= ticket.getPayload();
     console.log('Google payload is '+JSON.stringify(payload));
