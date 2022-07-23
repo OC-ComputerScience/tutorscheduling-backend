@@ -13,7 +13,8 @@ const Op = db.Sequelize.Op;
 let googleUser = {};
 
 const { group } = require("../models");
-//const { person } = require("../models");
+
+const google_id = process.env.GOOGLE_AUDIENCE;
 
 exports.login = async (req, res) => {
     console.log(req.body)

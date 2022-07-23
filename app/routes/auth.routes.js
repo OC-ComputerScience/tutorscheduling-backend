@@ -1,5 +1,6 @@
 module.exports = app => {
     const auth = require("../controllers/auth.controller.js");
+    const { authenticate,isAdmin} = require("../authorization/authorization.js");
   
     var router = require("express").Router();
 
@@ -10,7 +11,7 @@ module.exports = app => {
     router.post("/authorize", auth.authorize);
 
     // Logout
-    router.post("/logout", auth.logout);
+    router.post("/logout" ,auth.logout);
 
     app.use('', router);
 };

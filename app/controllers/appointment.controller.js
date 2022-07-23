@@ -13,8 +13,6 @@ const SCOPES = ['https://www.googleapis.com/auth/calendar'];
 // created automatically when the authorization flow completes for the first
 // time.
 const { google } = require("googleapis");
-const fs = require('fs');
-const { Sequelize, personappointment } = require("../models");
 let token = {};
 
 // Create and Save a new Appointment
@@ -140,12 +138,23 @@ exports.findAllPassedForPersonForGroupTutor = (req, res) => {
   date.setHours(date.getHours() - (date.getTimezoneOffset()/60))
   date.setHours(0,0,0);
 
+// Note: had to put the the tow OP.or in an Op.and to get Sequelize to generate SQL correctly
   Appointment.findAll({
     where: { groupId: groupId, 
-            date: { [Op.lte]: date }, 
-            endTime: { [Op.lt]: endTime }, 
-            [Op.and]: [{status: {[Op.notLike]: "tutorCancel"}}, {status: { [Op.notLike]: "studentCancel"}}],
-            [Op.or]: [{ status: {[Op.like]: "booked" }}, {type: { [Op.like]: "Group" }}] },
+            [Op.and]: [
+              {status: {[Op.notLike]: "tutorCancel"}}, 
+              {status: { [Op.notLike]: "studentCancel"}}
+            ],
+            [Op.and] : [
+              {[Op.or]: [
+                {date: { [Op.lt]: date }}, 
+                {[Op.and] : [
+                    {date: {[Op.eq]: date }},
+                    {endTime: {[Op.lt]: endTime }}
+                ]}
+              ]},
+              {[Op.or]: [{ status: {[Op.like]: "booked" }}, {type: { [Op.like]: "Group" }}]}
+            ] },
     include: [{
       where: { '$personappointment.personId$': personId, feedbacknumber: { [Op.eq]: null }, feedbacktext: { [Op.eq]: null } },
       model: PersonAppointment,
@@ -485,13 +494,7 @@ addToGoogle = (id) => {
     .then(data => {
       if (data) {
         console.log("successfully to google calendar steps")
-
-        // Load client secrets from a local file.
-        fs.readFile('credentials.json', (err, content) => {
-          if (err) return console.log('Error loading client secret file:', err);
-          // Authorize a client with credentials, then call the Google Calendar API.
-          authorize(JSON.parse(content), addEvent, data);
-        });
+        authorize(addEvent, data);
       }
       else {
         console.log(`Cannot find Appointment with id=${id}.`)
@@ -527,9 +530,7 @@ function addEvent(auth, data) {
     let obj = data[i];
     let tempObj = {};
     tempObj.email = obj.personappointment.person.email;
-    console.log(tempObj);
     attendees.push(tempObj);
-    console.log(obj);
     startTime = new Date(obj.date).toISOString();
     let temp = startTime.slice(11, 19);
     startTime = startTime.replace(temp, obj.startTime.toString());
@@ -625,15 +626,17 @@ async function findFirstTutorForAppointment(id) {
 };
 
 /**
- * Create an OAuth2 client with the given credentials, and then execute the
+ * Create an OAuth2 client with the credentials in the .env file, and then execute the
  * given callback function.
- * @param {Object} credentials The authorization client credentials.
  * @param {function} callback The callback to call with the authorized client.
  */
-async function authorize(credentials, callback, data) {
-  const { client_secret, client_id, redirect_uris } = credentials.web;
+async function authorize(callback, data) {
+  const client_id = process.env.GOOGLE_AUDIENCE;
+  const client_secret = process.env.CLIENT_SECRET;
+  const redirect_url = process.env.REDIRECT_URL;
+  
   const oAuth2Client = new google.auth.OAuth2(
-    client_id, client_secret, redirect_uris[0]);
+    client_id, client_secret, redirect_url);
 
   await findFirstTutorForAppointment(data[0].id);
   console.log(token)
