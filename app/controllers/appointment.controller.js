@@ -638,6 +638,7 @@ await findFirstTutorForAppointment(data[0].id);
 
     let creds = {};
   // gets access token from refresh token
+  // reference: https://zapier.com/engineering/how-to-use-the-google-calendar-api/
   var fetch = require("node-fetch"); // or fetch() is native in browsers
 
   var makeQuerystring = params =>
