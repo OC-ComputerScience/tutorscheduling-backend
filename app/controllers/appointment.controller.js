@@ -587,7 +587,7 @@ function addEvent(auth, data) {
     resource: event,
     conferenceDataVersion: 1,
   })
-    .then((event) => console.log('Event created: %s', event))
+    .then((event) => console.log('Event created: %s', event.data))
     .catch((error) => {
       console.log('Some error occured', error)
       // console.log(error.response.data.error.errors);
@@ -613,12 +613,7 @@ async function findFirstTutorForAppointment(id) {
   })
     .then((data) => {
       // only need to send the first tutor in the appointment to be the organizer
-      //console.log(data[0])
-      //res.send(data[0]);
-      token.access_token = data[0].access_token;
-      token.scope = SCOPES;
-      token.token_type = data[0].token_type;
-      token.expiry_date = data[0].expiry_date;
+      token = data[0].refresh_token;
     })
     .catch(err => {
       console.log({ message: err.message });
@@ -636,12 +631,40 @@ async function authorize(callback, data) {
   const redirect_url = process.env.REDIRECT_URL;
   
   const oAuth2Client = new google.auth.OAuth2(
-    client_id, client_secret, redirect_url);
+    client_id, client_secret, 'postmessage');
 
-  await findFirstTutorForAppointment(data[0].id);
-  console.log(token)
+await findFirstTutorForAppointment(data[0].id);
 
-  oAuth2Client.setCredentials(token);
+
+    let creds = {};
+  // gets access token from refresh token
+  var fetch = require("node-fetch"); // or fetch() is native in browsers
+
+  var makeQuerystring = params =>
+    Object.keys(params)
+    .map(key => {
+      return encodeURIComponent(key) + "=" + encodeURIComponent(params[key]);
+    })
+    .join("&");
+
+  await fetch("https://www.googleapis.com/oauth2/v4/token", {
+    method: "post",
+    body: makeQuerystring({
+      client_id: client_id,
+      client_secret: client_secret,
+      refresh_token: token,
+      grant_type: "refresh_token"
+    }),
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded"
+    }
+  })
+  .then(res => res.json())
+  .then(json => creds = json);
+  
+  console.log(creds)
+
+  oAuth2Client.setCredentials(creds);
   callback(oAuth2Client, data);
 
 }

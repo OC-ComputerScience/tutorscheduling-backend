@@ -5,10 +5,9 @@ const Session = db.session;
 const PersonRole = db.personrole;
 const Role = db.role;
 
-const googleAud = process.env.GOOGLE_AUDIENCE;
 const {google} = require('googleapis');
 
-const Op = db.Sequelize.Op;
+var jwt = require("jsonwebtoken");
 
 let googleUser = {};
 
@@ -19,14 +18,14 @@ const google_id = process.env.GOOGLE_AUDIENCE;
 exports.login = async (req, res) => {
     console.log(req.body)
 
-    var jwt = req.body.credential;
+    var googleToken = req.body.credential;
 
     const {OAuth2Client} = require('google-auth-library');
-    const client = new OAuth2Client(googleAud);
+    const client = new OAuth2Client(google_id);
     async function verify() {
         const ticket = await client.verifyIdToken({
-            idToken: jwt,
-            audience: googleAud
+            idToken: googleToken,
+            audience: google_id
         });
         googleUser = ticket.getPayload();
         console.log('Google payload is '+JSON.stringify(googleUser));
@@ -135,13 +134,14 @@ exports.login = async (req, res) => {
     });
 
     // create a new Session with an expiration date and save to database
-    let findExpirationDate = new Date();
-    findExpirationDate.setDate(findExpirationDate.getDate() + 1);
+    let token = jwt.sign({ id:email }, authconfig.secret, {expiresIn: 86400});
+    let tempExpirationDate = new Date();
+    tempExpirationDate.setDate(tempExpirationDate.getDate() + 1);
     const session = {
-        token : jwt,
+        token : token,
         email : email,
         personId : person.id,
-        expirationDate : findExpirationDate
+        expirationDate : tempExpirationDate
     }
 
     console.log(session)
@@ -154,7 +154,10 @@ exports.login = async (req, res) => {
             lName : person.lName,
             phoneNum : person.phoneNum,
             access : access,
-            userID : person.id
+            userID : person.id,
+            token: token,
+            refresh_token: person.refresh_token,
+            expiration_date: person.expiration_date
         }
         console.log(userInfo)
         res.send(userInfo);
@@ -176,6 +179,46 @@ exports.authorize = async (req, res) => {
     // Get access and refresh tokens (if access_type is offline)
     let { tokens } = await oauth2Client.getToken(req.body.code);
     oauth2Client.setCredentials(tokens);
+
+    let person = {}
+
+    await Person.findOne({
+        where: {
+          id: req.params.id
+        }
+    })
+    .then(data => {
+        if(data != null) {
+            person = data.dataValues;
+        }
+    })
+    .catch(err => {
+        res.status(500).send({ message: err.message });
+    });
+
+    person.refresh_token = tokens.refresh_token;
+    let tempExpirationDate = new Date();
+    tempExpirationDate.setDate(tempExpirationDate.getDate() + 100);
+    person.expiration_date = tempExpirationDate;
+
+    await Person.update(person, { where: { id: person.id } })
+    .then(num => {
+        if (num == 1) {
+            console.log("updated person's google token stuff")
+        } else {
+            console.log(`Cannot update Person with id=${person.id}. Maybe Person was not found or req.body is empty!`)
+        }
+        let userInfo = {
+            refresh_token: person.refresh_token,
+            expiration_date: person.expiration_date
+        }
+        console.log(userInfo)
+        res.send(userInfo);
+    })
+    .catch(err => {
+        console.log("Error updating Person with id=" + person.id + " " + err)
+    });
+
     console.log(tokens)
     console.log(oauth2Client)
 };
@@ -183,38 +226,37 @@ exports.authorize = async (req, res) => {
 exports.logout = async (req, res) => {
     // invalidate session -- delete token out of session table
     let session = {};
-    await Session.findAll({ where: { token : req.body.token} })
-      .then(data => {
-        session = data[0];
-      })
-      .catch(err => {
-        res.status(500).send({
-          message:
+    await Session.findAll({ where: { token : req.body.token } })
+    .then(data => {
+        session = data[0].dataValues;
+    })
+    .catch(err => {
+    res.status(500).send({
+        message:
             err.message || "Some error occurred while retrieving sessions."
         });
-      });
-  
+    });
+
+    session.token = '';
       
-    Session.destroy({
-        where: { id: session.id }
-      })
-        .then(num => {
-          if (num == 1) {
-              console.log("successfully logged out")
+    Session.update(session, { where: { id: session.id } })
+    .then(num => {
+        if (num == 1) {
+            console.log("successfully logged out")
             res.send({
-              message: "Session was deleted successfully and user has been logged out!"
+                message: "User has been successfully logged out!"
             });
-          } else {
-              console.log("failed");
-            res.send({
-              message: `Cannot delete session with id=${id}. Maybe session was not found!`
-            });
-          }
-        })
-        .catch(err => {
-          console.log(err)
-          res.status(500).send({
-            message: "Could not delete session with session=" + session.id
-          });
+        } else {
+            console.log("failed");
+        res.send({
+            message: `Error logging out user.`
+        });
+        }
+    })
+    .catch(err => {
+        console.log(err)
+        res.status(500).send({
+            message: "Error logging out user."
+        });
     });
 };

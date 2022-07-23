@@ -20,12 +20,12 @@ module.exports = (sequelize, Sequelize) => {
       phoneNum: {
         type: Sequelize.STRING
       },
-      access_token: {
-        type: Sequelize.STRING,
+      refresh_token: {
+        type: Sequelize.STRING(512),
         allowNull: true
       },
-      expiry_date: {
-        type: Sequelize.BIGINT,
+      expiration_date: {
+        type: Sequelize.DATE,
         allowNull: true
       },
     });
