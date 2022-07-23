@@ -21,6 +21,8 @@ jobs:
                   VUE_APP_CLIENT_ID : ${{secrets.VUE_APP_CLIENT_ID}}
                   VUE_APP_API_URL : ${{secrets.VUE_APP_API_URL}}
                   VUE_APP_CLIENT_URL : ${{secrets.VUE_APP_CLIENT_URL}}
+                  GOOGLE_AUDIENCE : ${{secrets.GOOGLE_AUDIENCE}} 
+                  CLIENT_SECRET : ${{secrets.CLIENT_SECRET}} 
 
                   
         steps:
@@ -43,6 +45,8 @@ jobs:
                     echo vue_app_client_id="$VUE_APP_CLIENT_ID" >> .env
                     echo vue_app_api_url ="$VUE_APP_API_URL" >> .env
                     echo vue_app_client_url = "tutorschedulingdev.oc.edu" >> .env
+                    echo google_audience ="$GOOGLE_AUDIENCE" >> .env
+                    echo client_secret = "CLIENT_SECRET" >> .env
                     echo url = "tutorschedulingdev.oc.edu" >> .env
                     
             - run: npm run bundle
