@@ -13,8 +13,6 @@ const SCOPES = ['https://www.googleapis.com/auth/calendar'];
 // created automatically when the authorization flow completes for the first
 // time.
 const { google } = require("googleapis");
-const fs = require('fs');
-const { Sequelize, personappointment } = require("../models");
 let token = {};
 
 // Create and Save a new Appointment
@@ -496,13 +494,7 @@ addToGoogle = (id) => {
     .then(data => {
       if (data) {
         console.log("successfully to google calendar steps")
-
-        // Load client secrets from a local file.
-        fs.readFile('credentials.json', (err, content) => {
-          if (err) return console.log('Error loading client secret file:', err);
-          // Authorize a client with credentials, then call the Google Calendar API.
-          authorize(JSON.parse(content), addEvent, data);
-        });
+        authorize(addEvent, data);
       }
       else {
         console.log(`Cannot find Appointment with id=${id}.`)
@@ -538,9 +530,7 @@ function addEvent(auth, data) {
     let obj = data[i];
     let tempObj = {};
     tempObj.email = obj.personappointment.person.email;
-    console.log(tempObj);
     attendees.push(tempObj);
-    console.log(obj);
     startTime = new Date(obj.date).toISOString();
     let temp = startTime.slice(11, 19);
     startTime = startTime.replace(temp, obj.startTime.toString());
@@ -597,7 +587,7 @@ function addEvent(auth, data) {
     resource: event,
     conferenceDataVersion: 1,
   })
-    .then((event) => console.log('Event created: %s', event))
+    .then((event) => console.log('Event created: %s', event.data))
     .catch((error) => {
       console.log('Some error occured', error)
       // console.log(error.response.data.error.errors);
@@ -623,12 +613,7 @@ async function findFirstTutorForAppointment(id) {
   })
     .then((data) => {
       // only need to send the first tutor in the appointment to be the organizer
-      //console.log(data[0])
-      //res.send(data[0]);
-      token.access_token = data[0].access_token;
-      token.scope = SCOPES;
-      token.token_type = data[0].token_type;
-      token.expiry_date = data[0].expiry_date;
+      token = data[0].refresh_token;
     })
     .catch(err => {
       console.log({ message: err.message });
@@ -636,20 +621,51 @@ async function findFirstTutorForAppointment(id) {
 };
 
 /**
- * Create an OAuth2 client with the given credentials, and then execute the
+ * Create an OAuth2 client with the credentials in the .env file, and then execute the
  * given callback function.
- * @param {Object} credentials The authorization client credentials.
  * @param {function} callback The callback to call with the authorized client.
  */
-async function authorize(credentials, callback, data) {
-  const { client_secret, client_id, redirect_uris } = credentials.web;
+async function authorize(callback, data) {
+  const client_id = process.env.GOOGLE_AUDIENCE;
+  const client_secret = process.env.CLIENT_SECRET;
+  const redirect_url = process.env.REDIRECT_URL;
+  
   const oAuth2Client = new google.auth.OAuth2(
-    client_id, client_secret, redirect_uris[0]);
+    client_id, client_secret, 'postmessage');
 
-  await findFirstTutorForAppointment(data[0].id);
-  console.log(token)
+await findFirstTutorForAppointment(data[0].id);
 
-  oAuth2Client.setCredentials(token);
+
+    let creds = {};
+  // gets access token from refresh token
+  // reference: https://zapier.com/engineering/how-to-use-the-google-calendar-api/
+  var fetch = require("node-fetch"); // or fetch() is native in browsers
+
+  var makeQuerystring = params =>
+    Object.keys(params)
+    .map(key => {
+      return encodeURIComponent(key) + "=" + encodeURIComponent(params[key]);
+    })
+    .join("&");
+
+  await fetch("https://www.googleapis.com/oauth2/v4/token", {
+    method: "post",
+    body: makeQuerystring({
+      client_id: client_id,
+      client_secret: client_secret,
+      refresh_token: token,
+      grant_type: "refresh_token"
+    }),
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded"
+    }
+  })
+  .then(res => res.json())
+  .then(json => creds = json);
+  
+  console.log(creds)
+
+  oAuth2Client.setCredentials(creds);
   callback(oAuth2Client, data);
 
 }

@@ -1,37 +1,38 @@
 module.exports = app => {
     const role = require("../controllers/role.controller.js");
+    const { authenticate,isAdmin,isSuperAdmin} = require("../authorization/authorization.js");
   
     var router = require("express").Router();
   
     // Create a new Role
-    router.post("/", role.create);
+    router.post("/", [authenticate,isSuperAdmin],role.create);
   
     // Retrieve all Role
-    router.get("/", role.findAll);
+    router.get("/", [authenticate],role.findAll);
   
     // Retrieve a single Role with id
-    router.get("/:id", role.findOne);
+    router.get("/:id", [authenticate],role.findOne);
 
     // Retrieve roles for a specific group
-    router.get("/group/:groupId", role.findAllForGroup);
+    router.get("/group/:groupId", [authenticate],role.findAllForGroup);
 
     // Retrieve roles for a specific person including personrole
-    router.get("/person/:personId", role.findRoleForPerson);
+    router.get("/person/:personId", [authenticate],role.findRoleForPerson);
 
     // Retrieve roles by group for a specific person including personroles
-    router.get("/group/:groupId/person/:personId", role.findRoleByGroupForPerson);
+    router.get("/group/:groupId/person/:personId", [authenticate],role.findRoleByGroupForPerson);
 
     // Retrieve incomplete roles for a specific person including personrole
-    router.get("/personIn/:personId", role.findIncompleteRoleForPerson);
+    router.get("/personIn/:personId", [authenticate],role.findIncompleteRoleForPerson);
   
     // Update a Role with id
-    router.put("/:id", role.update);
+    router.put("/:id", [authenticate,isSuperAdmin], role.update);
   
     // Delete a Role with id
-    router.delete("/:id", role.delete);
+    router.delete("/:id", [authenticate,isSuperAdmin],role.delete);
   
     // Delete all Roles
-    router.delete("/", role.deleteAll);
+    router.delete("/", [authenticate,isSuperAdmin],role.deleteAll);
   
     app.use('/role', router);
   };

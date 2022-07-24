@@ -1,31 +1,32 @@
 module.exports = app => {
     const persontopic = require("../controllers/persontopic.controller.js");
+    const { authenticate,isAdmin} = require("../authorization/authorization.js");
   
     var router = require("express").Router();
   
     // Create a new PersonTopic
-    router.post("/", persontopic.create);
+    router.post("/", [authenticate],persontopic.create);
   
     // Retrieve all PersonTopic
-    router.get("/", persontopic.findAll);
+    router.get("/", [authenticate],persontopic.findAll);
   
     // Retrieve a single PersonTopic with id
-    router.get("/:id", persontopic.findOne);
+    router.get("/:id", [authenticate],persontopic.findOne);
   
     // Retrieve personroles for a specific person
-    router.get("/person/:personId", persontopic.findAllForPerson);
+    router.get("/person/:personId", [authenticate],persontopic.findAllForPerson);
 
     // Retrieve all topics for tutor from a certain group
-    router.get("/group/:groupId/person/:personId", persontopic.getTopicForPersonGroup);
+    router.get("/group/:groupId/person/:personId", [authenticate],persontopic.getTopicForPersonGroup);
 
     // Update a PersonTopic with id
-    router.put("/:id", persontopic.update);
+    router.put("/:id",[authenticate], persontopic.update);
   
     // Delete a PersonTopic with id
-    router.delete("/:id", persontopic.delete);
+    router.delete("/:id", [authenticate],persontopic.delete);
   
     // Delete all PersonTopic
-    router.delete("/", persontopic.deleteAll);
+    router.delete("/", [authenticate],persontopic.deleteAll);
   
     app.use('/persontopic', router);
   };

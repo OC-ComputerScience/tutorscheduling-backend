@@ -1,34 +1,36 @@
 module.exports = app => {
     const topic = require("../controllers/topic.controller.js");
+    const { authenticate,isAdmin} = require("../authorization/authorization.js");
+
   
     var router = require("express").Router();
   
     // Create a new Topic
-    router.post("/", topic.create);
+    router.post("/",[authenticate,isAdmin], topic.create);
   
     // Retrieve all Topic
-    router.get("/", topic.findAll);
+    router.get("/", [authenticate],topic.findAll);
 
     // Retrieve topics for a specific group
-    router.get("/group/:groupId", topic.findAllForGroup);
+    router.get("/group/:groupId",[authenticate], topic.findAllForGroup);
 
     // Retrieve topics for a specific person including persontopics
-    router.get("/person/:personId", topic.findTopicForPerson);
+    router.get("/person/:personId", [authenticate],topic.findTopicForPerson);
 
     // Retrieve topics by group for a specific person including persontopics
-    router.get("/group/:groupId/person/:personId", topic.findTopicByGroupForPerson);
+    router.get("/group/:groupId/person/:personId",[authenticate], topic.findTopicByGroupForPerson);
   
     // Retrieve a single Topic with id
-    router.get("/:id", topic.findOne);
+    router.get("/:id",[authenticate], topic.findOne);
   
     // Update a Topic with id
-    router.put("/:id", topic.update);
+    router.put("/:id", [authenticate,isAdmin],topic.update);
   
     // Delete a Topic with id
-    router.delete("/:id", topic.delete);
+    router.delete("/:id",[authenticate,isAdmin], topic.delete);
   
     // Delete all Topic
-    router.delete("/", topic.deleteAll);
+    router.delete("/", [authenticate,isAdmin],topic.deleteAll);
   
     app.use('/topic', router);
   };
