@@ -7,16 +7,11 @@ const Location = db.location;
 const Topic = db.topic;
 const Op = db.Sequelize.Op;
 
-// If modifying these scopes, delete token.json.
-const SCOPES = ['https://www.googleapis.com/auth/calendar'];
-// The file token.json stores the user's access and refresh tokens, and is
-// created automatically when the authorization flow completes for the first
-// time.
 const { google } = require("googleapis");
-let token = {};
+let token = '';
 
 // Create and Save a new Appointment
-exports.create = (req, res) => {
+exports.create = async (req, res) => {
   // Validate request
   if (!req.body.date) {
     res.status(400).send({
@@ -28,6 +23,7 @@ exports.create = (req, res) => {
   // Create a Appointment
   const appointment = {
     id: req.body.id,
+    googleEventId: req.body.googleEventId,
     groupId: req.body.groupId,
     topicId: req.body.topicId,
     locationId: req.body.locationId,
@@ -43,16 +39,16 @@ exports.create = (req, res) => {
   };
 
   // Save Appointment in the database
-  Appointment.create(appointment)
-    .then(data => {
-      res.send(data);
-    })
-    .catch(err => {
-      res.status(500).send({
-        message:
-          err.message || "Some error occurred while creating the Appointment."
-      });
+  await Appointment.create(appointment)
+  .then(data => {
+    res.send(data);
+  })
+  .catch(err => {
+    res.status(500).send({
+      message:
+        err.message || "Some error occurred while creating the Appointment."
     });
+  });
 };
 
 // Retrieve all Appointment from the database.
@@ -385,18 +381,22 @@ exports.update = (req, res) => {
 };
 
 // Update an Appointment's status by the id in the request
-exports.updateStatus = (req, res) => {
+exports.updateForGoogle = (req, res) => {
   const id = req.params.id;
 
-  Appointment.update(req.body, {
-    where: { id: id }
-  })
+  if(req.body.type === "Group" && (req.body.status === "Available" || req.body.status === "available")) {
+    addToGoogle(id)
+  }
+  else if(req.body.type !== "Group") {
+    Appointment.update(req.body, {
+      where: { id: id }
+    })
     .then(num => {
       if (num == 1) {
         if (req.body.status === "booked") {
           addToGoogle(id);
         }
-        else if (req.body.status === "cancelled") {
+        else if (req.body.status === "cancelled" || req.body.status === "studentCancel" || req.body.status === "tutorCancel") {
           deleteFromGoogle(id);
         }
 
@@ -415,6 +415,7 @@ exports.updateStatus = (req, res) => {
         message: "Error updating Appointment with id=" + id
       });
     });
+  }
 };
 
 // Delete a Appointment with the specified id in the request
@@ -459,57 +460,52 @@ exports.deleteAll = (req, res) => {
     });
 };
 
-addToGoogle = (id) => {
-  Appointment.findAll({
+addToGoogle = async (id) => {
+  await Appointment.findAll({
     where: { id: id },
     include: [{
-      model: Location,
-      as: 'location',
-      required: true
-    },
-    {
-      model: Topic,
-      as: 'topic',
-      required: true
-    },
-    {
-      model: Group,
-      as: 'group',
-      required: true
-    },
-    {
-      model: PersonAppointment,
-      as: 'personappointment',
-      required: true,
-      include: [{
-        model: Person,
-        as: 'person',
+        model: Location,
+        as: 'location',
+        required: true
+      },
+      {
+        model: Topic,
+        as: 'topic',
+        required: true
+      },
+      {
+        model: Group,
+        as: 'group',
+        required: true
+      },
+      {
+        model: PersonAppointment,
+        as: 'personappointment',
         required: true,
-        right: true
+        include: [{
+          model: Person,
+          as: 'person',
+          required: true,
+          right: true
       }]
     }],
     raw: true,
     nest: true
   })
-    .then(data => {
-      if (data) {
-        console.log("successfully to google calendar steps")
-        authorize(addEvent, data);
-      }
-      else {
-        console.log(`Cannot find Appointment with id=${id}.`)
-        // res.status(404).send({
-        //   message: `Cannot find Appointment with id=${id}.`
-        // });
-      }
-    })
-    .catch(err => {
-      console.log("Error retrieving Appointment with id=" + id)
-      console.log(err)
-      // res.status(500).send({
-      //   message: "Error retrieving Appointment with id=" + id
-      // });
-    });
+  .then(data => {
+    if (data) {
+      console.log(data)
+      console.log("successfully to google calendar steps")
+      authorize(addEvent, data);
+    }
+    else {
+      console.log(`Cannot find Appointment with id=${id}.`)
+    }
+  })
+  .catch(err => {
+    console.log("Error retrieving Appointment with id=" + id)
+    console.log(err)
+  });
 }
 
 function addEvent(auth, data) {
@@ -525,6 +521,13 @@ function addEvent(auth, data) {
   let topic = '';
   let attendees = [];
   let online = false;
+
+   console.log(data)
+
+  let appointmentId = data[0].id
+
+ 
+  console.log(appointmentId)
 
   for (let i = 0; i < data.length; i++) {
     let obj = data[i];
@@ -587,11 +590,77 @@ function addEvent(auth, data) {
     resource: event,
     conferenceDataVersion: 1,
   })
-    .then((event) => console.log('Event created: %s', event.data))
-    .catch((error) => {
-      console.log('Some error occured', error)
-      // console.log(error.response.data.error.errors);
-    });
+  .then(async (event) => {
+    await updateAppointmentGoogleId(appointmentId, event.data.id);
+    console.log('Event created: %s', event.data)
+  })
+  .catch((error) => {
+    console.log('Some error occured', error)
+    // console.log(error.response.data.error.errors);
+  });
+}
+
+updateAppointmentGoogleId = async (appointmentId, eventId) => {
+  let appointment = {};
+
+  await Appointment.findAll({ where: { id: appointmentId } })
+  .then(data => {
+    appointment = data[0].dataValues
+  })
+  .catch(err => {
+    console.log("Some error occurred while retrieving Appointment.")
+  });
+
+  appointment.googleEventId = eventId;
+
+  Appointment.update(appointment, { where: { id: appointmentId } })
+  .then(num => {
+    if (num == 1) {
+      console.log("Appointment's google event id was updated successfully.")
+    }
+    else {
+      console.log(`Cannot update Appointment's google event id. Maybe Appointment was not found or req.body is empty!`)
+    }
+  })
+  .catch(err => {
+    console.log(`Cannot update Appointment's google event id. Maybe Appointment was not found or req.body is empty!`)
+  });
+}
+
+async function deleteFromGoogle(appointmentId) {
+
+  let eventId = '';
+
+  await Appointment.findAll({ where: { id: appointmentId } })
+  .then(data => {
+    eventId = data[0].dataValues.googleEventId
+  })
+  .catch(err => {
+    console.log("Some error occurred while retrieving Appointment.")
+  });
+
+  console.log(eventId)
+
+  let auth = await getAccessToken(appointmentId);
+
+  var params = {
+    auth: auth,
+    calendarId: 'primary',
+    eventId: eventId,
+  };
+
+  const calendar = google.calendar({
+    version: 'v3',
+    auth: auth
+  });        
+
+  calendar.events.delete(params, function(err) {
+    if (err) {
+      console.log('The API returned an error: ' + err);
+      return;
+    }
+    console.log('Event deleted.');
+  });
 }
 
 async function findFirstTutorForAppointment(id) {
@@ -628,15 +697,13 @@ async function findFirstTutorForAppointment(id) {
 async function authorize(callback, data) {
   const client_id = process.env.GOOGLE_AUDIENCE;
   const client_secret = process.env.CLIENT_SECRET;
-  const redirect_url = process.env.REDIRECT_URL;
   
   const oAuth2Client = new google.auth.OAuth2(
     client_id, client_secret, 'postmessage');
 
-await findFirstTutorForAppointment(data[0].id);
+  await findFirstTutorForAppointment(data[0].id);
 
-
-    let creds = {};
+  let creds = {};
   // gets access token from refresh token
   // reference: https://zapier.com/engineering/how-to-use-the-google-calendar-api/
   var fetch = require("node-fetch"); // or fetch() is native in browsers
@@ -670,3 +737,44 @@ await findFirstTutorForAppointment(data[0].id);
 
 }
 
+async function getAccessToken(appointmentId) {
+  const client_id = process.env.GOOGLE_AUDIENCE;
+  const client_secret = process.env.CLIENT_SECRET;
+  
+  const oAuth2Client = new google.auth.OAuth2(
+    client_id, client_secret, 'postmessage');
+
+  await findFirstTutorForAppointment(appointmentId);
+
+  let creds = {};
+  // gets access token from refresh token
+  // reference: https://zapier.com/engineering/how-to-use-the-google-calendar-api/
+  var fetch = require("node-fetch"); // or fetch() is native in browsers
+
+  var makeQuerystring = params =>
+    Object.keys(params)
+    .map(key => {
+      return encodeURIComponent(key) + "=" + encodeURIComponent(params[key]);
+    })
+    .join("&");
+
+  await fetch("https://www.googleapis.com/oauth2/v4/token", {
+    method: "post",
+    body: makeQuerystring({
+      client_id: client_id,
+      client_secret: client_secret,
+      refresh_token: token,
+      grant_type: "refresh_token"
+    }),
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded"
+    }
+  })
+  .then(res => res.json())
+  .then(json => creds = json);
+  
+  console.log(creds)
+
+  oAuth2Client.setCredentials(creds);
+  return oAuth2Client;
+}
