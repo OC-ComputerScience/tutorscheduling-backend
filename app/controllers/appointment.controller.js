@@ -539,33 +539,31 @@ function addEvent(auth, data) {
   let appointmentId = data[0].id
 
  
-  console.log(appointmentId)
+  console.log(data[0].preSessionInfo)
 
-  for (let i = 0; i < data.length; i++) {
-    let obj = data[i];
-    let tempObj = {};
-    tempObj.email = obj.personappointment.person.email;
-    attendees.push(tempObj);
-    startTime = new Date(obj.date).toISOString();
-    let temp = startTime.slice(11, 19);
-    startTime = startTime.replace(temp, obj.startTime.toString());
-    startTime = startTime.slice(0, 23);
-    endTime = new Date(obj.date).toISOString();
-    temp = endTime.slice(11, 19);
-    endTime = endTime.replace(temp, obj.endTime.toString());
-    endTime = endTime.slice(0, 23)
-    group = obj.group.name;
-    location = obj.location.name;
-    topic = obj.topic.name;
-    if (obj.location.type === "Online" || obj.location.type === "online") {
-      online = true;
-    }
+  let obj = data[0];
+  let tempObj = {};
+  tempObj.email = obj.personappointment.person.email;
+  attendees.push(tempObj);
+  startTime = new Date(obj.date).toISOString();
+  let temp = startTime.slice(11, 19);
+  startTime = startTime.replace(temp, obj.startTime.toString());
+  startTime = startTime.slice(0, 23);
+  endTime = new Date(obj.date).toISOString();
+  temp = endTime.slice(11, 19);
+  endTime = endTime.replace(temp, obj.endTime.toString());
+  endTime = endTime.slice(0, 23)
+  group = obj.group.name;
+  location = obj.location.name;
+  topic = obj.topic.name;
+  if (obj.location.type === "Online" || obj.location.type === "online") {
+    online = true;
   }
 
   const event = {
     summary: group + ' Tutoring: ' + topic,
     location: location,
-    description: data.preSessionInfo,
+    description: data[0].preSessionInfo,
     start: {
       dateTime: startTime,
       timeZone: 'US/Central',
@@ -597,6 +595,94 @@ function addEvent(auth, data) {
 
   // We make a request to Google Calendar API.
   calendar.events.insert({
+    auth: auth,
+    calendarId: "primary",
+    resource: event,
+    conferenceDataVersion: 1,
+  })
+  .then(async (event) => {
+    await updateAppointmentGoogleId(appointmentId, event.data.id);
+    console.log('Event created: %s', event.data)
+  })
+  .catch((error) => {
+    console.log('Some error occured', error)
+    // console.log(error.response.data.error.errors);
+  });
+}
+
+async function updateEvent(appointmentId) {
+  let auth = await getAccessToken(appointmentId);
+
+  const calendar = google.calendar({
+    version: 'v3',
+    auth: auth
+  });
+
+  let startTime = '';
+  let endTime = '';
+  let group = '';
+  let location = '';
+  let topic = '';
+  let attendees = [];
+  let online = false;
+ 
+  console.log(appointmentId)
+
+  let obj = data[0];
+  let tempObj = {};
+  tempObj.email = obj.personappointment.person.email;
+  attendees.push(tempObj);
+  startTime = new Date(obj.date).toISOString();
+  let temp = startTime.slice(11, 19);
+  startTime = startTime.replace(temp, obj.startTime.toString());
+  startTime = startTime.slice(0, 23);
+  endTime = new Date(obj.date).toISOString();
+  temp = endTime.slice(11, 19);
+  endTime = endTime.replace(temp, obj.endTime.toString());
+  endTime = endTime.slice(0, 23)
+  group = obj.group.name;
+  location = obj.location.name;
+  topic = obj.topic.name;
+  if (obj.location.type === "Online" || obj.location.type === "online") {
+    online = true;
+  }
+
+
+  const event = {
+    summary: group + ' Tutoring: ' + topic,
+    location: location,
+    description: data[0].preSessionInfo,
+    start: {
+      dateTime: startTime,
+      timeZone: 'US/Central',
+    },
+    end: {
+      dateTime: endTime,
+      timeZone: 'US/Central',
+    },
+    attendees: attendees,
+    reminders: {
+      useDefault: false,
+      overrides: [
+        { method: "email", minutes: 24 * 60 },
+        { method: "popup", minutes: 30 },
+      ],
+    },
+  };
+
+  if (online) {
+    event.conferenceData = {
+      createRequest: {
+        conferenceSolutionKey: {
+          type: 'hangoutsMeet'
+        },
+        requestId: group + data.date
+      }
+    }
+  }
+
+  // We make a request to Google Calendar API.
+  calendar.events.update({
     auth: auth,
     calendarId: "primary",
     resource: event,
@@ -707,46 +793,8 @@ async function findFirstTutorForAppointment(id) {
  * @param {function} callback The callback to call with the authorized client.
  */
 async function authorize(callback, data) {
-  const client_id = process.env.GOOGLE_AUDIENCE;
-  const client_secret = process.env.CLIENT_SECRET;
-  
-  const oAuth2Client = new google.auth.OAuth2(
-    client_id, client_secret, 'postmessage');
-
-  await findFirstTutorForAppointment(data[0].id);
-
-  let creds = {};
-  // gets access token from refresh token
-  // reference: https://zapier.com/engineering/how-to-use-the-google-calendar-api/
-  var fetch = require("node-fetch"); // or fetch() is native in browsers
-
-  var makeQuerystring = params =>
-    Object.keys(params)
-    .map(key => {
-      return encodeURIComponent(key) + "=" + encodeURIComponent(params[key]);
-    })
-    .join("&");
-
-  await fetch("https://www.googleapis.com/oauth2/v4/token", {
-    method: "post",
-    body: makeQuerystring({
-      client_id: client_id,
-      client_secret: client_secret,
-      refresh_token: token,
-      grant_type: "refresh_token"
-    }),
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded"
-    }
-  })
-  .then(res => res.json())
-  .then(json => creds = json);
-  
-  console.log(creds)
-
-  oAuth2Client.setCredentials(creds);
-  callback(oAuth2Client, data);
-
+  let auth = await getAccessToken(data[0].id);
+  callback(auth, data);
 }
 
 async function getAccessToken(appointmentId) {
