@@ -381,23 +381,35 @@ exports.update = (req, res) => {
 };
 
 // Update an Appointment's status by the id in the request
-exports.updateForGoogle = (req, res) => {
+exports.updateForGoogle = async (req, res) => {
   const id = req.params.id;
 
   if(req.body.type === "Group" && (req.body.status === "Available" || req.body.status === "available")) {
-    addToGoogle(id)
+    await addToGoogle(id)
+    .then(() => {
+        console.log("successfully added appointment to google")
+        res.send({
+          message: "Appointment was successfully added to google."
+        });
+    })
+    .catch(err => {
+      console.log("Error adding apppointment to google: " + err)
+      res.status(500).send({
+        message: "Error adding appointment to google"
+      });
+    })
   }
   else if(req.body.type !== "Group") {
     Appointment.update(req.body, {
       where: { id: id }
     })
-    .then(num => {
+    .then(async num => {
       if (num == 1) {
         if (req.body.status === "booked") {
-          addToGoogle(id);
+          await addToGoogle(id);
         }
         else if (req.body.status === "cancelled" || req.body.status === "studentCancel" || req.body.status === "tutorCancel") {
-          deleteFromGoogle(id);
+          await deleteFromGoogle(id);
         }
 
         res.send({
