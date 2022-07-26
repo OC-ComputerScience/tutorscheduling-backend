@@ -748,8 +748,7 @@ updateEvent = async (appointmentId) => {
     conferenceDataVersion: 1,
   })
   .then(async (event) => {
-    await updateAppointmentGoogleId(appointmentId, event.data.id);
-    console.log('Event created: %s', event.data)
+    console.log('Event updated: %s', event.data)
   })
   .catch((error) => {
     console.log('Some error occured', error)
