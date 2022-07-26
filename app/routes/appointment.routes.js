@@ -43,8 +43,8 @@ module.exports = app => {
     // Update a Appointment with id
     router.put("/:id", [authenticate],appointment.update);
 
-    // Update a Appointment with updated status with id
-    router.put("/status/:id", [authenticate],appointment.updateStatus);
+    // Update a Appointment for google stuff
+    router.put("/google/:id", [authenticate],appointment.updateForGoogle);
   
     // Delete a Appointment with id
     router.delete("/:id", [authenticate],appointment.delete);

@@ -7,16 +7,12 @@ const Location = db.location;
 const Topic = db.topic;
 const Op = db.Sequelize.Op;
 
-// If modifying these scopes, delete token.json.
-const SCOPES = ['https://www.googleapis.com/auth/calendar'];
-// The file token.json stores the user's access and refresh tokens, and is
-// created automatically when the authorization flow completes for the first
-// time.
 const { google } = require("googleapis");
-let token = {};
+let token = '';
+let eventId = '';
 
 // Create and Save a new Appointment
-exports.create = (req, res) => {
+exports.create = async (req, res) => {
   // Validate request
   if (!req.body.date) {
     res.status(400).send({
@@ -28,6 +24,7 @@ exports.create = (req, res) => {
   // Create a Appointment
   const appointment = {
     id: req.body.id,
+    googleEventId: req.body.googleEventId,
     groupId: req.body.groupId,
     topicId: req.body.topicId,
     locationId: req.body.locationId,
@@ -43,16 +40,16 @@ exports.create = (req, res) => {
   };
 
   // Save Appointment in the database
-  Appointment.create(appointment)
-    .then(data => {
-      res.send(data);
-    })
-    .catch(err => {
-      res.status(500).send({
-        message:
-          err.message || "Some error occurred while creating the Appointment."
-      });
+  await Appointment.create(appointment)
+  .then(data => {
+    res.send(data);
+  })
+  .catch(err => {
+    res.status(500).send({
+      message:
+        err.message || "Some error occurred while creating the Appointment."
     });
+  });
 };
 
 // Retrieve all Appointment from the database.
@@ -385,19 +382,117 @@ exports.update = (req, res) => {
 };
 
 // Update an Appointment's status by the id in the request
-exports.updateStatus = (req, res) => {
+exports.updateForGoogle = async (req, res) => {
   const id = req.params.id;
 
-  Appointment.update(req.body, {
-    where: { id: id }
-  })
-    .then(num => {
+  // shouldn't need to update appointment
+  if(req.body.type === "Group" &&
+   (req.body.status === "Available" || req.body.status === "available") && 
+   (req.body.googleEventId === '' || req.body.googleEventId === undefined || req.body.googleEventId === null)) {
+    await addToGoogle(id)
+    .then(() => {
+        console.log("successfully added appointment to google")
+        res.send({
+          message: "Appointment was successfully added to google."
+        });
+    })
+    .catch(err => {
+      console.log("Error adding apppointment to google: " + err)
+      res.status(500).send({
+        message: "Error adding appointment to google"
+      });
+    })
+  }
+  // all other cases should require updating
+  else {
+    Appointment.update(req.body, {
+      where: { id: id }
+    })
+    .then(async num => {
       if (num == 1) {
-        if (req.body.status === "booked") {
-          addToGoogle(id);
+        if (req.body.type === "Private") {
+          // if appointment is private and booked, and there isn't a google event id, add the google event
+          if (req.body.status === "booked" && (req.body.googleEventId === '' || req.body.googleEventId === undefined || req.body.googleEventId === null)) {
+            await addToGoogle(id)
+            .then(() => {
+              console.log("successfully added appointment to google")
+              res.send({
+                message: "Appointment was successfully added to google."
+              });
+            })
+            .catch(err => {
+              console.log("Error adding apppointment to google: " + err)
+              res.status(500).send({
+                message: "Error adding appointment to google"
+              });
+            })
+          }
+          // if appointment is private and cancelled, delete the google event
+          else if (req.body.status === "cancelled" || req.body.status === "studentCancel" || req.body.status === "tutorCancel") {
+            await deleteFromGoogle(id)
+            .then(() => {
+              console.log("successfully deleted appointment from google")
+              res.send({
+                message: "Appointment was successfully deleted from google."
+              });
+            })
+            .catch(err => {
+              console.log("Error deleting apppointment from google: " + err)
+              res.status(500).send({
+                message: "Error deleting appointment from google"
+              });
+            })
+          }
+          // otherwise, update the google event
+          else {
+            await updateEvent(id)
+            .then(() => {
+              console.log("successfully updated appointment with google")
+              res.send({
+                message: "Appointment was successfully updated with google."
+              });
+            })
+            .catch(err => {
+              console.log("Error updating apppointment with google: " + err)
+              res.status(500).send({
+                message: "Error updating appointment with google"
+              });
+            })
+          }
         }
-        else if (req.body.status === "cancelled") {
-          deleteFromGoogle(id);
+        else if (req.body.type === "Group") {
+          // if a tutor cancels, delete the google event
+          if (req.body.status === "cancelled" || req.body.status === "tutorCancel") {
+            await deleteFromGoogle(id)
+            .then(() => {
+              console.log("successfully deleted appointment from google")
+              res.send({
+                message: "Appointment was successfully deleted from google."
+              });
+            })
+            .catch(err => {
+              console.log("Error deleting apppointment from google: " + err)
+              res.status(500).send({
+                message: "Error deleting appointment from google"
+              });
+            })
+          }
+          // otherwise, update the google event
+          else {
+            await updateEvent(id)
+            .then(() => {
+              console.log("successfully updated appointment with google")
+              res.send({
+                message: "Appointment was successfully updated with google."
+              });
+            })
+            .catch(err => {
+              console.log("Error updating apppointment with google: " + err)
+              res.status(500).send({
+                message: "Error updating appointment with google"
+              });
+            })
+          }
         }
 
         res.send({
@@ -415,6 +510,7 @@ exports.updateStatus = (req, res) => {
         message: "Error updating Appointment with id=" + id
       });
     });
+  }
 };
 
 // Delete a Appointment with the specified id in the request
@@ -459,64 +555,60 @@ exports.deleteAll = (req, res) => {
     });
 };
 
-addToGoogle = (id) => {
-  Appointment.findAll({
-    where: { id: id },
+getAllAppointmentInfo = async (appointmentId) => {
+  let appointments = [];
+  await Appointment.findAll({
+    where: { id: appointmentId },
     include: [{
-      model: Location,
-      as: 'location',
-      required: true
-    },
-    {
-      model: Topic,
-      as: 'topic',
-      required: true
-    },
-    {
-      model: Group,
-      as: 'group',
-      required: true
-    },
-    {
-      model: PersonAppointment,
-      as: 'personappointment',
-      required: true,
-      include: [{
-        model: Person,
-        as: 'person',
+        model: Location,
+        as: 'location',
+        required: true
+      },
+      {
+        model: Topic,
+        as: 'topic',
+        required: true
+      },
+      {
+        model: Group,
+        as: 'group',
+        required: true
+      },
+      {
+        model: PersonAppointment,
+        as: 'personappointment',
         required: true,
-        right: true
+        include: [{
+          model: Person,
+          as: 'person',
+          required: true,
+          right: true
       }]
     }],
     raw: true,
     nest: true
   })
-    .then(data => {
-      if (data) {
-        console.log("successfully to google calendar steps")
-        authorize(addEvent, data);
-      }
-      else {
-        console.log(`Cannot find Appointment with id=${id}.`)
-        // res.status(404).send({
-        //   message: `Cannot find Appointment with id=${id}.`
-        // });
-      }
-    })
-    .catch(err => {
-      console.log("Error retrieving Appointment with id=" + id)
-      console.log(err)
-      // res.status(500).send({
-      //   message: "Error retrieving Appointment with id=" + id
-      // });
-    });
+  .then(data => {
+    if (data) {
+      console.log(data)
+      appointments = data;
+    }
+    else {
+      console.log(`Cannot find Appointment with id=${id}.`)
+    }
+  })
+  .catch(err => {
+    console.log("Error retrieving Appointment with id=" + id)
+    console.log(err)
+  });
+
+  return appointments;
 }
 
-function addEvent(auth, data) {
-  const calendar = google.calendar({
-    version: 'v3',
-    auth: auth
-  });
+setUpEvent = async (appointmentId) => {
+  let appointments = [];  // there will be multiple for each attendee
+  appointments = await getAllAppointmentInfo(appointmentId);
+  console.log(appointments)
 
   let startTime = '';
   let endTime = '';
@@ -526,31 +618,35 @@ function addEvent(auth, data) {
   let attendees = [];
   let online = false;
 
-  for (let i = 0; i < data.length; i++) {
-    let obj = data[i];
+  for(let i = 0; i < appointments.length; i++) {
+    let obj = appointments[i];
     let tempObj = {};
     tempObj.email = obj.personappointment.person.email;
     attendees.push(tempObj);
-    startTime = new Date(obj.date).toISOString();
-    let temp = startTime.slice(11, 19);
-    startTime = startTime.replace(temp, obj.startTime.toString());
-    startTime = startTime.slice(0, 23);
-    endTime = new Date(obj.date).toISOString();
-    temp = endTime.slice(11, 19);
-    endTime = endTime.replace(temp, obj.endTime.toString());
-    endTime = endTime.slice(0, 23)
-    group = obj.group.name;
-    location = obj.location.name;
-    topic = obj.topic.name;
-    if (obj.location.type === "Online" || obj.location.type === "online") {
-      online = true;
-    }
+  }
+
+  let appointment = appointments[0];
+  eventId = appointment.googleEventId;
+  
+  startTime = new Date(appointment.date).toISOString();
+  let temp = startTime.slice(11, 19);
+  startTime = startTime.replace(temp, appointment.startTime.toString());
+  startTime = startTime.slice(0, 23);
+  endTime = new Date(appointment.date).toISOString();
+  temp = endTime.slice(11, 19);
+  endTime = endTime.replace(temp, appointment.endTime.toString());
+  endTime = endTime.slice(0, 23)
+  group = appointment.group.name;
+  location = appointment.location.name;
+  topic = appointment.topic.name;
+  if (appointment.location.type === "Online" || appointment.location.type === "online") {
+    online = true;
   }
 
   const event = {
     summary: group + ' Tutoring: ' + topic,
     location: location,
-    description: data.preSessionInfo,
+    description: appointment.preSessionInfo,
     start: {
       dateTime: startTime,
       timeZone: 'US/Central',
@@ -575,10 +671,25 @@ function addEvent(auth, data) {
         conferenceSolutionKey: {
           type: 'hangoutsMeet'
         },
-        requestId: group + data.date
+        requestId: group + appointment.date
       }
     }
   }
+
+  return event;
+}
+
+addToGoogle = async (appointmentId) => {
+  let auth = await getAccessToken(appointmentId);
+
+  let event = {};
+  event = await setUpEvent(appointmentId);
+  console.log(event)
+
+  const calendar = google.calendar({
+    version: 'v3',
+    auth: auth
+  });
 
   // We make a request to Google Calendar API.
   calendar.events.insert({
@@ -587,14 +698,128 @@ function addEvent(auth, data) {
     resource: event,
     conferenceDataVersion: 1,
   })
-    .then((event) => console.log('Event created: %s', event.data))
-    .catch((error) => {
-      console.log('Some error occured', error)
-      // console.log(error.response.data.error.errors);
-    });
+  .then(async (event) => {
+    await updateAppointmentGoogleId(appointmentId, event.data.id);
+    console.log('Event created: %s', event.data)
+  })
+  .catch((error) => {
+    console.log('Some error occured', error)
+    // if we get back 403 or 429, try again
+    if(error.status === 403 || error.status === 429) {
+      // We make a request to Google Calendar API.
+      console.log("Google status is: " + error.status)
+      console.log("Attempting insert again.")
+      calendar.events.insert({
+        auth: auth,
+        calendarId: "primary",
+        resource: event,
+        conferenceDataVersion: 1,
+      })
+      .then(async (event) => {
+        await updateAppointmentGoogleId(appointmentId, event.data.id);
+        console.log('Event created: %s', event.data)
+      })
+      .catch((error) => {
+        console.log('Some error occured', error)
+        // console.log(error.response.data.error.errors);
+      });
+    }
+  });
 }
 
-async function findFirstTutorForAppointment(id) {
+updateEvent = async (appointmentId) => {
+  let auth = await getAccessToken(appointmentId);
+
+  let event = {};
+  event = await setUpEvent(appointmentId);
+  console.log(event)
+
+  const calendar = google.calendar({
+    version: 'v3',
+    auth: auth
+  });
+
+  // We make a request to Google Calendar API.
+  calendar.events.update({
+    auth: auth,
+    calendarId: "primary",
+    eventId: eventId,
+    resource: event,
+    conferenceDataVersion: 1,
+  })
+  .then(async (event) => {
+    console.log('Event updated: %s', event.data)
+  })
+  .catch((error) => {
+    console.log('Some error occured', error)
+    // console.log(error.response.data.error.errors);
+  });
+}
+
+updateAppointmentGoogleId = async (appointmentId, eventId) => {
+  let appointment = {};
+
+  await Appointment.findAll({ where: { id: appointmentId } })
+  .then(data => {
+    appointment = data[0].dataValues
+  })
+  .catch(err => {
+    console.log("Some error occurred while retrieving Appointment.")
+  });
+
+  appointment.googleEventId = eventId;
+
+  Appointment.update(appointment, { where: { id: appointmentId } })
+  .then(num => {
+    if (num == 1) {
+      console.log("Appointment's google event id was updated successfully.")
+    }
+    else {
+      console.log(`Cannot update Appointment's google event id. Maybe Appointment was not found or req.body is empty!`)
+    }
+  })
+  .catch(err => {
+    console.log(`Cannot update Appointment's google event id. Maybe Appointment was not found or req.body is empty!`)
+  });
+}
+
+deleteFromGoogle = async (appointmentId) => {
+
+  let eventId = '';
+
+  await Appointment.findAll({ where: { id: appointmentId } })
+  .then(data => {
+    eventId = data[0].dataValues.googleEventId
+  })
+  .catch(err => {
+    console.log("Some error occurred while retrieving Appointment.")
+  });
+
+  console.log(eventId)
+
+  let auth = await getAccessToken(appointmentId);
+
+  var params = {
+    auth: auth,
+    calendarId: 'primary',
+    eventId: eventId,
+  };
+
+  const calendar = google.calendar({
+    version: 'v3',
+    auth: auth
+  });        
+
+  calendar.events.delete(params, function(err) {
+    if (err) {
+      console.log('The API returned an error: ' + err);
+      return;
+    }
+    console.log('Event deleted.');
+  });
+}
+
+findFirstTutorForAppointment = async (id) => {
   const appId = id;
   console.log(id)
   await Person.findAll({
@@ -620,23 +845,16 @@ async function findFirstTutorForAppointment(id) {
     });
 };
 
-/**
- * Create an OAuth2 client with the credentials in the .env file, and then execute the
- * given callback function.
- * @param {function} callback The callback to call with the authorized client.
- */
-async function authorize(callback, data) {
+getAccessToken = async (appointmentId) => {
   const client_id = process.env.GOOGLE_AUDIENCE;
   const client_secret = process.env.CLIENT_SECRET;
-  const redirect_url = process.env.REDIRECT_URL;
   
   const oAuth2Client = new google.auth.OAuth2(
     client_id, client_secret, 'postmessage');
 
-await findFirstTutorForAppointment(data[0].id);
+  await findFirstTutorForAppointment(appointmentId);
 
-
-    let creds = {};
+  let creds = {};
   // gets access token from refresh token
   // reference: https://zapier.com/engineering/how-to-use-the-google-calendar-api/
   var fetch = require("node-fetch"); // or fetch() is native in browsers
@@ -666,7 +884,5 @@ await findFirstTutorForAppointment(data[0].id);
   console.log(creds)
 
   oAuth2Client.setCredentials(creds);
-  callback(oAuth2Client, data);
-
+  return oAuth2Client;
 }
-
