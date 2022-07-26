@@ -494,10 +494,6 @@ exports.updateForGoogle = async (req, res) => {
             })
           }
         }
-
-        res.send({
-          message: "Appointment was updated successfully."
-        });
       }
       else {
         res.send({
