@@ -8,7 +8,7 @@ module.exports = app => {
     router.post("/", [authenticate,isSuperAdmin],group.create);
   
     // Retrieve all Groups
-    router.get("/", [authenticate],group.findAll);
+    router.get("/", group.findAll);
 
     // Retrieve Group by name
     router.get("/name/:name", [authenticate],group.findOneByName);
