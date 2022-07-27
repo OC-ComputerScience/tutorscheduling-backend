@@ -17,9 +17,9 @@ const client = require('twilio')(accountSid, authToken);
 
   exports.hourlyTasks = () =>{
 // for prod, runs at ever hour at 55 minute past the hour.
-       cron.schedule('55 * * * *', function() {
+      cron.schedule('55 * * * *', function() {
 // for testing, runs every minute
-//      cron.schedule('* * * * *', function() {
+      // cron.schedule('* * * * *', function() {
         console.log('Scheduled task every day at 55 min past the hour');
         deletePastAppointments();
         notifyUpcomingAppointments();

@@ -13,6 +13,10 @@ exports.send = (req, res) => {
       .then(message => console.log("sent" + message.sid))
       .catch(err => {
         console.log("Could not send messsage"+ err);
+        res.status(500).send({
+          message:
+            err.message || "Could not send messsage: "+ err
+        });
       });
   
 }
