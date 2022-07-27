@@ -21,6 +21,9 @@ module.exports = app => {
   
     // Retrieve personappointments for a specific person
     router.get("/person/:personId", [authenticate],personappointment.findAllForPerson);
+    
+    // Retrieve personappointments for a specific person
+    router.get("/appointment/:appointmentId", [authenticate],personappointment.findStudentDataForTable);
 
     // Update a PersonAppointment with id
     router.put("/:id", [authenticate],personappointment.update);
