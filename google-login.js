@@ -11,3 +11,4 @@ let email = payload['email'];
 let emailVerified = payload['email_verified'];
 let name = payload["name"];
 let pictureUrl = payload["picture"];
+
