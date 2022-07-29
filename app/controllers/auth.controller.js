@@ -206,6 +206,7 @@ exports.authorize = async (req, res) => {
         if (num == 1) {
             console.log("updated person's google token stuff")
         } else {
+          
             console.log(`Cannot update Person with id=${person.id}. Maybe Person was not found or req.body is empty!`)
         }
         let userInfo = {
@@ -216,7 +217,8 @@ exports.authorize = async (req, res) => {
         res.send(userInfo);
     })
     .catch(err => {
-        console.log("Error updating Person with id=" + person.id + " " + err)
+      res.status(500).send({ message: err.message });
+       
     });
 
     console.log(tokens)
