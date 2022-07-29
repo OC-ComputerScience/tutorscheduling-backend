@@ -168,7 +168,7 @@ exports.login = async (req, res) => {
 };
 
 exports.authorize = async (req, res) => {
-    
+console.log*"authorize"
     const oauth2Client = new google.auth.OAuth2(
         process.env.GOOGLE_AUDIENCE,
         process.env.CLIENT_SECRET,
