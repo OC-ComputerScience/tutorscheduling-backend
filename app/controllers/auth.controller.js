@@ -168,13 +168,14 @@ exports.login = async (req, res) => {
 };
 
 exports.authorize = async (req, res) => {
-console.log("authorize")
+console.log("authorize client")
     const oauth2Client = new google.auth.OAuth2(
         process.env.GOOGLE_AUDIENCE,
         process.env.CLIENT_SECRET,
         'postmessage'
     );
 
+    console.log("authorize token")
     // Get access and refresh tokens (if access_type is offline)
     let { tokens } = await oauth2Client.getToken(req.body.code);
     oauth2Client.setCredentials(tokens);
