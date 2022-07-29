@@ -168,7 +168,6 @@ exports.login = async (req, res) => {
 };
 
 exports.authorize = async (req, res) => {
-    console.log(req)
     
     const oauth2Client = new google.auth.OAuth2(
         process.env.GOOGLE_AUDIENCE,
@@ -181,6 +180,7 @@ exports.authorize = async (req, res) => {
     oauth2Client.setCredentials(tokens);
 
     let person = {}
+console.log("findPerson")
 
     await Person.findOne({
         where: {
@@ -194,8 +194,10 @@ exports.authorize = async (req, res) => {
     })
     .catch(err => {
         res.status(500).send({ message: err.message });
+        return
     });
-
+    console.log("person")
+    console.log(person)
     person.refresh_token = tokens.refresh_token;
     let tempExpirationDate = new Date();
     tempExpirationDate.setDate(tempExpirationDate.getDate() + 100);
