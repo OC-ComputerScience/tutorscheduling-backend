@@ -94,9 +94,24 @@ exports.findAllUpcomingForPersonForGroup = (req, res) => {
   const personId = req.params.personId;
   const groupId = req.params.groupId;
   const date = new Date();
+  date.setHours(date.getHours() - (date.getTimezoneOffset()/60))
+  date.setHours(0,0,0,0);
+
+  let checkTime = new Date();
+  checkTime = checkTime.getHours()+":"+ checkTime.getMinutes() +":"+checkTime.getSeconds();
 
   Appointment.findAll({
-    where: { groupId: groupId, date: { [Op.gte]: date }, 
+    where: { groupId: groupId, 
+      [Op.or]: [
+        {
+          [Op.and]: [
+            {startTime: { [Op.gte]: checkTime }},  {date: { [Op.eq]: date }},
+          ],
+        },
+        {
+          date: { [Op.gt]: date },
+        }
+      ],
       [Op.and]: [
         {
             status: { [Op.not]: "cancelled" }

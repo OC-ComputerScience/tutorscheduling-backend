@@ -168,19 +168,20 @@ exports.login = async (req, res) => {
 };
 
 exports.authorize = async (req, res) => {
-    console.log(req)
-    
+console.log("authorize client")
     const oauth2Client = new google.auth.OAuth2(
         process.env.GOOGLE_AUDIENCE,
         process.env.CLIENT_SECRET,
         'postmessage'
     );
 
+    console.log("authorize token")
     // Get access and refresh tokens (if access_type is offline)
     let { tokens } = await oauth2Client.getToken(req.body.code);
     oauth2Client.setCredentials(tokens);
 
     let person = {}
+console.log("findPerson")
 
     await Person.findOne({
         where: {
@@ -194,8 +195,10 @@ exports.authorize = async (req, res) => {
     })
     .catch(err => {
         res.status(500).send({ message: err.message });
+        return
     });
-
+    console.log("person")
+    console.log(person)
     person.refresh_token = tokens.refresh_token;
     let tempExpirationDate = new Date();
     tempExpirationDate.setDate(tempExpirationDate.getDate() + 100);
@@ -206,6 +209,7 @@ exports.authorize = async (req, res) => {
         if (num == 1) {
             console.log("updated person's google token stuff")
         } else {
+          
             console.log(`Cannot update Person with id=${person.id}. Maybe Person was not found or req.body is empty!`)
         }
         let userInfo = {
@@ -216,7 +220,8 @@ exports.authorize = async (req, res) => {
         res.send(userInfo);
     })
     .catch(err => {
-        console.log("Error updating Person with id=" + person.id + " " + err)
+      res.status(500).send({ message: err.message });
+       
     });
 
     console.log(tokens)

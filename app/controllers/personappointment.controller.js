@@ -1,5 +1,6 @@
 const db = require("../models");
 const PersonAppointment = db.personappointment;
+const Person = db.person;
 const Op = db.Sequelize.Op;
 
 // Create and Save a new PersonAppointment
@@ -120,6 +121,36 @@ exports.findOne = (req, res) => {
         });
       });
   };
+
+  // Retrieve all upcoming appointments for a person for a group from the database.
+exports.findStudentDataForTable = (req, res) => {
+  const appointmentId = req.params.appointmentId;
+
+  PersonAppointment.findAll({
+    where: { appointmentId: appointmentId,
+      isTutor: false,
+    },
+    include: [{
+      model: Person,
+      as: 'person',
+      required: true
+    }]
+  })
+    .then(data => {
+      if (data.length > 1) {
+        res.send(data.length); //send back the number of people for a group appointment
+      }
+      else {
+        res.send(data);
+      }
+    })
+    .catch(err => {
+      res.status(500).send({
+        message:
+          err.message || "Some error occurred while retrieving appointments for person for group."
+      });
+    });
+};
 
 // Update a PersonAppointment by the id in the request
 exports.update = (req, res) => {
