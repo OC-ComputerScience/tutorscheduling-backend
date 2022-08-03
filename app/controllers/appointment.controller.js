@@ -73,20 +73,39 @@ exports.findAll = (req, res) => {
 exports.findAppointmentsForGroup = (req, res) => {
   const groupId = req.params.groupId;
 
-  Appointment.findAll({ 
-    where: { 
-      groupId: groupId 
-    }
+  Appointment.findAll({
+    where: { groupId : groupId },
+    include: [{
+        model: Location,
+        as: 'location',
+        required: true
+      },
+      {
+        model: Topic,
+        as: 'topic',
+        required: true
+      },
+      {
+        model: PersonAppointment,
+        as: 'personappointment',
+        required: false,
+        include: [{
+          model: Person,
+          as: 'person',
+          required: true,
+          right: true
+      }]
+    }]
   })
-    .then(data => {
-      res.send(data);
-    })
-    .catch(err => {
-      res.status(500).send({
-        message:
-          err.message || "Some error occurred while retrieving Appointment."
-      });
+  .then(data => {
+    res.send(data);
+  })
+  .catch(err => {
+    res.status(500).send({
+      message:
+        err.message || "Some error occurred while retrieving Appointments."
     });
+  });
 };
 
 // Retrieve all upcoming appointments for a person for a group from the database.
