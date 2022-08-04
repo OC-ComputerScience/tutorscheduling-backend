@@ -33,6 +33,7 @@ const client = require('twilio')(accountSid, authToken);
     await Appointment.findAll({
       where: { 
         status : 'available',
+        type : 'Private',
         date : {[Op.eq]: delDate},
         startTime : {[Op.lt]: delTime}
       }
