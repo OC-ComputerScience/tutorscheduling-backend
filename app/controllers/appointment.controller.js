@@ -5,6 +5,7 @@ const Person = db.person;
 const Group = db.group;
 const Location = db.location;
 const Topic = db.topic;
+const PersonTopic = db.persontopic;
 const Op = db.Sequelize.Op;
 
 const { google } = require("googleapis");
@@ -72,30 +73,48 @@ exports.findAll = (req, res) => {
 // Retrieve all Appointment from the database.
 exports.findAppointmentsForGroup = (req, res) => {
   const groupId = req.params.groupId;
-
+  var oneMonthAgo = new Date(
+    new Date().getFullYear(),
+    new Date().getMonth() - 1, 
+    new Date().getDate()
+  );
+  
   Appointment.findAll({
-    where: { groupId : groupId },
+    where: { groupId : groupId, date: { [Op.gt]: oneMonthAgo }},
     include: [{
         model: Location,
         as: 'location',
-        required: true
+        required: false
       },
       {
         model: Topic,
         as: 'topic',
-        required: true
+        required: false
       },
       {
         model: PersonAppointment,
         as: 'personappointment',
-        required: false,
+        required: true,
         include: [{
           model: Person,
           as: 'person',
           required: true,
-          right: true
-      }]
-    }]
+          right: true,
+          include: [{
+            model: PersonTopic,
+            as: 'persontopic',
+            required: true,
+            include: [{
+              model: Topic,
+              as: 'topic',
+              required: true,
+              right: true,
+              where: { groupId: groupId }
+            }]
+          }]
+        }]
+      }
+    ]
   })
   .then(data => {
     res.send(data);
