@@ -1,6 +1,7 @@
 const db = require("../models");
 const PersonAppointment = db.personappointment;
 const Person = db.person;
+const Appointment = db.appointment;
 const Op = db.Sequelize.Op;
 
 // Create and Save a new PersonAppointment
@@ -110,7 +111,14 @@ exports.findOne = (req, res) => {
     const personId = req.params.personId;
     const appointmentId = req.params.appointmentId;
   
-    PersonAppointment.findOne({ where: {personId: personId, appointmentId: appointmentId} })
+    PersonAppointment.findOne({ 
+      where: {personId: personId, appointmentId: appointmentId},
+      include: [{
+        model: Appointment,
+        as: 'appointment',
+        required: true,
+      }]
+    })
       .then(data => {
         res.send(data);
       })

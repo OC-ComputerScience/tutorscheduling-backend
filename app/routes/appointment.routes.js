@@ -36,6 +36,9 @@ module.exports = app => {
 
     // Retrieve tutor for an appointment
     router.get("/tutorAppointment/:id", [authenticate],appointment.getTutorForAppointment);
+
+    // Retrieve appointment for feedback
+    router.get("/feedback/:appointmentId", [authenticate], appointment.findFeedbackApptForPerson);
   
     // Retrieve a single Appointment with id
     router.get("/:id", [authenticate],appointment.findOne);
