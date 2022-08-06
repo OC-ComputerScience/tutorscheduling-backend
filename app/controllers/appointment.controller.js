@@ -103,7 +103,7 @@ exports.findAppointmentsForGroup = (req, res) => {
           include: [{
             model: PersonTopic,
             as: 'persontopic',
-            required: true,
+            required: false,
             include: [{
               model: Topic,
               as: 'topic',
