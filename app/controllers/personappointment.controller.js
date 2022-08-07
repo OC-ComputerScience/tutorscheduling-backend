@@ -152,6 +152,36 @@ exports.findStudentDataForTable = (req, res) => {
     });
 };
 
+  // Retrieve all upcoming appointments for a person for a group from the database.
+  exports.findTutorDataForTable = (req, res) => {
+    const appointmentId = req.params.appointmentId;
+  
+    PersonAppointment.findAll({
+      where: { appointmentId: appointmentId,
+        isTutor: true,
+      },
+      include: [{
+        model: Person,
+        as: 'person',
+        required: true
+      }]
+    })
+      .then(data => {
+        if (data.length > 1) {
+          res.send(data.length); //send back the number of people for a group appointment
+        }
+        else {
+          res.send(data);
+        }
+      })
+      .catch(err => {
+        res.status(500).send({
+          message:
+            err.message || "Some error occurred while retrieving appointments for person for group."
+        });
+      });
+  };
+
 // Update a PersonAppointment by the id in the request
 exports.update = (req, res) => {
     const id = req.params.id;
