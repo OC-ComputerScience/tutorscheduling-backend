@@ -20,7 +20,8 @@ exports.create = (req, res) => {
     const group = {
       id: req.body.id,
       name: req.body.name,
-      description: req.body.description
+      description: req.body.description,
+      timeInterval: req.body.timeInterval
     };
   
     // Save Group in the database

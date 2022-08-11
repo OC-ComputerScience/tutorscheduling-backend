@@ -11,6 +11,10 @@ module.exports = (sequelize, Sequelize) => {
       },
       description: {
         type: Sequelize.STRING
+      },
+      timeInterval: {
+        type: Sequelize.INTEGER,
+        allowNull: false
       }
     });
   
