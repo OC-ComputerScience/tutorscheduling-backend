@@ -387,6 +387,51 @@ exports.findAllForPerson = (req, res) => {
       });
     });
 };
+
+exports.findFeedbackApptForPerson = (req, res) => {
+  const appointmentId = req.params.appointmentId;
+
+  Appointment.findAll({
+    where: { id: appointmentId },
+    include: [{
+        model: Location,
+        as: 'location',
+        required: true
+      },
+      {
+        model: Topic,
+        as: 'topic',
+        required: true
+      },
+      {
+        model: Group,
+        as: 'group',
+        required: true
+      },
+      {
+        model: PersonAppointment,
+        as: 'personappointment',
+        required: true,
+        include: [{
+          model: Person,
+          as: 'person',
+          required: true,
+          right: true
+      }]
+    }],
+  })
+  .then(data => {
+    res.send(data);
+  })
+  .catch(err => {
+    res.status(500).send({
+      message:
+        err.message || "Some error occurred while retrieving appointments."
+    });
+  });
+};
+
+
 // Find a single Appointment with an id
 exports.findOne = (req, res) => {
   const id = req.params.id;

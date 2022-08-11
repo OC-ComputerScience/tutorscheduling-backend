@@ -236,10 +236,10 @@ exports.logout = async (req, res) => {
         session = data[0].dataValues;
     })
     .catch(err => {
-    res.status(500).send({
-        message:
-            err.message || "Some error occurred while retrieving sessions."
+        res.status(500).send({
+            message: err.message || "Some error occurred while retrieving sessions."
         });
+        return;
     });
 
     session.token = '';
@@ -253,9 +253,9 @@ exports.logout = async (req, res) => {
             });
         } else {
             console.log("failed");
-        res.send({
-            message: `Error logging out user.`
-        });
+            res.send({
+                message: `Error logging out user.`
+            });
         }
     })
     .catch(err => {
