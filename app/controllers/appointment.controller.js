@@ -716,6 +716,8 @@ setUpEvent = async (appointmentId) => {
     let obj = appointments[i];
     let tempObj = {};
     tempObj.email = obj.personappointment.person.email;
+    if(obj.personappointment.isTutor)
+      tempObj.responseStatus = "accepted";
     attendees.push(tempObj);
   }
 
