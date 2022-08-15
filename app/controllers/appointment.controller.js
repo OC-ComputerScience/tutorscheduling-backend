@@ -754,9 +754,11 @@ setUpEvent = async (appointmentId) => {
       useDefault: false,
       overrides: [
         { method: "email", minutes: 24 * 60 },
-        { method: "popup", minutes: 30 },
+        { method: "email", minutes: 120 },
       ],
     },
+    status: "confirmed",
+    transparency: "opaque"
   };
 
   if (online) {
@@ -791,6 +793,7 @@ addToGoogle = async (appointmentId) => {
     calendarId: "primary",
     resource: event,
     conferenceDataVersion: 1,
+    sendUpdates: "all"
   })
   .then(async (event) => {
     await updateAppointmentGoogleId(appointmentId, event.data.id);
@@ -808,6 +811,7 @@ addToGoogle = async (appointmentId) => {
         calendarId: "primary",
         resource: event,
         conferenceDataVersion: 1,
+        sendUpdates: "all"
       })
       .then(async (event) => {
         await updateAppointmentGoogleId(appointmentId, event.data.id);
@@ -840,6 +844,7 @@ updateEvent = async (appointmentId) => {
     eventId: eventId,
     resource: event,
     conferenceDataVersion: 1,
+    sendUpdates: "all"
   })
   .then(async (event) => {
     console.log('Event updated: %s', event.data)
