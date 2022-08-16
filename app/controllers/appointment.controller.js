@@ -152,9 +152,6 @@ exports.findAllUpcomingForPersonForGroup = (req, res) => {
       ],
       [Op.and]: [
         {
-            status: { [Op.not]: "cancelled" }
-        }, 
-        {
             status: { [Op.not]: "studentCancel" }
         }, 
         {
@@ -168,15 +165,15 @@ exports.findAllUpcomingForPersonForGroup = (req, res) => {
       required: true
     }]
   })
-    .then(data => {
-      res.send(data);
-    })
-    .catch(err => {
-      res.status(500).send({
-        message:
-          err.message || "Some error occurred while retrieving appointments for person for group."
-      });
+  .then(data => {
+    res.send(data);
+  })
+  .catch(err => {
+    res.status(500).send({
+      message:
+        err.message || "Some error occurred while retrieving appointments for person for group."
     });
+  });
 };
 
 // Retrieve all passed appointments for a person for a group from the database.
