@@ -24,6 +24,9 @@ module.exports = app => {
   // Retrieve all approved tutors for group
   router.get("/appTutor/:groupId", [authenticate],person.findApprovedTutorsForGroup);
 
+  // Retrieve all appointment hour count
+  router.get("/group/:groupId/hours/week/:currWeek", person.getAppointmentHourCount);
+
   // Retrieve a single Person with id
   router.get("/:id", [authenticate],person.findOne);
 

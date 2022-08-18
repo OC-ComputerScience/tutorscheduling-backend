@@ -20,6 +20,9 @@ module.exports = app => {
     // Retrieve topics by group for a specific person including persontopics
     router.get("/group/:groupId/person/:personId",[authenticate], topic.findTopicByGroupForPerson);
   
+    // Retrieve all appointment hour count
+    router.get("/group/:groupId/hours/week/:currWeek", topic.getAppointmentHourCount);
+
     // Retrieve a single Topic with id
     router.get("/:id",[authenticate], topic.findOne);
   

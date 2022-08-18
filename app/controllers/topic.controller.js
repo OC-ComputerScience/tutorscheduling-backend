@@ -67,6 +67,28 @@ exports.findAllForGroup = (req, res) => {
     });
 };
 
+// Retrieve all Topic hours for a group from the database.
+exports.getAppointmentHourCount = (req, res) => {
+  const id = req.params.groupId;
+  const currWeek = req.params.currWeek;
+  var week = getWeekFromDate(currWeek)
+  var firstDay = week.first.slice(0,10)
+  var lastDay = week.last.slice(0,10)
+
+  data = db.sequelize.query(("SELECT SUM(CASE WHEN t.id = a.topicId AND a.date"
+  + "  BETWEEN '" + firstDay + "' AND '" + lastDay + "' THEN TIMESTAMPDIFF(minute, startTime, endTime) ELSE 0 END)"
+	+ "AS diff, name FROM topics t"
+  + "  JOIN appointments a WHERE a.topicId = t.id"
+  + "  AND t.groupId = " + id ),
+  { type:db.sequelize.QueryTypes.SELECT})
+   .then(function(data) {
+      res.status(200).json(data)
+  })
+  .catch(err => {
+      res.status(500).send({ message: err.message });
+  });
+};
+
 // Retrieve topics per group for persontopics for a specific person
 exports.findTopicByGroupForPerson = (req, res) => {
   const personId = req.params.personId;
@@ -198,3 +220,24 @@ exports.deleteAll = (req, res) => {
       });
   };
   
+function getWeekFromDate(date) {
+  var year = parseInt(date.substring(0,4));
+  var month = parseInt(date.substring(5,7));
+  var day = parseInt(date.substring(8,10));
+  var curr = new Date(year, month-1, day); // get current date
+  console.log(day + ", " + month + ", " + year) // something wonky here, month is adding one each time.
+  console.log("CURR " + curr)
+  var first = curr.getDate() - curr.getDay(); // First day is the day of the month - the day of the week
+  var last = first + 6; // last day is the first day + 6
+
+  var firstday = new Date(curr.setDate(first));
+  var lastday = new Date(curr.setDate(last));
+
+  return toSQLDate(firstday, lastday);
+}
+
+function toSQLDate(date1, date2) {
+  first = date1.toISOString().slice(0, 19).replace('T', ' ');
+  last = date2.toISOString().slice(0, 19).replace('T', ' ');
+  return {first, last};
+}
