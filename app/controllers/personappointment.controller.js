@@ -145,14 +145,10 @@ exports.findStudentDataForTable = (req, res) => {
     }]
   })
     .then(data => {
-      if (data.length > 1) {
-        res.send(data.length); //send back the number of people for a group appointment
-      }
-      else {
         res.send(data);
-      }
     })
     .catch(err => {
+      console.log(err)
       res.status(500).send({
         message:
           err.message || "Some error occurred while retrieving appointments for person for group."
@@ -175,12 +171,7 @@ exports.findStudentDataForTable = (req, res) => {
       }]
     })
       .then(data => {
-        if (data.length > 1) {
-          res.send(data.length); //send back the number of people for a group appointment
-        }
-        else {
           res.send(data);
-        }
       })
       .catch(err => {
         res.status(500).send({
