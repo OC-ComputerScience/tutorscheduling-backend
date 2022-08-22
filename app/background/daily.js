@@ -18,15 +18,16 @@ const url = process.env.url;
 
   exports.dailyTasks = () =>{
 // for prod, runs at every day at 9am.
-       cron.schedule('00 09 * * *', function() {
+//       cron.schedule('00 09 * * *', function() {
 // for testing, runs every minute
-//      cron.schedule('* * * * *', function() {
+      cron.schedule('* * * * *', function() {
         console.log('Start running a task every day at 12:01 am');
         notifyForFeedback();
         })
 }
 
 async function notifyForFeedback() {
+  console.log("check for feedback");
   let date = new Date();
   date.setHours(date.getHours() - (date.getTimezoneOffset()/60))
   date.setHours(0,0,0);
@@ -43,7 +44,12 @@ async function notifyForFeedback() {
       where: {
         [Op.or]: [
           {status: 'booked'},
-          {type: 'Group'}
+          { [Op.and] : [
+              {type: 'Group'},
+              {status: 'available'}
+            ] 
+          }
+
         ],
         date : {[Op.lt]: date},
       },
