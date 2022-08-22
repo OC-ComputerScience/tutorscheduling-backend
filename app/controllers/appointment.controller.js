@@ -152,9 +152,6 @@ exports.findAllUpcomingForPersonForGroup = (req, res) => {
       ],
       [Op.and]: [
         {
-            status: { [Op.not]: "cancelled" }
-        }, 
-        {
             status: { [Op.not]: "studentCancel" }
         }, 
         {
@@ -168,15 +165,15 @@ exports.findAllUpcomingForPersonForGroup = (req, res) => {
       required: true
     }]
   })
-    .then(data => {
-      res.send(data);
-    })
-    .catch(err => {
-      res.status(500).send({
-        message:
-          err.message || "Some error occurred while retrieving appointments for person for group."
-      });
+  .then(data => {
+    res.send(data);
+  })
+  .catch(err => {
+    res.status(500).send({
+      message:
+        err.message || "Some error occurred while retrieving appointments for person for group."
     });
+  });
 };
 
 // Retrieve all passed appointments for a person for a group from the database.
@@ -716,6 +713,8 @@ setUpEvent = async (appointmentId) => {
     let obj = appointments[i];
     let tempObj = {};
     tempObj.email = obj.personappointment.person.email;
+    if(obj.personappointment.isTutor)
+      tempObj.responseStatus = "accepted";
     attendees.push(tempObj);
   }
 
@@ -754,9 +753,11 @@ setUpEvent = async (appointmentId) => {
       useDefault: false,
       overrides: [
         { method: "email", minutes: 24 * 60 },
-        { method: "popup", minutes: 30 },
+        { method: "email", minutes: 120 },
       ],
     },
+    status: "confirmed",
+    transparency: "opaque"
   };
 
   if (online) {
@@ -791,6 +792,7 @@ addToGoogle = async (appointmentId) => {
     calendarId: "primary",
     resource: event,
     conferenceDataVersion: 1,
+    sendUpdates: "all"
   })
   .then(async (event) => {
     await updateAppointmentGoogleId(appointmentId, event.data.id);
@@ -808,6 +810,7 @@ addToGoogle = async (appointmentId) => {
         calendarId: "primary",
         resource: event,
         conferenceDataVersion: 1,
+        sendUpdates: "all"
       })
       .then(async (event) => {
         await updateAppointmentGoogleId(appointmentId, event.data.id);
@@ -840,6 +843,7 @@ updateEvent = async (appointmentId) => {
     eventId: eventId,
     resource: event,
     conferenceDataVersion: 1,
+    sendUpdates: "all"
   })
   .then(async (event) => {
     console.log('Event updated: %s', event.data)
