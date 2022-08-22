@@ -18,9 +18,9 @@ const url = process.env.url;
 
   exports.dailyTasks = () =>{
 // for prod, runs at every day at 9am.
-//       cron.schedule('00 09 * * *', function() {
+       cron.schedule('00 09 * * *', function() {
 // for testing, runs every minute
-      cron.schedule('* * * * *', function() {
+//      cron.schedule('* * * * *', function() {
         console.log('Start running a task every day at 12:01 am');
         notifyForFeedback();
         })
