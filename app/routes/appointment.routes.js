@@ -13,10 +13,10 @@ module.exports = app => {
     // Retrieve all Appointment
     router.get("/person/:personId", [authenticate],appointment.findAllForPerson);
 
-    // Retrieve all Appointment
+    // Retrieve all Appointment for reporting (literally all)
     router.get("/group/:groupId", [authenticate],appointment.findAllForGroup);
 
-    // Retrieve all Appointment
+    // Retrieve all Appointment for calendar (one month behind)
     router.get("/allGroup/:groupId", [authenticate],appointment.findAppointmentsForGroup);
 
     // Retrieve all upcoming Appointment
