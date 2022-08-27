@@ -205,12 +205,29 @@ exports.findAllUpcomingForPersonForGroup = (req, res) => {
         {
             status: { [Op.not]: "tutorCancel" }
         }
-      ] },
+      ]
+    },
     include: [{
-      where: { '$personappointment.personId$': personId },
+      model: Location,
+      as: 'location',
+      required: false
+    },
+    {
+      model: Topic,
+      as: 'topic',
+      required: false
+    },
+    {
       model: PersonAppointment,
       as: 'personappointment',
-      required: true
+      required: true,
+      include: [{
+        model: Person,
+        as: 'person',
+        required: true,
+        right: true,
+        where: { id: personId }
+      }]
     }]
   })
   .then(data => {
