@@ -1,5 +1,7 @@
 const db = require("../models");
 const PersonRole = db.personrole;
+const Role = db.role;
+const Group = db.group;
 const Op = db.Sequelize.Op;
 
 // Create and Save a new PersonRole
@@ -66,6 +68,34 @@ exports.findAllForPerson = (req, res) => {
           err.message || "Some error occurred while retrieving personroles for person."
       });
     });
+};
+
+// Retrieve the group and role for a person role id from the database.
+exports.findGroupByPersonRole = (req, res) => {
+  const id = req.params.id;
+
+  PersonRole.findAll({ 
+    where: { id: id},
+    include: [{
+      model: Role,
+      include: [ {
+          model: Group, 
+          as: 'group',
+          required: true
+      } ],
+      as: 'role',
+      required: true
+    }]
+  })
+  .then(data => {
+    res.send(data);
+  })
+  .catch(err => {
+    res.status(500).send({
+      message:
+        err.message || "Some error occurred while retrieving personroles for person."
+    });
+  });
 };
 
 // Find a single PersonRole with an id
