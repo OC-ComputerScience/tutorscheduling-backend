@@ -10,6 +10,9 @@ module.exports = app => {
     // Retrieve all PersonRole
     router.get("/", [authenticate],personrole.findAll);
   
+    // Retrieve a group and role based on a PersonRole
+    router.get("/group/:id", [authenticate],personrole.findGroupByPersonRole);
+
     // Retrieve a single PersonRole with id
     router.get("/:id", [authenticate],personrole.findOne);
 

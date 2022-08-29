@@ -127,6 +127,54 @@ exports.findAppointmentsForGroup = (req, res) => {
   });
 };
 
+// Retrieve all upcoming appointments for a person from the database to help check conflicts
+exports.findAllUpcomingForPerson = (req, res) => {
+  const personId = req.params.personId;
+  const date = new Date();
+  date.setHours(date.getHours() - (date.getTimezoneOffset()/60))
+  date.setHours(0,0,0,0);
+
+  let checkTime = new Date();
+  checkTime = checkTime.getHours()+":"+ checkTime.getMinutes() +":"+checkTime.getSeconds();
+
+  Appointment.findAll({
+    where: {
+      [Op.or]: [
+        {
+          [Op.and]: [
+            {startTime: { [Op.gte]: checkTime }},  {date: { [Op.eq]: date }},
+          ],
+        },
+        {
+          date: { [Op.gt]: date },
+        }
+      ],
+      [Op.and]: [
+        {
+            status: { [Op.not]: "studentCancel" }
+        }, 
+        {
+            status: { [Op.not]: "tutorCancel" }
+        }
+      ] },
+    include: [{
+      where: { '$personappointment.personId$': personId },
+      model: PersonAppointment,
+      as: 'personappointment',
+      required: true
+    }]
+  })
+  .then(data => {
+    res.send(data);
+  })
+  .catch(err => {
+    res.status(500).send({
+      message:
+        err.message || "Some error occurred while retrieving appointments for person for group."
+    });
+  });
+};
+
 // Retrieve all upcoming appointments for a person for a group from the database.
 exports.findAllUpcomingForPersonForGroup = (req, res) => {
   const personId = req.params.personId;
@@ -157,12 +205,29 @@ exports.findAllUpcomingForPersonForGroup = (req, res) => {
         {
             status: { [Op.not]: "tutorCancel" }
         }
-      ] },
+      ]
+    },
     include: [{
-      where: { '$personappointment.personId$': personId },
+      model: Location,
+      as: 'location',
+      required: false
+    },
+    {
+      model: Topic,
+      as: 'topic',
+      required: false
+    },
+    {
       model: PersonAppointment,
       as: 'personappointment',
-      required: true
+      required: true,
+      include: [{
+        model: Person,
+        as: 'person',
+        required: true,
+        right: true,
+        where: { id: personId }
+      }]
     }]
   })
   .then(data => {
@@ -334,22 +399,41 @@ exports.findAllForGroup = (req, res) => {
   const groupId = req.params.groupId;
 
   Appointment.findAll({
-    where: { groupId: groupId },
+    where: { groupId : groupId },
     include: [{
-      model: Location,
-      as: 'location',
-      required: true
-    },
-    {
-      model: Topic,
-      as: 'topic',
-      required: true
-    },
-    {
-      model: PersonAppointment,
-      as: 'personappointment',
-      required: true
-    }]
+        model: Location,
+        as: 'location',
+        required: false
+      },
+      {
+        model: Topic,
+        as: 'topic',
+        required: false
+      },
+      {
+        model: PersonAppointment,
+        as: 'personappointment',
+        required: true,
+        include: [{
+          model: Person,
+          as: 'person',
+          required: true,
+          right: true,
+          include: [{
+            model: PersonTopic,
+            as: 'persontopic',
+            required: false,
+            include: [{
+              model: Topic,
+              as: 'topic',
+              required: true,
+              right: true,
+              where: { groupId: groupId }
+            }]
+          }]
+        }]
+      }
+    ]
   })
     .then(data => {
       res.send(data);
