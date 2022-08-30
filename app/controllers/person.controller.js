@@ -165,7 +165,7 @@ exports.getAppointmentHourCount = (req, res) => {
   var week = getWeekFromDate(currWeek)
   var firstDay = week.first.slice(0,10)
   var lastDay = week.last.slice(0,10)
-
+  console.log("right here")
   data = db.sequelize.query(
       ("SELECT "
 	    +"SUM(CASE"
@@ -197,12 +197,12 @@ exports.getAppointmentHourCount = (req, res) => {
       +"          ELSE 0"
       +"          END) "
 	    +"	AS hours_paying"
-      +"  FROM people AS p"
-	    +"	LEFT JOIN personroles pr ON pr.personId = p.id"
-      +"      LEFT JOIN roles r ON r.id = pr.roleId"
+      +"  FROM roles AS r"
+	    +"	LEFT JOIN personroles pr ON pr.roleId = r.id"
+      +"  LEFT JOIN people p ON p.id = pr.personId"
 	    +"	LEFT JOIN personappointments pa ON pa.personId = p.id"
-      +"      LEFT JOIN appointments a ON a.id = pa.appointmentId"
-      +"      WHERE r.groupId = 1 AND r.type = 'Tutor'"),
+      +"  LEFT JOIN appointments a ON a.id = pa.appointmentId"
+      +"  WHERE r.groupId = 1 AND r.type = 'Tutor'"),
   { type:db.sequelize.QueryTypes.SELECT})
     .then(function(data) {
       res.status(200).json(data)
