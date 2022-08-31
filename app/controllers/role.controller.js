@@ -1,6 +1,7 @@
 const db = require("../models");
 const Role = db.role;
 const PersonRole = db.personrole;
+const PersonRolePrivilege = db.personroleprivilege;
 const Op = db.Sequelize.Op;
 
 // Create and Save a new Role
@@ -76,7 +77,11 @@ exports.findRoleByGroupForPerson = (req, res) => {
     include: [ {
         model: PersonRole, 
         as: 'personrole',
-        right: true
+        right: true,
+        include: [ {
+          model: PersonRolePrivilege,
+          as: 'personroleprivilege'
+        } ]
     } ]
   })
   .then((data) => {

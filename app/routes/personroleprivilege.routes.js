@@ -9,6 +9,9 @@ module.exports = app => {
   
     // Retrieve all personrole privilege
     router.get("/", [authenticate],personroleprivilege.findAll);
+
+    // Retrieve privileges with personroleId
+    router.get("/personrole/:personroleId", [authenticate],personroleprivilege.findPrivilegeByPersonRole);
   
     // Retrieve a single personrole privilege with id
     router.get("/:id", [authenticate],personroleprivilege.findOne);

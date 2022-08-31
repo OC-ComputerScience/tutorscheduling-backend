@@ -5,7 +5,7 @@ const Op = db.Sequelize.Op;
 // Create and Save a new PersonRolePrivilege
 exports.create = (req, res) => {
     // Validate request
-    if (!req.body.status) {
+    if (!req.body.privilege) {
       res.status(400).send({
         message: "Content can not be empty!"
       });
@@ -15,7 +15,7 @@ exports.create = (req, res) => {
     // Create a PersonRolePrivilege
     const personroleprivilege = {
       id: req.body.id,
-      personRoleId: req.body.personRoleId,
+      personroleId: req.body.personroleId,
       privilege: req.body.privilege
     };
   
@@ -48,6 +48,24 @@ exports.findAll = (req, res) => {
         });
       });
   };
+
+  // Retrieve the privileges for a person role id from the database.
+exports.findPrivilegeByPersonRole = (req, res) => {
+  const personroleId = req.params.personroleId;
+
+  PersonRolePrivilege.findAll({ 
+    where: { personroleId : personroleId},
+  })
+  .then(data => {
+    res.send(data);
+  })
+  .catch(err => {
+    res.status(500).send({
+      message:
+        err.message || "Some error occurred while retrieving privileges for personrole."
+    });
+  });
+};
 
 // Find a single PersonRolePrivilege with an id
 exports.findOne = (req, res) => {
