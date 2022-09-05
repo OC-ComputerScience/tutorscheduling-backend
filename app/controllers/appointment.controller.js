@@ -792,9 +792,15 @@ setUpEvent = async (appointmentId) => {
   let topic = '';
   let attendees = [];
   let online = false;
+  let studentName = '';
+  let summary = '';
 
   for(let i = 0; i < appointments.length; i++) {
     let obj = appointments[i];
+    if(obj.type === "Private" && !obj.personappointment.isTutor) {
+      studentName = obj.personappointment.person.fName + ' ' + obj.personappointment.person.lName
+      console.log("Google student name: " + studentName)
+    }
     let tempObj = {};
     tempObj.email = obj.personappointment.person.email;
     if(obj.personappointment.isTutor)
@@ -820,8 +826,16 @@ setUpEvent = async (appointmentId) => {
     online = true;
   }
 
+  // set up name
+  if(appointment.type === "Private") {
+    summary = studentName + " - " + topic + " Tutoring"
+  }
+  else {
+    summary = "Group - " + topic + " Tutoring"
+  }
+
   const event = {
-    summary: group + ' Tutoring: ' + topic,
+    summary: summary,
     location: location,
     description: appointment.preSessionInfo,
     start: {
