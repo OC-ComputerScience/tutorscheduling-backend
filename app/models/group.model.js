@@ -20,6 +20,10 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.INTEGER,
         allowNull: false
       },
+      allowSplittingAppointments: {
+        type: Sequelize.BOOLEAN,
+        allowNull: false
+      }
     });
   
     return Group;

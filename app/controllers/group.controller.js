@@ -22,7 +22,8 @@ exports.create = (req, res) => {
       name: req.body.name,
       description: req.body.description,
       timeInterval: req.body.timeInterval,
-      bookPastMinutes: req.body.bookPastMinutes
+      bookPastMinutes: req.body.bookPastMinutes,
+      allowSplittingAppointments: req.body.allowSplittingAppointments
     };
   
     // Save Group in the database
