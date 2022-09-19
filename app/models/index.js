@@ -26,6 +26,7 @@ db.person = require("./person.model.js")(sequelize, Sequelize);
 db.role = require("./role.model.js")(sequelize, Sequelize);
 db.group = require("./group.model.js")(sequelize, Sequelize);
 db.personrole = require("./personrole.model.js")(sequelize, Sequelize);
+db.personroleprivilege = require("./personroleprivilege.model.js")(sequelize, Sequelize);
 db.availability = require("./availability.model.js")(sequelize, Sequelize);
 db.topic = require("./topic.model.js")(sequelize, Sequelize);
 db.persontopic = require("./persontopic.model.js")(sequelize, Sequelize);
@@ -44,6 +45,10 @@ db.role.hasMany(db.personrole, { as: 'personrole'}, { foreignKey: { allowNull: f
 db.person.hasMany(db.personrole, { as: 'personrole'}, { foreignKey: { allowNull: false }, onDelete: 'CASCADE' });
 db.personrole.belongsTo(db.role, { as: 'role' }, { foreignKey: { allowNull: false }, onDelete: 'CASCADE' });
 db.personrole.belongsTo(db.person, { as: 'person' }, { foreignKey: { allowNull: false }, onDelete: 'CASCADE' });
+
+// foreign key for personroleprivilege
+db.personrole.hasMany(db.personroleprivilege, { as: 'personroleprivilege'}, { foreignKey: { allowNull: false }, onDelete: 'CASCADE' });
+db.personroleprivilege.belongsTo(db.personrole, { as: 'personrole'}, { foreignKey: { allowNull: false }, onDelete: 'CASCADE' });
 
 // foreign key for availability
 db.person.hasMany(db.availability, { as: 'availability'}, { foreignKey: { allowNull: false }, onDelete: 'CASCADE' });
