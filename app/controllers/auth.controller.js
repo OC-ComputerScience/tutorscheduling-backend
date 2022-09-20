@@ -115,15 +115,34 @@ exports.login = async (req, res) => {
         for (let i = 0; i < data.length; i++) {
             let element = data[i].dataValues;
             let roles = [];
+            let sortedRoles = [];
 
             for (let j = 0; j < element.role.length; j++) {
                 let item = element.role[j];
                 let role = item.type;
                 roles.push(role);
             }
+
+            // sets the order of the roles
+            if(roles.includes("Admin"))
+                sortedRoles[0] = "Admin"
+            else if(roles.includes("Tutor"))
+                sortedRoles[0] = "Tutor"
+            else if(roles.includes("Student"))
+                sortedRoles[0] = "Student"
+
+            if(roles.includes("Tutor") && !sortedRoles.includes("Tutor"))
+                sortedRoles[1] = "Tutor"
+            else if(roles.includes("Student") && !sortedRoles.includes("Student"))
+                sortedRoles[0] = "Student"
+            
+            if(roles.includes("Student") && !sortedRoles.includes("Student"))
+                sortedRoles[2] = "Student"
+           
+            console.log(sortedRoles)
             let group = {
                 name: element.name,
-                roles: roles
+                roles: sortedRoles
             }
             access.push(group);
         }
