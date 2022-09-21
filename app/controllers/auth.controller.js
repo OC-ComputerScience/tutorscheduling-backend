@@ -134,7 +134,7 @@ exports.login = async (req, res) => {
             if(roles.includes("Tutor") && !sortedRoles.includes("Tutor"))
                 sortedRoles[1] = "Tutor"
             else if(roles.includes("Student") && !sortedRoles.includes("Student"))
-                sortedRoles[0] = "Student"
+                sortedRoles[1] = "Student"
             
             if(roles.includes("Student") && !sortedRoles.includes("Student"))
                 sortedRoles[2] = "Student"
