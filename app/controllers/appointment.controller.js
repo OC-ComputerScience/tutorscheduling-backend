@@ -127,6 +127,54 @@ exports.findAppointmentsForGroup = (req, res) => {
   });
 };
 
+// Retrieve all upcoming appointments for a person from the database to help check conflicts
+exports.findAllUpcomingForPerson = (req, res) => {
+  const personId = req.params.personId;
+  const date = new Date();
+  date.setHours(date.getHours() - (date.getTimezoneOffset()/60))
+  date.setHours(0,0,0,0);
+
+  let checkTime = new Date();
+  checkTime = checkTime.getHours()+":"+ checkTime.getMinutes() +":"+checkTime.getSeconds();
+
+  Appointment.findAll({
+    where: {
+      [Op.or]: [
+        {
+          [Op.and]: [
+            {startTime: { [Op.gte]: checkTime }},  {date: { [Op.eq]: date }},
+          ],
+        },
+        {
+          date: { [Op.gt]: date },
+        }
+      ],
+      [Op.and]: [
+        {
+            status: { [Op.not]: "studentCancel" }
+        }, 
+        {
+            status: { [Op.not]: "tutorCancel" }
+        }
+      ] },
+    include: [{
+      where: { '$personappointment.personId$': personId },
+      model: PersonAppointment,
+      as: 'personappointment',
+      required: true
+    }]
+  })
+  .then(data => {
+    res.send(data);
+  })
+  .catch(err => {
+    res.status(500).send({
+      message:
+        err.message || "Some error occurred while retrieving appointments for person for group."
+    });
+  });
+};
+
 // Retrieve all upcoming appointments for a person for a group from the database.
 exports.findAllUpcomingForPersonForGroup = (req, res) => {
   const personId = req.params.personId;
@@ -157,23 +205,40 @@ exports.findAllUpcomingForPersonForGroup = (req, res) => {
         {
             status: { [Op.not]: "tutorCancel" }
         }
-      ] },
+      ]
+    },
     include: [{
-      where: { '$personappointment.personId$': personId },
+      model: Location,
+      as: 'location',
+      required: false
+    },
+    {
+      model: Topic,
+      as: 'topic',
+      required: false
+    },
+    {
       model: PersonAppointment,
       as: 'personappointment',
-      required: true
+      required: true,
+      include: [{
+        model: Person,
+        as: 'person',
+        required: true,
+        right: true,
+        where: { id: personId }
+      }]
     }]
   })
-    .then(data => {
-      res.send(data);
-    })
-    .catch(err => {
-      res.status(500).send({
-        message:
-          err.message || "Some error occurred while retrieving appointments for person for group."
-      });
+  .then(data => {
+    res.send(data);
+  })
+  .catch(err => {
+    res.status(500).send({
+      message:
+        err.message || "Some error occurred while retrieving appointments for person for group."
     });
+  });
 };
 
 // Retrieve all passed appointments for a person for a group from the database.
@@ -368,22 +433,41 @@ exports.findAllForGroup = (req, res) => {
   const groupId = req.params.groupId;
 
   Appointment.findAll({
-    where: { groupId: groupId },
+    where: { groupId : groupId },
     include: [{
-      model: Location,
-      as: 'location',
-      required: true
-    },
-    {
-      model: Topic,
-      as: 'topic',
-      required: true
-    },
-    {
-      model: PersonAppointment,
-      as: 'personappointment',
-      required: true
-    }]
+        model: Location,
+        as: 'location',
+        required: false
+      },
+      {
+        model: Topic,
+        as: 'topic',
+        required: false
+      },
+      {
+        model: PersonAppointment,
+        as: 'personappointment',
+        required: true,
+        include: [{
+          model: Person,
+          as: 'person',
+          required: true,
+          right: true,
+          include: [{
+            model: PersonTopic,
+            as: 'persontopic',
+            required: false,
+            include: [{
+              model: Topic,
+              as: 'topic',
+              required: true,
+              right: true,
+              where: { groupId: groupId }
+            }]
+          }]
+        }]
+      }
+    ]
   })
     .then(data => {
       res.send(data);
@@ -742,11 +826,19 @@ setUpEvent = async (appointmentId) => {
   let topic = '';
   let attendees = [];
   let online = false;
+  let studentName = '';
+  let summary = '';
 
   for(let i = 0; i < appointments.length; i++) {
     let obj = appointments[i];
+    if(obj.type === "Private" && !obj.personappointment.isTutor) {
+      studentName = obj.personappointment.person.fName + ' ' + obj.personappointment.person.lName
+      console.log("Google student name: " + studentName)
+    }
     let tempObj = {};
     tempObj.email = obj.personappointment.person.email;
+    if(obj.personappointment.isTutor)
+      tempObj.responseStatus = "accepted";
     attendees.push(tempObj);
   }
 
@@ -768,8 +860,16 @@ setUpEvent = async (appointmentId) => {
     online = true;
   }
 
+  // set up name
+  if(appointment.type === "Private") {
+    summary = studentName + " - " + topic + " Tutoring"
+  }
+  else {
+    summary = "Group - " + topic + " Tutoring"
+  }
+
   const event = {
-    summary: group + ' Tutoring: ' + topic,
+    summary: summary,
     location: location,
     description: appointment.preSessionInfo,
     start: {
@@ -785,9 +885,11 @@ setUpEvent = async (appointmentId) => {
       useDefault: false,
       overrides: [
         { method: "email", minutes: 24 * 60 },
-        { method: "popup", minutes: 30 },
+        { method: "email", minutes: 120 },
       ],
     },
+    status: "confirmed",
+    transparency: "opaque"
   };
 
   if (online) {
@@ -822,6 +924,7 @@ addToGoogle = async (appointmentId) => {
     calendarId: "primary",
     resource: event,
     conferenceDataVersion: 1,
+    sendUpdates: "all"
   })
   .then(async (event) => {
     await updateAppointmentGoogleId(appointmentId, event.data.id);
@@ -839,6 +942,7 @@ addToGoogle = async (appointmentId) => {
         calendarId: "primary",
         resource: event,
         conferenceDataVersion: 1,
+        sendUpdates: "all"
       })
       .then(async (event) => {
         await updateAppointmentGoogleId(appointmentId, event.data.id);
@@ -871,6 +975,7 @@ updateEvent = async (appointmentId) => {
     eventId: eventId,
     resource: event,
     conferenceDataVersion: 1,
+    sendUpdates: "all"
   })
   .then(async (event) => {
     console.log('Event updated: %s', event.data)

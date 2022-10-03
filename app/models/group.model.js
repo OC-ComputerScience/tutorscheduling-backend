@@ -15,6 +15,14 @@ module.exports = (sequelize, Sequelize) => {
       timeInterval: {
         type: Sequelize.INTEGER,
         allowNull: false
+      },
+      bookPastMinutes: {
+        type: Sequelize.INTEGER,
+        allowNull: false
+      },
+      allowSplittingAppointments: {
+        type: Sequelize.BOOLEAN,
+        allowNull: false
       }
     });
   

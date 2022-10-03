@@ -27,6 +27,7 @@ const url = process.env.url;
 }
 
 async function notifyForFeedback() {
+  console.log("check for feedback");
   let date = new Date();
   date.setHours(date.getHours() - (date.getTimezoneOffset()/60))
   date.setHours(0,0,0);
@@ -43,7 +44,12 @@ async function notifyForFeedback() {
       where: {
         [Op.or]: [
           {status: 'booked'},
-          {type: 'Group'}
+          { [Op.and] : [
+              {type: 'Group'},
+              {status: 'available'}
+            ] 
+          }
+
         ],
         date : {[Op.lt]: date},
       },

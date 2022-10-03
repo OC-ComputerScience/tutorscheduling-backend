@@ -13,15 +13,14 @@ module.exports = app => {
     // Retrieve all Appointment
     router.get("/person/:personId", [authenticate],appointment.findAllForPerson);
 
-    // Retrieve all Appointment
+    // Retrieve all Appointment for reporting (literally all)
     router.get("/group/:groupId", [authenticate],appointment.findAllForGroup);
 
     // -------------------------------------------- FOR GROUP ---------------------------------------
     // Retrieve all appointment hour count
     router.get("/group/:groupId/hours/week/:currWeek", [authenticate], appointment.getAppointmentHourCount);
 
-
-    // Retrieve all Appointment
+    // Retrieve all Appointment for calendar (one month behind)
     router.get("/allGroup/:groupId", [authenticate],appointment.findAppointmentsForGroup);
 
     // Retrieve all upcoming Appointment
@@ -29,6 +28,9 @@ module.exports = app => {
 
     // Retrieve all Appointment
     router.get("/group/:groupId/person/:personId",[authenticate], appointment.findAllForPersonForGroup);
+
+    // Retrieve all upcoming Appointments for a person
+    router.get("/upcoming/person/:personId",[authenticate], appointment.findAllUpcomingForPerson);
 
     // Retrieve all upcoming Appointment
     router.get("/upGroup/:groupId/person/:personId", [authenticate],appointment.findAllUpcomingForPersonForGroup);
