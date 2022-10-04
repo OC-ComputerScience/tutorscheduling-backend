@@ -37,6 +37,7 @@ require("./app/routes/location.routes")(app);
 require("./app/routes/person.routes")(app);
 require("./app/routes/personappointment.routes")(app);
 require("./app/routes/personrole.routes")(app);
+require("./app/routes/personroleprivilege.routes")(app);
 require("./app/routes/persontopic.routes")(app);
 require("./app/routes/request.routes")(app);
 require("./app/routes/role.routes")(app);
