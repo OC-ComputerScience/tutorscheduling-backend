@@ -413,7 +413,7 @@ exports.getAppointmentHourCount = (req, res) => {
       [db.sequelize.literal("SUM(CASE WHEN status = 'pending' THEN TIMESTAMPDIFF(minute,startTime,endTime) ELSE 0 END)"), "pending"],
       [db.sequelize.literal("SUM(CASE WHEN status = 'booked' THEN TIMESTAMPDIFF(minute,startTime,endTime) ELSE 0 END)"), "booked"],
       [db.sequelize.literal("SUM(CASE WHEN status = 'complete' THEN TIMESTAMPDIFF(minute,startTime,endTime) ELSE 0 END)"), "complete"],
-      [db.sequelize.literal("SUM(CASE WHEN status = 'no-sjow' THEN TIMESTAMPDIFF(minute,startTime,endTime) ELSE 0 END)"), "no-show"],
+      [db.sequelize.literal("SUM(CASE WHEN status = 'no-show' THEN TIMESTAMPDIFF(minute,startTime,endTime) ELSE 0 END)"), "noshow"],
     ],
   })
   .then(data => {
