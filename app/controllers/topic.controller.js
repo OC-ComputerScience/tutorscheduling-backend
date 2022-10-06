@@ -1,6 +1,9 @@
 const db = require("../models");
 const Topic = db.topic;
 const PersonTopic = db.persontopic;
+const Person = db.person;
+const PersonAppointment = db.personappointment;
+const Appointment = db.appointment;
 const Op = db.Sequelize.Op;
 
 // Create and Save a new Topic
@@ -75,18 +78,56 @@ exports.getAppointmentHourCount = (req, res) => {
   var firstDay = week.first.slice(0,10)
   var lastDay = week.last.slice(0,10)
 
-  data = db.sequelize.query(("SELECT SUM(CASE WHEN t.id = a.topicId AND a.date"
-  + "  BETWEEN '" + firstDay + "' AND '" + lastDay + "' THEN TIMESTAMPDIFF(minute, startTime, endTime) ELSE 0 END)"
-	+ "  AS diff, name FROM topics t"
-  + "  JOIN appointments a WHERE a.topicId = t.id"
-  + "  AND t.groupId = " + id ),
-  { type:db.sequelize.QueryTypes.SELECT})
-   .then(function(data) {
-      res.status(200).json(data)
+  Topic.findAll({
+    where: { groupId: id },
+    include: [ {
+      model: PersonTopic, 
+      as: 'persontopic',
+      right: true,
+      include: [{
+        model: Person,
+        as: 'person',
+        right: true,
+        include : [{
+          model: PersonAppointment,
+          as: 'personappointment',
+          right: true,
+          include: [{
+            model: Appointment,
+            as: 'appointment',
+            right: true
+          }]
+        }]
+      }]
+    },
+    {
+      model: Appointment,
+      as: 'appointment',
+      right: true,
+      where: {date: {[Op.between]: [firstDay, lastDay]}}
+    }]
+  })
+  .then((data) => {
+    console.log("check here")
+    console.log(data)
+      res.send(data);
   })
   .catch(err => {
       res.status(500).send({ message: err.message });
   });
+
+  // data = db.sequelize.query(("SELECT SUM(CASE WHEN t.id = a.topicId AND a.date"
+  // + "  BETWEEN '" + firstDay + "' AND '" + lastDay + "' THEN TIMESTAMPDIFF(minute, startTime, endTime) ELSE 0 END)"
+	// + "  AS diff, name FROM topics t"
+  // + "  JOIN appointments a WHERE a.topicId = t.id"
+  // + "  AND t.groupId = " + id ),
+  // { type:db.sequelize.QueryTypes.SELECT})
+  //  .then(function(data) {
+  //     res.status(200).json(data)
+  // })
+  // .catch(err => {
+  //     res.status(500).send({ message: err.message });
+  // });
 };
 
 // Retrieve topics per group for persontopics for a specific person
