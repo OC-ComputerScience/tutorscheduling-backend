@@ -49,6 +49,8 @@ const tasks = require ("./app/background/hourly.js");
 tasks.hourlyTasks();
 const dailyTasks = require ("./app/background/daily.js");
 dailyTasks.dailyTasks();
+const fifteenMinuteTasks = require ("./app/background/fifteen.js");
+fifteenMinuteTasks.fifteenMinuteTasks();
 
 // set port, listen for requests
 const PORT = process.env.PORT || 3002;
