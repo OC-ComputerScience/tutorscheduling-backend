@@ -6,6 +6,7 @@ const Person = db.person;
 const Location = db.location;
 const sms = require("../controllers/twilio.controller.js");
 const Op = db.Sequelize.Op;
+const Group = db.group;
 const accountSid = process.env.TWILIO_ACCOUNT_SID; 
 const authToken = process.env.TWILIO_AUTH_TOKEN1 + process.env.TWILIO_AUTH_TOKEN2;
 const phoneNum = process.env.TWILIO_NUMBER;
@@ -44,41 +45,47 @@ const client = require('twilio')(accountSid, authToken);
         status : 'available',
         date : {[Op.eq]: delDate},
         startTime : {[Op.lt]: delTime}
-      }
+      },
+      include: [{
+        model: Group,
+        as: 'group',
+        required: true
+      }]
     })
     .then(appointments => {
       console.log(delTime+":Checking "+appointments.length+" appointments for deletion or revision");
       if (appointments.length >0) {
         // for each appointment check to see if the need to have start time update or be deleted
         appointments.forEach((appointment) => {
-        let startTime = appointment.startTime.split(":");
-        let hour = parseInt(startTime[0])+1 % 24;
-        if(hour < 10) {
-          hour = "0" + hour
-        }
-        let newStartTime = hour+":"+startTime[1]+":"+startTime[2];
-        if (newStartTime < appointment.endTime && appointment.endTime > delTime ) {
-          appointment.startTime =  newStartTime;
-          let newAppointment = appointment.dataValues
-          let appointmentId = newAppointment.id
-          Appointment.update(newAppointment, {
-          where: { id: appointmentId}
-          })
-          .catch (err => {
-              console.log("Could not update Appointment"+ err);
-          });
-        }
-        else {
-          let id = appointment.id
-          Appointment.destroy({
-            where: { id: id }
-          })
-         .catch (err => {
-            console.log("Could not delete Appointment"+ err);
-          });
-        }
-      })
-    }
+          let startTime = appointment.startTime.split(":");
+          let hour = parseInt(startTime[0])+1 % 24;
+          if(hour < 10) {
+            hour = "0" + hour
+          }
+          let newStartTime = hour+":"+startTime[1]+":"+startTime[2];
+          // should not try to change time of group appointment, should just delete those
+          if (newStartTime < appointment.endTime && appointment.endTime > delTime && appointment.type === "Private" && appointment.group.allowSplittingAppointments) {
+            appointment.startTime =  newStartTime;
+            let newAppointment = appointment.dataValues
+            let appointmentId = newAppointment.id
+            Appointment.update(newAppointment, {
+              where: { id: appointmentId}
+            })
+            .catch (err => {
+                console.log("Could not update Appointment"+ err);
+            });
+          }
+          else {
+            let id = appointment.id
+            Appointment.destroy({
+              where: { id: id }
+            })
+            .catch (err => {
+              console.log("Could not delete Appointment"+ err);
+            });
+          }
+        })
+      }
     })
     .catch(err => {
       console.log("Could not find past Appointments: "+ err);
