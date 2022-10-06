@@ -13,9 +13,9 @@ const Group = db.group;
 
   exports.fifteenMinuteTasks = () =>{
 // for prod, runs at ever hour at 15 minute past the hour.
-    //   cron.schedule('55 * * * *', function() {
+      cron.schedule('*/15 * * * *', function() {
 // for testing, runs every minute
-      cron.schedule('* * * * *', function() {
+    //   cron.schedule('* * * * *', function() {
             console.log('Scheduled task every 15 mins');
             deletePastAppointments();
         })
