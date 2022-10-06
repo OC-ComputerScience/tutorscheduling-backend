@@ -77,7 +77,7 @@ exports.getAppointmentHourCount = (req, res) => {
 
   data = db.sequelize.query(("SELECT SUM(CASE WHEN t.id = a.topicId AND a.date"
   + "  BETWEEN '" + firstDay + "' AND '" + lastDay + "' THEN TIMESTAMPDIFF(minute, startTime, endTime) ELSE 0 END)"
-	+ "AS diff, name FROM topics t"
+	+ "  AS diff, name FROM topics t"
   + "  JOIN appointments a WHERE a.topicId = t.id"
   + "  AND t.groupId = " + id ),
   { type:db.sequelize.QueryTypes.SELECT})
