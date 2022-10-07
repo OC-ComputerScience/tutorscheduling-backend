@@ -170,7 +170,7 @@ exports.getAppointmentHourCount = (req, res) => {
     ("SELECT DISTINCT p.fName,p.lName, "
     + "(SELECT SUM(CASE WHEN a.groupId = " + id + " AND pa.appointmentId = a.id AND pa.personId = p.id AND a.date BETWEEN '" + firstDay + "' AND '" + lastDay + "'"
     + " THEN TIMESTAMPDIFF(minute, a.startTime, a.endTime) ELSE 0 END) "
-    + " FROM appointments a, personappointments pa, roles r, personroles pr WHERE pr.roleId = r.id AND pr.personId = p.id AND r.groupId = " + id + " AND r.type = 'Tutor' ) AS diff, "     
+    + " FROM appointments a, personappointments pa, roles r, personroles pr WHERE pr.roleId = r.id AND pr.personId = p.id AND r.groupId = " + id + " AND r.type = 'Tutor' ) AS hours, "     
     + " (SELECT COUNT(DISTINCT IF(a.groupId = " + id + " AND pa.appointmentId = a.id AND pa.personId = p.id AND a.date BETWEEN '" + firstDay + "' AND '" + lastDay + "', a.id,  NULL)) "
     + " FROM appointments a, personappointments pa, roles r, personroles pr WHERE pr.roleId = r.id AND pr.personId = p.id AND r.groupId = " + id + " AND r.type = 'Tutor') AS apptCount , "
     + " (SELECT SUM(CASE WHEN a.groupId = " + id + " AND pa.appointmentId = a.id AND pa.personId = p.id AND ((a.status = 'booked' AND a.type = 'Private') OR "

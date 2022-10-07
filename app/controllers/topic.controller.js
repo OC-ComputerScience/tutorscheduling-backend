@@ -83,51 +83,42 @@ exports.getAppointmentHourCount = (req, res) => {
     include: [ {
       model: PersonTopic, 
       as: 'persontopic',
-      right: true,
+      right: false,
+      required: false,
       include: [{
         model: Person,
         as: 'person',
-        right: true,
+        right: false,
+        required: false,
         include : [{
           model: PersonAppointment,
           as: 'personappointment',
-          right: true,
+          right: false,
+          required: false,
           include: [{
             model: Appointment,
             as: 'appointment',
-            right: true
+            right: false,
+            required: false,
+            where: { groupId: id, date: {[Op.between]: [firstDay, lastDay]}}
           }]
         }]
-      }]
+      }],
     },
     {
       model: Appointment,
       as: 'appointment',
-      right: true,
+      right: false,
+      required: false,
       where: {date: {[Op.between]: [firstDay, lastDay]}}
     }]
   })
   .then((data) => {
-    console.log("check here")
-    console.log(data)
       res.send(data);
   })
   .catch(err => {
       res.status(500).send({ message: err.message });
   });
-
-  // data = db.sequelize.query(("SELECT SUM(CASE WHEN t.id = a.topicId AND a.date"
-  // + "  BETWEEN '" + firstDay + "' AND '" + lastDay + "' THEN TIMESTAMPDIFF(minute, startTime, endTime) ELSE 0 END)"
-	// + "  AS diff, name FROM topics t"
-  // + "  JOIN appointments a WHERE a.topicId = t.id"
-  // + "  AND t.groupId = " + id ),
-  // { type:db.sequelize.QueryTypes.SELECT})
-  //  .then(function(data) {
-  //     res.status(200).json(data)
-  // })
-  // .catch(err => {
-  //     res.status(500).send({ message: err.message });
-  // });
 };
 
 // Retrieve topics per group for persontopics for a specific person
