@@ -250,6 +250,7 @@ console.log("findPerson")
 exports.logout = async (req, res) => {
     // invalidate session -- delete token out of session table
     let session = {};
+    console.log(req.body.token)
     await Session.findAll({ where: { token : req.body.token } })
     .then(data => {
         session = data[0].dataValues;
@@ -260,6 +261,9 @@ exports.logout = async (req, res) => {
         });
         return;
     });
+
+    console.log("session:")
+    console.log(session)
 
     session.token = '';
       
