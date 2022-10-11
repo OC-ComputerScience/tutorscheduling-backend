@@ -168,15 +168,15 @@ exports.getAppointmentHourCount = (req, res) => {
   console.log("right here")
   data = db.sequelize.query(
     ("SELECT DISTINCT p.fName,p.lName, "
-    + "(SELECT SUM(CASE WHEN a.groupId = " + id + " AND pa.appointmentId = a.id AND pa.personId = p.id AND a.date BETWEEN '" + firstDay + "' AND '" + lastDay + "'"
+    + "(SELECT SUM(CASE WHEN a.groupId = " + id + " AND pa.appointmentId = a.id AND pa.personId = p.id AND a.date >= '" + firstDay + "' AND a.date <= '" + lastDay + "'"
     + " THEN TIMESTAMPDIFF(minute, a.startTime, a.endTime) ELSE 0 END) "
     + " FROM appointments a, personappointments pa, roles r, personroles pr WHERE pr.roleId = r.id AND pr.personId = p.id AND r.groupId = " + id + " AND r.type = 'Tutor' ) AS hours, "     
-    + " (SELECT COUNT(DISTINCT IF(a.groupId = " + id + " AND pa.appointmentId = a.id AND pa.personId = p.id AND a.date BETWEEN '" + firstDay + "' AND '" + lastDay + "', a.id,  NULL)) "
+    + " (SELECT COUNT(DISTINCT IF(a.groupId = " + id + " AND pa.appointmentId = a.id AND pa.personId = p.id AND a.date >= '" + firstDay + "' AND a.date <= '" + lastDay + "', a.id,  NULL)) "
     + " FROM appointments a, personappointments pa, roles r, personroles pr WHERE pr.roleId = r.id AND pr.personId = p.id AND r.groupId = " + id + " AND r.type = 'Tutor') AS apptCount , "
     + " (SELECT SUM(CASE WHEN a.groupId = " + id + " AND pa.appointmentId = a.id AND pa.personId = p.id AND ((a.status = 'booked' AND a.type = 'Private') OR "
     + " (a.status = 'available' AND a.type = 'Group' AND (SELECT COUNT(spa.id) FROM roles AS sr, personroles as spr, personappointments as spa WHERE a.groupId = " + id + " AND spr.roleId = sr.id AND spr.personId = spa.personId AND spa.id = a.id AND "
-    + " sr.groupId = " + id + " AND sr.type = 'Student' AND a.date BETWEEN '" + firstDay + "' AND '" + lastDay + "') > 0) OR (a.status = 'complete')) AND a.date BETWEEN '" + firstDay + "' AND '" + lastDay + "' THEN TIMESTAMPDIFF(minute, a.startTime, a.endTime) ELSE 0 END) "
-    + " FROM appointments a, personappointments pa, roles r, personroles pr WHERE pr.roleId = r.id and pr.personId = p.id and r.groupId = " + id + " and r.type = 'Tutor') AS hours_paying  "
+    + " sr.groupId = " + id + " AND sr.type = 'Student' AND a.date >= '" + firstDay + "' AND a.date <= '" + lastDay + "') > 0) OR (a.status = 'complete')) AND a.date >= '" + firstDay + "' AND a.date <= '" + lastDay + "' THEN TIMESTAMPDIFF(minute, a.startTime, a.endTime) ELSE 0 END) "
+    + " FROM appointments a, personappointments pa, roles r, personroles pr WHERE pr.roleId = r.id and pr.personId = p.id and r.groupId = " + id + " and r.type = 'Tutor') AS payingHours  "
     + " FROM roles as r, people as p, personroles as pr WHERE pr.roleId = r.id AND p.id = pr.personId AND r.groupId = " + id + " AND r.type = 'Tutor';"),
     { 
       type:db.sequelize.QueryTypes.SELECT

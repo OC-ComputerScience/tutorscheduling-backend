@@ -402,10 +402,13 @@ exports.getAppointmentHourCount = (req, res) => {
   const currWeek = req.params.currWeek;
   console.log('CurrWeek: ' + currWeek)
   var week = getWeekFromDate(currWeek)
-  var firstDay = week.first
-  var lastDay = week.last
+  var firstDay = week.first.slice(0,10)
+  var lastDay = week.last.slice(0,10)
   Appointment.findAll({
-    where: { groupId: groupId,  date: { [Op.between]: [firstDay, lastDay]}},
+    where: { groupId: groupId,  
+      [Op.and]: [
+        {date: { [Op.gte]: firstDay} },  {date: { [Op.lte]: lastDay}},
+      ]},
     attributes: [
       [db.sequelize.literal("COUNT(id)"), "count"],
       [db.sequelize.literal("SUM(TIMESTAMPDIFF(minute,startTime,endTime))"), "hours"],

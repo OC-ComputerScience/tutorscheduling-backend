@@ -77,48 +77,28 @@ exports.getAppointmentHourCount = (req, res) => {
   var week = getWeekFromDate(currWeek)
   var firstDay = week.first.slice(0,10)
   var lastDay = week.last.slice(0,10)
-
-  Topic.findAll({
-    where: { groupId: id },
-    include: [ {
-      model: PersonTopic, 
-      as: 'persontopic',
-      right: false,
-      required: false,
-      include: [{
-        model: Person,
-        as: 'person',
-        right: false,
-        required: false,
-        include : [{
-          model: PersonAppointment,
-          as: 'personappointment',
-          right: false,
-          required: false,
-          include: [{
-            model: Appointment,
-            as: 'appointment',
-            right: false,
-            required: false,
-            where: { groupId: id, date: {[Op.between]: [firstDay, lastDay]}}
-          }]
-        }]
-      }],
-    },
-    {
-      model: Appointment,
-      as: 'appointment',
-      right: false,
-      required: false,
-      where: {date: {[Op.between]: [firstDay, lastDay]}}
-    }]
-  })
-  .then((data) => {
-      res.send(data);
-  })
-  .catch(err => {
-      res.status(500).send({ message: err.message });
-  });
+  console.log("here")
+  data = db.sequelize.query(
+    ("SELECT DISTINCT t.name, "
+    + "(SELECT SUM(CASE WHEN a.groupId = " + id + " AND t.id = a.topicId AND t.groupId = " + id 
+    + " AND a.date >= '" + firstDay + "' AND a.date <= '" + lastDay + "' THEN TIMESTAMPDIFF(minute, a.startTime, a.endTime) ELSE 0 END) "
+    + "FROM appointments a " 
+    + "WHERE a.groupId = " + id + " AND t.groupId = " + id + " AND t.id = a.topicId AND a.date >= '" + firstDay + "' AND a.date <= '" + lastDay + "' "
+    + ") AS hours, "
+    +  " (SELECT SUM(CASE WHEN a.groupId = " + id + " AND a.topicId IS NULL AND a.type = 'Private' AND pa.appointmentId = a.id AND pt.topicId = t.id "
+    + "AND a.date >= '" + firstDay + "' AND a.date <= '" + lastDay + "'  THEN TIMESTAMPDIFF(minute, a.startTime, a.endTime) ELSE 0 END) "
+    + "FROM appointments a JOIN personappointments pa on a.id = pa.appointmentId JOIN persontopics pt on pt.personId = pa.personId) AS potentialHours "
+    + "FROM topics as t WHERE t.groupId = " + id + ";"),
+    { 
+      type:db.sequelize.QueryTypes.SELECT
+    })
+    .then(function(data) {
+      res.status(200).json(data)
+    })
+    .catch(err => {
+      console.log(err)
+        res.status(500).send({ message: err.message });
+    });
 };
 
 // Retrieve topics per group for persontopics for a specific person
