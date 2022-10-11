@@ -70,6 +70,42 @@ exports.findAllForPerson = (req, res) => {
     });
 };
 
+exports.findAllUpcomingForPerson = (req, res) => {
+  const personId = req.params.personId;
+  const date = new Date();
+  date.setHours(date.getHours() - (date.getTimezoneOffset()/60))
+  date.setHours(0,0,0,0);
+
+  let checkTime = new Date();
+  checkTime = checkTime.getHours()+":"+ checkTime.getMinutes() +":"+checkTime.getSeconds();
+
+  Availability.findAll({
+    where: {
+      personId: personId,
+      [Op.or]: [
+        {
+          [Op.and]: [
+            {startTime: { [Op.gte]: checkTime }},  {date: { [Op.eq]: date }},
+          ],
+        },
+        {
+          date: { [Op.gt]: date },
+        }
+      ],
+    }
+  })
+  .then(data => {
+    res.send(data);
+  })
+  .catch(err => {
+    res.status(500).send({
+      message:
+        err.message || "Some error occurred while retrieving appointments for person for group."
+    });
+  });
+};
+
+
 // Find a single Availability with an id
 exports.findOne = (req, res) => {
     const id = req.params.id;
