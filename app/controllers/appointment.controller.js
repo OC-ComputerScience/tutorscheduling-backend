@@ -412,7 +412,8 @@ exports.getAppointmentHourCount = (req, res) => {
     attributes: [
       [db.sequelize.literal("COUNT(id)"), "count"],
       [db.sequelize.literal("SUM(TIMESTAMPDIFF(minute,startTime,endTime))"), "hours"],
-      [db.sequelize.literal("SUM(CASE WHEN status = 'available' THEN TIMESTAMPDIFF(minute,startTime,endTime) ELSE 0 END)"), "available"],
+      [db.sequelize.literal("SUM(CASE WHEN status = 'available' AND type = 'Private' THEN TIMESTAMPDIFF(minute,startTime,endTime) ELSE 0 END)"), "available"],
+      [db.sequelize.literal("SUM(CASE WHEN status = 'available' AND type = 'Group' THEN TIMESTAMPDIFF(minute,startTime,endTime) ELSE 0 END)"), "group"],
       [db.sequelize.literal("SUM(CASE WHEN status = 'pending' THEN TIMESTAMPDIFF(minute,startTime,endTime) ELSE 0 END)"), "pending"],
       [db.sequelize.literal("SUM(CASE WHEN status = 'booked' THEN TIMESTAMPDIFF(minute,startTime,endTime) ELSE 0 END)"), "booked"],
       [db.sequelize.literal("SUM(CASE WHEN status = 'complete' THEN TIMESTAMPDIFF(minute,startTime,endTime) ELSE 0 END)"), "complete"],
