@@ -2,8 +2,6 @@ const cron = require('node-cron');
 const db = require("../models");
 const Appointment = db.appointment;
 const PersonAppointment = db.personappointment;
-const Person = db.person;
-const Location = db.location;
 const Op = db.Sequelize.Op;
 const Group = db.group;
 
@@ -12,8 +10,8 @@ const Group = db.group;
 // From : https://www.digitalocean.com/community/tutorials/nodejs-cron-jobs-by-examples
 
   exports.fifteenMinuteTasks = () =>{
-// for prod, runs at ever hour at 15 minute past the hour.
-      cron.schedule('*/15 * * * *', function() {
+// for prod, runs at 3 minutes before every 15 minutes every hour
+      cron.schedule('12,27,42,57 * * * *', function() {
 // for testing, runs every minute
     //   cron.schedule('* * * * *', function() {
             console.log('Scheduled task every 15 mins');
