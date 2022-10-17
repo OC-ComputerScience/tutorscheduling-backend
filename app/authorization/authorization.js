@@ -13,32 +13,28 @@ authenticate = (req,res,next) => {
   console.log("authenticate");
   let authHeader = req.get("authorization");
   if (authHeader != null) {
-    if (authHeader.startsWith("Bearer ")) 
-    {
+    if (authHeader.startsWith("Bearer ")) {
       token = authHeader.slice(7);
-      // jwt.verify(token, config.secret, (err, decoded) => {
-      //   if (err) {
-      //     return res.status(401).send({
-      //       message: "Unauthorized! Expired Token, Login again"
-      //     });
-      //   }
-  
-    Session.findAll({ 
-      where: 
-        {token : token}}
-      )
+      Session.findAll({ where: {token : token} })
       .then(data => {
         let session = data[0];
         console.log(session.expirationDate)
         if (session != null) {
-          if (session.expirationDate >= Date.now()){
+          if (session.expirationDate >= Date.now()) {
             next();
             return;
           }
-         else
+         else {
             return res.status(401).send({
               message: "Unauthorized! Expired Token, Logout and Login again"
-              });
+            });
+          }
+        }
+        // if session is null, they are also unauthorized
+        else {
+          return res.status(401).send({
+            message: "Unauthorized! Expired Token, Logout and Login again"
+          });
         }
       })
       .catch(err => {
