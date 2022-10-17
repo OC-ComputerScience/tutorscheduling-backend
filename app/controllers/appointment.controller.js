@@ -402,8 +402,8 @@ exports.getAppointmentHourCount = (req, res) => {
   const currWeek = req.params.currWeek;
   console.log('CurrWeek: ' + currWeek)
   var week = getWeekFromDate(currWeek)
-  var firstDay = week.first.slice(0,10)
-  var lastDay = week.last.slice(0,10)
+  var firstDay = week.first
+  var lastDay = week.last
   Appointment.findAll({
     where: { groupId: groupId,  
       [Op.and]: [

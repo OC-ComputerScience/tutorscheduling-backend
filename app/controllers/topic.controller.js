@@ -75,8 +75,8 @@ exports.getAppointmentHourCount = (req, res) => {
   const id = req.params.groupId;
   const currWeek = req.params.currWeek;
   var week = getWeekFromDate(currWeek)
-  var firstDay = week.first.slice(0,10)
-  var lastDay = week.last.slice(0,10)
+  var firstDay = week.first
+  var lastDay = week.last
   console.log("here")
   data = db.sequelize.query(
     ("SELECT DISTINCT t.name, "
