@@ -3,11 +3,6 @@ const Session = db.session;
 const PersonRole = db.personrole;
 const Role = db.role;
 
-
-//const jwt = require("jsonwebtoken");
-const config = require("../config/auth.config.js");
-
-
 authenticate = (req,res,next) => {
   let token = null;
   console.log("authenticate");
