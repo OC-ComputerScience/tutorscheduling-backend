@@ -28,7 +28,7 @@ authenticate = (req,res,next) => {
         // if session is null, they are also unauthorized
         else {
           return res.status(401).send({
-            message: "Unauthorized! Expired Token, Logout and Login again"
+            message: "Unauthorized! No active session found."
           });
         }
       })
@@ -39,7 +39,7 @@ authenticate = (req,res,next) => {
   }
   else {
     return res.status(401).send({
-      message: "Unauthorized! No Auth Header"
+      message: "Unauthorized! No authentication header."
     });
   }
 };
