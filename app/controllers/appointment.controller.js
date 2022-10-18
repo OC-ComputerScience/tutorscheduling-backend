@@ -250,7 +250,7 @@ exports.findAllPassedForPersonForGroupTutor = (req, res) => {
   date.setHours(date.getHours() - (date.getTimezoneOffset()/60))
   date.setHours(0,0,0);
 
-// Note: had to put the the tow OP.or in an Op.and to get Sequelize to generate SQL correctly
+// Note: had to put the the two OP.or in an Op.and to get Sequelize to generate SQL correctly
   Appointment.findAll({
     where: { groupId: groupId, 
             [Op.and]: [
@@ -351,7 +351,10 @@ exports.getTutorForAppointment = (req, res) => {
       model: PersonAppointment,
       as: 'personappointment',
       required: true,
-      where: { isTutor: true, appointmentId: appId },
+      where: { 
+        isTutor: true, 
+        appointmentId: appId 
+      },
 
     }/*,
       {
@@ -392,6 +395,41 @@ exports.findAllUpcomingForGroup = (req, res) => {
           err.message || "Some error occurred while retrieving appointments for group."
       });
     });
+};
+
+exports.getAppointmentHourCount = (req, res) => {
+  const groupId = req.params.groupId;
+  const currWeek = req.params.currWeek;
+  console.log('CurrWeek: ' + currWeek)
+  var week = getWeekFromDate(currWeek)
+  var firstDay = week.first
+  var lastDay = week.last
+  Appointment.findAll({
+    where: { groupId: groupId,  
+      [Op.and]: [
+        {date: { [Op.gte]: firstDay} },  {date: { [Op.lte]: lastDay}},
+      ]},
+    attributes: [
+      [db.sequelize.literal("COUNT(id)"), "count"],
+      [db.sequelize.literal("SUM(TIMESTAMPDIFF(minute,startTime,endTime))"), "hours"],
+      [db.sequelize.literal("SUM(CASE WHEN status = 'available' AND type = 'Private' THEN TIMESTAMPDIFF(minute,startTime,endTime) ELSE 0 END)"), "available"],
+      [db.sequelize.literal("SUM(CASE WHEN status = 'available' AND type = 'Group' THEN TIMESTAMPDIFF(minute,startTime,endTime) ELSE 0 END)"), "group"],
+      [db.sequelize.literal("SUM(CASE WHEN status = 'pending' THEN TIMESTAMPDIFF(minute,startTime,endTime) ELSE 0 END)"), "pending"],
+      [db.sequelize.literal("SUM(CASE WHEN status = 'booked' THEN TIMESTAMPDIFF(minute,startTime,endTime) ELSE 0 END)"), "booked"],
+      [db.sequelize.literal("SUM(CASE WHEN status = 'complete' THEN TIMESTAMPDIFF(minute,startTime,endTime) ELSE 0 END)"), "complete"],
+      [db.sequelize.literal("SUM(CASE WHEN status = 'no-show' THEN TIMESTAMPDIFF(minute,startTime,endTime) ELSE 0 END)"), "noshow"],
+    ],
+  })
+  .then(data => {
+    res.send(data);
+  })
+
+  .catch(err => {
+    res.status(500).send({
+      message:
+        err.message || "Some error occurred while retrieving appointments for group."
+    });
+  });
 };
 
 // Retrieve all appointments for a person for a group from the database.
@@ -1081,4 +1119,26 @@ getAccessToken = async (appointmentId) => {
 
   oAuth2Client.setCredentials(creds);
   return oAuth2Client;
+}
+
+function getWeekFromDate(date) {
+  var year = parseInt(date.substring(0,4));
+  var month = parseInt(date.substring(5,7));
+  var day = parseInt(date.substring(8,10));
+  var curr = new Date(year, month-1, day); // get current date
+  console.log(day + ", " + month + ", " + year) // something wonky here, month is adding one each time.
+  console.log("CURR " + curr)
+  var first = curr.getDate() - curr.getDay(); // First day is the day of the month - the day of the week
+  var last = first + 6; // last day is the first day + 6
+
+  var firstday = new Date(curr.setDate(first));
+  var lastday = new Date(curr.setDate(last));
+
+  return toSQLDate(firstday, lastday);
+}
+
+function toSQLDate(date1, date2) {
+  first = date1.toISOString().slice(0, 19).replace('T', ' ');
+  last = date2.toISOString().slice(0, 19).replace('T', ' ');
+  return {first, last};
 }

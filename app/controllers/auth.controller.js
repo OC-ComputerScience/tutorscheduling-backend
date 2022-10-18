@@ -250,6 +250,7 @@ console.log("findPerson")
 exports.logout = async (req, res) => {
     // invalidate session -- delete token out of session table
     let session = {};
+
     await Session.findAll({ where: { token : req.body.token } })
     .then(data => {
         session = data[0].dataValues;
@@ -262,25 +263,34 @@ exports.logout = async (req, res) => {
     });
 
     session.token = '';
-      
-    Session.update(session, { where: { id: session.id } })
-    .then(num => {
-        if (num == 1) {
-            console.log("successfully logged out")
-            res.send({
-                message: "User has been successfully logged out!"
+
+    if(session !== null && session !== undefined) {
+        Session.update(session, { where: { id: session.id } })
+        .then(num => {
+            if (num == 1) {
+                console.log("successfully logged out")
+                res.send({
+                    message: "User has been successfully logged out!"
+                });
+            } else {
+                console.log("failed");
+                res.send({
+                    message: `Error logging out user.`
+                });
+            }
+        })
+        .catch(err => {
+            console.log(err)
+            res.status(500).send({
+                message: "Error logging out user."
             });
-        } else {
-            console.log("failed");
-            res.send({
-                message: `Error logging out user.`
-            });
-        }
-    })
-    .catch(err => {
-        console.log(err)
-        res.status(500).send({
-            message: "Error logging out user."
+        }); 
+    }
+    
+    else {
+        console.log("already logged out")
+        res.send({
+            message: "User has already been successfully logged out!"
         });
-    });
+    }
 };
