@@ -158,6 +158,37 @@ exports.findAllForGroup = (req, res) => {
   });
 };
 
+// Retrieve all appointment hours for a group from the database.
+exports.getAppointmentHourCount = (req, res) => {
+  const id = req.params.groupId;
+  const currWeek = req.params.currWeek;
+  var week = getWeekFromDate(currWeek)
+  var firstDay = week.first.slice(0,10)
+  var lastDay = week.last.slice(0,10)
+  console.log("right here")
+  data = db.sequelize.query(
+    ("SELECT DISTINCT p.fName,p.lName, "
+    + "(SELECT SUM(CASE WHEN a.groupId = " + id + " AND pa.appointmentId = a.id AND pa.personId = p.id AND a.date >= '" + firstDay + "' AND a.date <= '" + lastDay + "'"
+    + " THEN TIMESTAMPDIFF(minute, a.startTime, a.endTime) ELSE 0 END) "
+    + " FROM appointments a, personappointments pa, roles r, personroles pr WHERE pr.roleId = r.id AND pa.personId = p.id AND pr.personId = p.id AND r.groupId = " + id + " AND r.type = 'Tutor' ) AS hours, "     
+    + " (SELECT COUNT(DISTINCT IF(a.groupId = " + id + " AND pa.appointmentId = a.id AND pa.personId = p.id AND a.date >= '" + firstDay + "' AND a.date <= '" + lastDay + "', a.id,  NULL)) "
+    + " FROM appointments a, personappointments pa, roles r, personroles pr WHERE pr.roleId = r.id AND pa.personId = p.id AND pr.personId = p.id AND r.groupId = " + id + " AND r.type = 'Tutor') AS apptCount , "
+    + " (SELECT SUM(CASE WHEN a.groupId = " + id + " AND pa.appointmentId = a.id AND pa.personId = p.id AND ((a.status = 'booked' AND a.type = 'Private') OR "
+    + " (a.status = 'available' AND a.type = 'Group' AND (SELECT COUNT(spa.id) FROM roles AS sr, personroles as spr, personappointments as spa WHERE a.groupId = " + id + " AND spr.roleId = sr.id AND spr.personId = spa.personId AND spa.id = a.id AND "
+    + " sr.groupId = " + id + " AND sr.type = 'Student' AND a.date >= '" + firstDay + "' AND a.date <= '" + lastDay + "') > 0) OR (a.status = 'complete')) AND a.date >= '" + firstDay + "' AND a.date <= '" + lastDay + "' THEN TIMESTAMPDIFF(minute, a.startTime, a.endTime) ELSE 0 END) "
+    + " FROM appointments a, personappointments pa, roles r, personroles pr WHERE pr.roleId = r.id AND pa.personId = p.id AND pr.personId = p.id AND r.groupId = " + id + " and r.type = 'Tutor') AS payingHours  "
+    + " FROM roles as r, people as p, personroles as pr WHERE pr.roleId = r.id AND p.id = pr.personId AND r.groupId = " + id + " AND r.type = 'Tutor';"),
+    { 
+      type:db.sequelize.QueryTypes.SELECT
+    })
+    .then(function(data) {
+      res.status(200).json(data)
+  })
+  .catch(err => {
+      res.status(500).send({ message: err.message });
+  });
+};
+
 // Find pending tutors for group
 exports.findPendingTutorsForGroup = (req, res) => {
   const groupId = req.params.groupId;
@@ -278,3 +309,24 @@ exports.deleteAll = (req, res) => {
       });
   };
   
+  function getWeekFromDate(date) {
+    var year = parseInt(date.substring(0,4));
+    var month = parseInt(date.substring(5,7));
+    var day = parseInt(date.substring(8,10));
+    var curr = new Date(year, month-1, day); // get current date
+    console.log(day + ", " + month + ", " + year) // something wonky here, month is adding one each time.
+    console.log("CURR " + curr)
+    var first = curr.getDate() - curr.getDay(); // First day is the day of the month - the day of the week
+    var last = first + 6; // last day is the first day + 6
+  
+    var firstday = new Date(curr.setDate(first));
+    var lastday = new Date(curr.setDate(last));
+  
+    return toSQLDate(firstday, lastday);
+  }
+  
+  function toSQLDate(date1, date2) {
+    first = date1.toISOString().slice(0, 19).replace('T', ' ');
+    last = date2.toISOString().slice(0, 19).replace('T', ' ');
+    return {first, last};
+  }
