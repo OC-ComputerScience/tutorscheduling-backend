@@ -92,7 +92,7 @@ exports.findAllForGroup = (req, res) => {
     {
       model: Topic, 
       as: 'topic',
-      required: true 
+      required: false 
     } 
   ]
   })
