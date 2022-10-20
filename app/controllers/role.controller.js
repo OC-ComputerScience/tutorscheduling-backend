@@ -94,7 +94,7 @@ exports.findRoleByGroupForPerson = (req, res) => {
 
 }
 
-// Retrieve roles per group for personroles for a specific person
+// Retrieve roles per group for personroles for a specific type
 exports.findRoleByGroupForType = (req, res) => {
   const type = req.params.type;
   const groupId = req.params.groupId;
@@ -105,10 +105,14 @@ exports.findRoleByGroupForType = (req, res) => {
         model: PersonRole, 
         as: 'personrole',
         right: true,
-        include: [ {
-          model: Person,
-          as: 'person',
-          right: true
+        include: [{
+            model: PersonRolePrivilege,
+            as: 'personroleprivilege'
+          },
+          {
+            model: Person,
+            as: 'person',
+            right: true, 
         }]
     }]
   })
