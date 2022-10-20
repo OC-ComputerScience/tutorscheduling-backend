@@ -54,7 +54,7 @@ exports.findAll = (req, res) => {
       });
   };
 
-  // Retrieve all Roles for a group from the database.
+  // Retrieve all availabilities for a person from the database.
 exports.findAllForPerson = (req, res) => {
   const id = req.params.personId;
 

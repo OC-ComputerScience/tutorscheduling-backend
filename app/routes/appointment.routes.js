@@ -16,6 +16,10 @@ module.exports = app => {
     // Retrieve all Appointment for reporting (literally all)
     router.get("/group/:groupId", [authenticate],appointment.findAllForGroup);
 
+    // -------------------------------------------- FOR GROUP ---------------------------------------
+    // Retrieve all appointment hour count
+    router.get("/group/:groupId/hours/week/:currWeek", [authenticate], appointment.getAppointmentHourCount);
+
     // Retrieve all Appointment for calendar (one month behind)
     router.get("/allGroup/:groupId", [authenticate],appointment.findAppointmentsForGroup);
 
