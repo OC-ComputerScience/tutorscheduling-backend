@@ -70,18 +70,20 @@ exports.findAllForPerson = (req, res) => {
     });
 };
 
-	// Retrieve all availabilities for a group from the database.	
-  exports.findAllForGroup = (req, res) => {	
-    const id = req.params.personId;	
-    Availability.findAll({ where: {personId: id} })	
-      .then(data => {	
-        res.send(data);	
-      })	
-      .catch(err => {	
-        res.status(500).send({	
-          message:	
-            err.message || "Some error occurred while retrieving availabilities for person."	
-        });
+// Retrieve all availabilities for a group from the database.	
+exports.findAllForGroup = (req, res) => {	
+  const id = req.params.personId;	
+  Availability.findAll({ where: {personId: id} })	
+    .then(data => {	
+      res.send(data);	
+    })	
+    .catch(err => {	
+      res.status(500).send({	
+        message:	
+          err.message || "Some error occurred while retrieving availabilities for person."	
+      });
+    });
+  };
 
 exports.findAllUpcomingForPerson = (req, res) => {
   const personId = req.params.personId;
