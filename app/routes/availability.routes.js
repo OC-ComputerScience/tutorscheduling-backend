@@ -13,6 +13,9 @@ module.exports = app => {
     // Retrieve availabilities for a specific person
     router.get("/person/:personId", [authenticate],availability.findAllForPerson);
 
+    // Retrieve upcoming availabilities for a specific person
+    router.get("/upcoming/person/:personId",[authenticate], availability.findAllUpcomingForPerson);
+
     // Retrieve a single Availability with id
     router.get("/:id", [authenticate],availability.findOne);
   
