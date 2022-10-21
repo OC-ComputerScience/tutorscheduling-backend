@@ -253,7 +253,8 @@ exports.logout = async (req, res) => {
 
     await Session.findAll({ where: { token : req.body.token } })
     .then(data => {
-        session = data[0].dataValues;
+        if(data[0] !== undefined)
+            session = data[0].dataValues;
     })
     .catch(err => {
         res.status(500).send({
@@ -264,7 +265,8 @@ exports.logout = async (req, res) => {
 
     session.token = '';
 
-    if(session !== null && session !== undefined) {
+    // session won't be null but the id will if no session was found
+    if(session.id !== undefined) {
         Session.update(session, { where: { id: session.id } })
         .then(num => {
             if (num == 1) {
@@ -286,7 +288,6 @@ exports.logout = async (req, res) => {
             });
         }); 
     }
-    
     else {
         console.log("already logged out")
         res.send({
