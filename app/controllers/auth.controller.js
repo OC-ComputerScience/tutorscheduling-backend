@@ -119,9 +119,17 @@ exports.login = async (req, res) => {
 
             for (let j = 0; j < element.role.length; j++) {
                 let item = element.role[j];
-                let role = item.type;
+                let role = {
+                    type: item.type,
+                    personRoleId: item.personrole[0].id
+                }
+                console.log("ITEM")
+                console.log(role)
                 roles.push(role);
             }
+
+            console.log("group roles with PERSONROLE")
+            console.log(roles)
 
             // sets the order of the roles
             if(roles.includes("Admin"))
