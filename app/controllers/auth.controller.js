@@ -108,8 +108,11 @@ exports.login = async (req, res) => {
                 required: true
             } ],
             as: 'role',
-            required: true
-        }]
+            required: true,
+        }],
+        order: [
+            ['name', 'ASC']
+        ]
     })
     .then((data) => {
         for (let i = 0; i < data.length; i++) {
@@ -123,31 +126,25 @@ exports.login = async (req, res) => {
                     type: item.type,
                     personRoleId: item.personrole[0].id
                 }
-                console.log("ITEM")
-                console.log(role)
                 roles.push(role);
             }
 
-            console.log("group roles with PERSONROLE")
-            console.log(roles)
-
             // sets the order of the roles
-            if(roles.includes("Admin"))
-                sortedRoles[0] = "Admin"
-            else if(roles.includes("Tutor"))
-                sortedRoles[0] = "Tutor"
-            else if(roles.includes("Student"))
-                sortedRoles[0] = "Student"
+            if(roles.find(role => role.type === "Admin") !== undefined)
+                sortedRoles[0] = roles.find(role => role.type === "Admin")
+            else if(roles.find(role => role.type === "Tutor") !== undefined)
+                sortedRoles[0] = roles.find(role => role.type === "Tutor")    
+            else if(roles.find(role => role.type === "Student") !== undefined)
+                sortedRoles[0] = roles.find(role => role.type === "Student")    
 
-            if(roles.includes("Tutor") && !sortedRoles.includes("Tutor"))
-                sortedRoles[1] = "Tutor"
-            else if(roles.includes("Student") && !sortedRoles.includes("Student"))
-                sortedRoles[1] = "Student"
+            if(roles.find(role => role.type === "Tutor") !== undefined && sortedRoles.find(role => role.type === "Tutor") === undefined)
+                sortedRoles[1] = roles.find(role => role.type === "Tutor") 
+            else if(roles.find(role => role.type === "Student") !== undefined && sortedRoles.find(role => role.type === "Student") === undefined)
+                sortedRoles[1] = roles.find(role => role.type === "Student") 
             
-            if(roles.includes("Student") && !sortedRoles.includes("Student"))
-                sortedRoles[2] = "Student"
-           
-            console.log(sortedRoles)
+            if(roles.find(role => role.type === "Student") !== undefined && sortedRoles.find(role => role.type === "Student") == undefined)
+                sortedRoles[2] = roles.find(role => role.type === "Student") 
+
             let group = {
                 name: element.name,
                 roles: sortedRoles
@@ -208,7 +205,7 @@ console.log("authorize client")
     oauth2Client.setCredentials(tokens);
 
     let person = {}
-console.log("findPerson")
+    console.log("findPerson")
 
     await Person.findOne({
         where: {
