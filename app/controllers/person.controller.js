@@ -1,10 +1,12 @@
-const { Sequelize } = require("../models");
+const { Sequelize, persontopic } = require("../models");
 const db = require("../models");
 const Person = db.person;
 const PersonRole = db.personrole;
+const PersonTopic = db.persontopic;
 const PersonAppointment = db.personappointment;
 const Appointment = db.appointment;
 const Role = db.role;
+const Topic = db.topic;
 const Op = db.Sequelize.Op;
 
 // Create and Save a new Person
@@ -195,15 +197,26 @@ exports.findPendingTutorsForGroup = (req, res) => {
 
   Person.findAll({
     include: [ {
-        model: PersonRole, 
-        as: 'personrole',
+      model: PersonRole, 
+      as: 'personrole',
+      required: true,
+      where: { '$personrole.status$': "applied"},
+      include: [ {
+        model: Role, 
+        as: 'role',
         required: true,
-        where: { '$personrole.status$': "applied"},
-        include: [ {
-          model: Role, 
-          as: 'role',
-          required: true,
-          where: { '$personrole->role.groupId$': groupId, '$personrole->role.type$': "Tutor"}
+        where: { '$personrole->role.groupId$': groupId, '$personrole->role.type$': "Tutor"}
+      }]
+    },
+    {
+      model: PersonTopic,
+      as: "persontopic",
+      required: false,
+      include: [ {
+        model: Topic, 
+        as: 'topic',
+        required: true,
+        where: { '$persontopic->topic.groupId$': groupId}
       }]
     }]
   })
