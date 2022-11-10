@@ -15,6 +15,9 @@ module.exports = app => {
 
     // Retrieve locations for a specific group
     router.get("/group/:groupId", [authenticate],location.findAllForGroup);
+
+    // Retrieve locations for a specific group
+    router.get("/active/group/:groupId", [authenticate],location.findActiveForGroup);
   
     // Update a Location with id
     router.put("/:id", [authenticate,isAdmin],location.update);
