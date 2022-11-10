@@ -16,6 +16,10 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.INTEGER,
         allowNull: false
       },
+      minApptTime: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+      },
       bookPastMinutes: {
         type: Sequelize.INTEGER,
         allowNull: false
