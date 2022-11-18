@@ -3,19 +3,19 @@ module.exports = (sequelize, Sequelize) => {
     id: {
       type: Sequelize.INTEGER,
       autoIncrement: true,
-      primaryKey: true
+      primaryKey: true,
     },
     isTutor: {
       type: Sequelize.BOOLEAN,
-      allowNull: false  
+      allowNull: false,
     },
     feedbacknumber: {
       type: Sequelize.INTEGER,
-      allowNull: true
+      allowNull: true,
     },
     feedbacktext: {
       type: Sequelize.STRING,
-      allowNull: true
+      allowNull: true,
     },
   });
 

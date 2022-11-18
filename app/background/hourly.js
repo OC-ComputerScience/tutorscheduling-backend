@@ -139,7 +139,6 @@ async function notifyUpcomingAppointments() {
       console.log("Could not work 3" + err);
     });
 }
-
 function calcTime(time) {
   if (time == null) {
     return null;
