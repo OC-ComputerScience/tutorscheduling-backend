@@ -1,17 +1,20 @@
-module.exports = app => {
-    const auth = require("../controllers/auth.controller.js");
-    const { authenticate,isAdmin} = require("../authorization/authorization.js");
-  
-    var router = require("express").Router();
+module.exports = (app) => {
+  const auth = require("../controllers/auth.controller.js");
+  const {
+    authenticate,
+    isAdmin,
+  } = require("../authorization/authorization.js");
 
-    // Login
-    router.post("/login", auth.login);
+  var router = require("express").Router();
 
-    // Authorization
-    router.post("/authorize/:id", auth.authorize);
+  // Login
+  router.post("/login", auth.login);
 
-    // Logout
-    router.post("/logout" ,auth.logout);
+  // Authorization
+  router.post("/authorize/:id", auth.authorize);
 
-    app.use('', router);
+  // Logout
+  router.post("/logout", auth.logout);
+
+  app.use("", router);
 };
