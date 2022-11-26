@@ -13,8 +13,6 @@ var jwt = require("jsonwebtoken");
 
 let googleUser = {};
 
-const { group } = require("../models");
-
 const google_id = process.env.GOOGLE_AUDIENCE;
 
 exports.login = async (req, res) => {
@@ -114,6 +112,7 @@ exports.login = async (req, res) => {
         required: true,
       },
     ],
+    order: [["name", "ASC"]],
   })
     .then((data) => {
       for (let i = 0; i < data.length; i++) {
@@ -123,24 +122,38 @@ exports.login = async (req, res) => {
 
         for (let j = 0; j < element.role.length; j++) {
           let item = element.role[j];
-          let role = item.type;
+          let role = {
+            type: item.type,
+            personRoleId: item.personrole[0].id,
+          };
           roles.push(role);
         }
 
         // sets the order of the roles
-        if (roles.includes("Admin")) sortedRoles[0] = "Admin";
-        else if (roles.includes("Tutor")) sortedRoles[0] = "Tutor";
-        else if (roles.includes("Student")) sortedRoles[0] = "Student";
+        if (roles.find((role) => role.type === "Admin") !== undefined)
+          sortedRoles[0] = roles.find((role) => role.type === "Admin");
+        else if (roles.find((role) => role.type === "Tutor") !== undefined)
+          sortedRoles[0] = roles.find((role) => role.type === "Tutor");
+        else if (roles.find((role) => role.type === "Student") !== undefined)
+          sortedRoles[0] = roles.find((role) => role.type === "Student");
 
-        if (roles.includes("Tutor") && !sortedRoles.includes("Tutor"))
-          sortedRoles[1] = "Tutor";
-        else if (roles.includes("Student") && !sortedRoles.includes("Student"))
-          sortedRoles[1] = "Student";
+        if (
+          roles.find((role) => role.type === "Tutor") !== undefined &&
+          sortedRoles.find((role) => role.type === "Tutor") === undefined
+        )
+          sortedRoles[1] = roles.find((role) => role.type === "Tutor");
+        else if (
+          roles.find((role) => role.type === "Student") !== undefined &&
+          sortedRoles.find((role) => role.type === "Student") === undefined
+        )
+          sortedRoles[1] = roles.find((role) => role.type === "Student");
 
-        if (roles.includes("Student") && !sortedRoles.includes("Student"))
-          sortedRoles[2] = "Student";
+        if (
+          roles.find((role) => role.type === "Student") !== undefined &&
+          sortedRoles.find((role) => role.type === "Student") == undefined
+        )
+          sortedRoles[2] = roles.find((role) => role.type === "Student");
 
-        console.log(sortedRoles);
         let group = {
           name: element.name,
           roles: sortedRoles,
