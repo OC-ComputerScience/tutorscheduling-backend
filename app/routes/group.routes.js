@@ -21,13 +21,17 @@ module.exports = (app) => {
 
   // Retrieve all incomplete Groups for a person
   router.get(
-    "/personIn/:personId",
+    "/personNeedContracts/:personId",
     [authenticate],
-    group.findAllIncompleteForPerson
+    group.findContractsNeededForPerson
   );
 
   // Retrieve all Groups and topics for a person
-  router.get("/personT/:personId", [authenticate], group.findAllTopicsForTutor);
+  router.get(
+    "/personNeedTopics/:personId",
+    [authenticate],
+    group.findTopicsNeededForTutor
+  );
 
   // Retrieve a single Group with id
   router.get("/:id", [authenticate], group.findOne);

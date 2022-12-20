@@ -2,6 +2,7 @@ const db = require("../models");
 const Group = db.group;
 const Role = db.role;
 const PersonRole = db.personrole;
+const Person = db.person;
 const Topic = db.topic;
 const PersonTopic = db.persontopic;
 const Op = db.Sequelize.Op;
@@ -102,13 +103,15 @@ exports.findAllForPerson = (req, res) => {
 };
 
 // Retrieve all Groups for a person from the database.
-exports.findAllIncompleteForPerson = (req, res) => {
+exports.findContractsNeededForPerson = (req, res) => {
   const id = req.params.personId;
 
   Group.findAll({
     include: [
       {
         model: Role,
+        as: "role",
+        required: true,
         include: [
           {
             where: {
@@ -120,8 +123,6 @@ exports.findAllIncompleteForPerson = (req, res) => {
             required: true,
           },
         ],
-        as: "role",
-        required: true,
       },
     ],
   })
@@ -136,7 +137,7 @@ exports.findAllIncompleteForPerson = (req, res) => {
 };
 
 // Retrieve all Groups and topics for a person from the database.
-exports.findAllTopicsForTutor = (req, res) => {
+exports.findTopicsNeededForTutor = (req, res) => {
   const id = req.params.personId;
 
   Group.findAll({
