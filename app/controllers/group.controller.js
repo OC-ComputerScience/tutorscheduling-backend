@@ -2,7 +2,6 @@ const db = require("../models");
 const Group = db.group;
 const Role = db.role;
 const PersonRole = db.personrole;
-const Person = db.person;
 const Topic = db.topic;
 const PersonTopic = db.persontopic;
 const Op = db.Sequelize.Op;
@@ -91,6 +90,7 @@ exports.findAllForPerson = (req, res) => {
         required: true,
       },
     ],
+    order: [["name", "ASC"]],
   })
     .then((data) => {
       res.send(data);
@@ -125,6 +125,7 @@ exports.findContractsNeededForPerson = (req, res) => {
         ],
       },
     ],
+    order: [["name", "ASC"]],
   })
     .then((data) => {
       res.send(data);
@@ -170,6 +171,7 @@ exports.findTopicsNeededForTutor = (req, res) => {
         required: true,
       },
     ],
+    order: [["name", "ASC"]],
   })
     .then((data) => {
       res.send(data);
