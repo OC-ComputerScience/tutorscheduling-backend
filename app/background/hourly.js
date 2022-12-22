@@ -6,6 +6,7 @@ const Person = db.person;
 const Location = db.location;
 const sms = require("../controllers/twilio.controller.js");
 const Op = db.Sequelize.Op;
+const Group = db.group;
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken =
   process.env.TWILIO_AUTH_TOKEN1 + process.env.TWILIO_AUTH_TOKEN2;
@@ -21,83 +22,9 @@ exports.hourlyTasks = () => {
     // for testing, runs every minute
     // cron.schedule('* * * * *', function() {
     console.log("Scheduled task every day at 55 min past the hour");
-    deletePastAppointments();
     notifyUpcomingAppointments();
   });
 };
-
-async function deletePastAppointments() {
-  let delDate = new Date().setHours(0, 0, 0);
-  let delTime = new Date().toLocaleTimeString("it-IT");
-  //get all of the appointments for today that start before now
-  await Appointment.findAll({
-    where: {
-      status: "available",
-      type: "Private",
-      date: { [Op.eq]: delDate },
-      startTime: { [Op.lt]: delTime },
-    },
-  })
-    .then((appointments) => {
-      console.log(
-        delTime +
-          ":Checking " +
-          appointments.length +
-          " appointments for deletion or revision"
-      );
-      if (appointments.length > 0) {
-        // for each appointment check to see if the need to have start time update or be deleted
-        appointments.forEach((appointment) => {
-          let startTime = appointment.startTime.split(":");
-          let hour = parseInt(startTime[0]) + (1 % 24);
-          if (hour < 10) {
-            hour = "0" + hour;
-          }
-          let newStartTime = hour + ":" + startTime[1] + ":" + startTime[2];
-          if (
-            newStartTime < appointment.endTime &&
-            appointment.endTime > delTime
-          ) {
-            appointment.startTime = newStartTime;
-            let newAppointment = appointment.dataValues;
-            let appointmentId = newAppointment.id;
-            Appointment.update(newAppointment, {
-              where: { id: appointmentId },
-            }).catch((err) => {
-              console.log("Could not update Appointment" + err);
-            });
-          } else {
-            let id = appointment.id;
-            Appointment.destroy({
-              where: { id: id },
-            }).catch((err) => {
-              console.log("Could not delete Appointment" + err);
-            });
-          }
-        });
-      }
-    })
-    .catch((err) => {
-      console.log("Could not find past Appointments" + err);
-    });
-
-  PersonAppointment.destroy({
-    where: {
-      appointmentId: null,
-    },
-  })
-    .then((num) => {
-      console.log(
-        num +
-          " Past person appointments before " +
-          delDate.toString() +
-          " were deleted successfully!"
-      );
-    })
-    .catch((err) => {
-      console.log("Could not delete past PersonAppointments" + err);
-    });
-}
 
 async function notifyUpcomingAppointments() {
   let date = new Date().setHours(0, 0, 0);

@@ -4,14 +4,14 @@ const Person = db.person;
 const Session = db.session;
 const PersonRole = db.personrole;
 const Role = db.role;
+const Group = db.group;
+const Op = db.Sequelize.Op;
 
 const { google } = require("googleapis");
 
 var jwt = require("jsonwebtoken");
 
 let googleUser = {};
-
-const { group } = require("../models");
 
 const google_id = process.env.GOOGLE_AUDIENCE;
 
@@ -39,6 +39,7 @@ exports.login = async (req, res) => {
   console.log(lastName);
 
   let person = {};
+  let session = {};
   let access = [];
 
   await Person.findOne({
@@ -66,7 +67,6 @@ exports.login = async (req, res) => {
   // this lets us get the person id
   if (person.id === undefined) {
     console.log("need to get person's id");
-    console.log(person);
     await Person.create(person)
       .then((data) => {
         console.log("person was registered");
@@ -77,11 +77,9 @@ exports.login = async (req, res) => {
         res.status(500).send({ message: err.message });
       });
   } else {
-    console.log(person);
     // doing this to ensure that the person's name is the one listed with Google
     person.fName = firstName;
     person.lName = lastName;
-    console.log(person);
     await Person.update(person, { where: { id: person.id } })
       .then((num) => {
         if (num == 1) {
@@ -98,24 +96,24 @@ exports.login = async (req, res) => {
   }
 
   // sets access for user
-  await group
-    .findAll({
-      include: [
-        {
-          model: Role,
-          include: [
-            {
-              where: { "$role->personrole.personId$": person.id },
-              model: PersonRole,
-              as: "personrole",
-              required: true,
-            },
-          ],
-          as: "role",
-          required: true,
-        },
-      ],
-    })
+  await Group.findAll({
+    include: [
+      {
+        model: Role,
+        include: [
+          {
+            where: { "$role->personrole.personId$": person.id },
+            model: PersonRole,
+            as: "personrole",
+            required: true,
+          },
+        ],
+        as: "role",
+        required: true,
+      },
+    ],
+    order: [["name", "ASC"]],
+  })
     .then((data) => {
       for (let i = 0; i < data.length; i++) {
         let element = data[i].dataValues;
@@ -124,24 +122,38 @@ exports.login = async (req, res) => {
 
         for (let j = 0; j < element.role.length; j++) {
           let item = element.role[j];
-          let role = item.type;
+          let role = {
+            type: item.type,
+            personRoleId: item.personrole[0].id,
+          };
           roles.push(role);
         }
 
         // sets the order of the roles
-        if (roles.includes("Admin")) sortedRoles[0] = "Admin";
-        else if (roles.includes("Tutor")) sortedRoles[0] = "Tutor";
-        else if (roles.includes("Student")) sortedRoles[0] = "Student";
+        if (roles.find((role) => role.type === "Admin") !== undefined)
+          sortedRoles[0] = roles.find((role) => role.type === "Admin");
+        else if (roles.find((role) => role.type === "Tutor") !== undefined)
+          sortedRoles[0] = roles.find((role) => role.type === "Tutor");
+        else if (roles.find((role) => role.type === "Student") !== undefined)
+          sortedRoles[0] = roles.find((role) => role.type === "Student");
 
-        if (roles.includes("Tutor") && !sortedRoles.includes("Tutor"))
-          sortedRoles[1] = "Tutor";
-        else if (roles.includes("Student") && !sortedRoles.includes("Student"))
-          sortedRoles[1] = "Student";
+        if (
+          roles.find((role) => role.type === "Tutor") !== undefined &&
+          sortedRoles.find((role) => role.type === "Tutor") === undefined
+        )
+          sortedRoles[1] = roles.find((role) => role.type === "Tutor");
+        else if (
+          roles.find((role) => role.type === "Student") !== undefined &&
+          sortedRoles.find((role) => role.type === "Student") === undefined
+        )
+          sortedRoles[1] = roles.find((role) => role.type === "Student");
 
-        if (roles.includes("Student") && !sortedRoles.includes("Student"))
-          sortedRoles[2] = "Student";
+        if (
+          roles.find((role) => role.type === "Student") !== undefined &&
+          sortedRoles.find((role) => role.type === "Student") == undefined
+        )
+          sortedRoles[2] = roles.find((role) => role.type === "Student");
 
-        console.log(sortedRoles);
         let group = {
           name: element.name,
           roles: sortedRoles,
@@ -154,38 +166,102 @@ exports.login = async (req, res) => {
       res.status(500).send({ message: err.message });
     });
 
-  // create a new Session with an expiration date and save to database
-  let token = jwt.sign({ id: email }, authconfig.secret, { expiresIn: 86400 });
-  let tempExpirationDate = new Date();
-  tempExpirationDate.setDate(tempExpirationDate.getDate() + 1);
-  const session = {
-    token: token,
-    email: email,
-    personId: person.id,
-    expirationDate: tempExpirationDate,
-  };
+  // try to find session first
 
-  console.log(session);
-
-  Session.create(session)
-    .then(() => {
-      let userInfo = {
-        email: person.email,
-        fName: person.fName,
-        lName: person.lName,
-        phoneNum: person.phoneNum,
-        access: access,
-        userID: person.id,
-        token: token,
-        refresh_token: person.refresh_token,
-        expiration_date: person.expiration_date,
-      };
-      console.log(userInfo);
-      res.send(userInfo);
+  await Session.findOne({
+    where: {
+      email: email,
+      token: { [Op.ne]: "" },
+    },
+  })
+    .then(async (data) => {
+      if (data !== null) {
+        session = data.dataValues;
+        if (session.expirationDate < Date.now()) {
+          session.token = "";
+          // clear session's token if it's expired
+          await Session.update(session, { where: { id: session.id } })
+            .then((num) => {
+              if (num == 1) {
+                console.log("successfully logged out");
+              } else {
+                console.log("failed");
+                res.send({
+                  message: `Error logging out user.`,
+                });
+              }
+            })
+            .catch((err) => {
+              console.log(err);
+              res.status(500).send({
+                message: "Error logging out user.",
+              });
+            });
+          //reset session to be null since we need to make another one
+          session = {};
+        } else {
+          // if the session is still valid, then send info to the front end
+          let userInfo = {
+            email: person.email,
+            fName: person.fName,
+            lName: person.lName,
+            phoneNum: person.phoneNum,
+            access: access,
+            userID: person.id,
+            token: session.token,
+            refresh_token: person.refresh_token,
+            expiration_date: person.expiration_date,
+          };
+          console.log("found a session, don't need to make another one");
+          console.log(userInfo);
+          res.send(userInfo);
+        }
+      }
     })
     .catch((err) => {
-      res.status(500).send({ message: err.message });
+      res.status(500).send({
+        message:
+          err.message || "Some error occurred while retrieving sessions.",
+      });
     });
+
+  if (session.id === undefined) {
+    // create a new Session with an expiration date and save to database
+    let token = jwt.sign({ id: email }, authconfig.secret, {
+      expiresIn: 86400,
+    });
+    let tempExpirationDate = new Date();
+    tempExpirationDate.setDate(tempExpirationDate.getDate() + 1);
+    session = {
+      token: token,
+      email: email,
+      personId: person.id,
+      expirationDate: tempExpirationDate,
+    };
+
+    console.log("making a new session");
+    console.log(session);
+
+    await Session.create(session)
+      .then(() => {
+        let userInfo = {
+          email: person.email,
+          fName: person.fName,
+          lName: person.lName,
+          phoneNum: person.phoneNum,
+          access: access,
+          userID: person.id,
+          token: session.token,
+          refresh_token: person.refresh_token,
+          expiration_date: person.expiration_date,
+        };
+        console.log(userInfo);
+        res.send(userInfo);
+      })
+      .catch((err) => {
+        res.status(500).send({ message: err.message });
+      });
+  }
 };
 
 exports.authorize = async (req, res) => {

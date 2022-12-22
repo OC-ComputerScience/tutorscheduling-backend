@@ -91,6 +91,7 @@ exports.findAllForPerson = (req, res) => {
         required: true,
       },
     ],
+    order: [["name", "ASC"]],
   })
     .then((data) => {
       res.send(data);
@@ -103,13 +104,15 @@ exports.findAllForPerson = (req, res) => {
 };
 
 // Retrieve all Groups for a person from the database.
-exports.findAllIncompleteForPerson = (req, res) => {
+exports.findContractsNeededForPerson = (req, res) => {
   const id = req.params.personId;
 
   Group.findAll({
     include: [
       {
         model: Role,
+        as: "role",
+        required: true,
         include: [
           {
             where: {
@@ -121,10 +124,9 @@ exports.findAllIncompleteForPerson = (req, res) => {
             required: true,
           },
         ],
-        as: "role",
-        required: true,
       },
     ],
+    order: [["name", "ASC"]],
   })
     .then((data) => {
       res.send(data);
@@ -137,7 +139,7 @@ exports.findAllIncompleteForPerson = (req, res) => {
 };
 
 // Retrieve all Groups and topics for a person from the database.
-exports.findAllTopicsForTutor = (req, res) => {
+exports.findTopicsNeededForTutor = (req, res) => {
   const id = req.params.personId;
 
   Group.findAll({
@@ -170,6 +172,7 @@ exports.findAllTopicsForTutor = (req, res) => {
         required: true,
       },
     ],
+    order: [["name", "ASC"]],
   })
     .then((data) => {
       res.send(data);

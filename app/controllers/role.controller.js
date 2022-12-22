@@ -1,5 +1,6 @@
 const db = require("../models");
 const Role = db.role;
+const Person = db.person;
 const PersonRole = db.personrole;
 const PersonRolePrivilege = db.personroleprivilege;
 const Op = db.Sequelize.Op;
@@ -82,6 +83,40 @@ exports.findRoleByGroupForPerson = (req, res) => {
           {
             model: PersonRolePrivilege,
             as: "personroleprivilege",
+          },
+        ],
+      },
+    ],
+  })
+    .then((data) => {
+      res.send(data);
+    })
+    .catch((err) => {
+      res.status(500).send({ message: err.message });
+    });
+};
+
+// Retrieve roles per group for personroles for a specific type
+exports.findRoleByGroupForType = (req, res) => {
+  const type = req.params.type;
+  const groupId = req.params.groupId;
+
+  Role.findAll({
+    where: { type: type, groupId: groupId },
+    include: [
+      {
+        model: PersonRole,
+        as: "personrole",
+        right: true,
+        include: [
+          {
+            model: PersonRolePrivilege,
+            as: "personroleprivilege",
+          },
+          {
+            model: Person,
+            as: "person",
+            right: true,
           },
         ],
       },

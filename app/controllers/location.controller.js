@@ -19,6 +19,7 @@ exports.create = (req, res) => {
     type: req.body.type,
     building: req.body.building,
     description: req.body.description,
+    status: req.body.status ? req.body.status : "active",
     groupId: req.body.groupId,
   };
 
@@ -57,6 +58,23 @@ exports.findAllForGroup = (req, res) => {
   const id = req.params.groupId;
 
   Location.findAll({ where: { groupId: id } })
+    .then((data) => {
+      res.send(data);
+    })
+    .catch((err) => {
+      res.status(500).send({
+        message:
+          err.message ||
+          "Some error occurred while retrieving locations for group.",
+      });
+    });
+};
+
+// Retrieve all active locations for a group from the database.
+exports.findActiveForGroup = (req, res) => {
+  const id = req.params.groupId;
+
+  Location.findAll({ where: { groupId: id, status: "active" } })
     .then((data) => {
       res.send(data);
     })
