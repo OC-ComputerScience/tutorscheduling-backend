@@ -62,10 +62,7 @@ exports.findAllForGroup = (req, res) => {
 
   Topic.findAll({
     where: { groupId: id },
-    order: [
-      ["status", "ASC"],
-      ["name", "ASC"],
-    ],
+    order: [["name", "ASC"]],
   })
     .then((data) => {
       res.send(data);
