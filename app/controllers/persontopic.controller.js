@@ -190,25 +190,27 @@ exports.deleteWithTopicId = (req, res) => {
     ],
   })
     .then(async (data) => {
-      for (let i = 0; i < data[0].dataValues.persontopic.length; i++) {
-        let personTopic = data[0].dataValues.persontopic[i];
-        await PersonTopic.destroy({
-          where: { id: personTopic.id },
-        })
-          .then((num) => {
-            if (num == 1) {
-              console.log("PersonTopic was deleted successfully!");
-            } else {
-              res.send({
-                message: `Cannot delete PersonTopic with id=${id}. Maybe PersonTopic was not found!`,
-              });
-            }
+      if (data[0] !== undefined) {
+        for (let i = 0; i < data[0].dataValues.persontopic.length; i++) {
+          let personTopic = data[0].dataValues.persontopic[i];
+          await PersonTopic.destroy({
+            where: { id: personTopic.id },
           })
-          .catch((err) => {
-            res.status(500).send({
-              message: "Could not delete PersonTopic with id=" + id,
+            .then((num) => {
+              if (num == 1) {
+                console.log("PersonTopic was deleted successfully!");
+              } else {
+                res.send({
+                  message: `Cannot delete PersonTopic with id=${id}. Maybe PersonTopic was not found!`,
+                });
+              }
+            })
+            .catch((err) => {
+              res.status(500).send({
+                message: "Could not delete PersonTopic with id=" + id,
+              });
             });
-          });
+        }
       }
       res.send({
         message: `PersonTopics were deleted successfully!`,
