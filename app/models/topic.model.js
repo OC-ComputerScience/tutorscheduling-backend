@@ -12,6 +12,10 @@ module.exports = (sequelize, Sequelize) => {
     abbr: {
       type: Sequelize.STRING,
     },
+    status: {
+      type: Sequelize.STRING,
+      allowNull: false,
+    },
   });
 
   return Topic;

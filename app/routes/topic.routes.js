@@ -26,6 +26,13 @@ module.exports = (app) => {
     topic.findTopicByGroupForPerson
   );
 
+  // Retrieve active topics for a specific group
+  router.get(
+    "/active/group/:groupId",
+    [authenticate],
+    topic.findActiveForGroup
+  );
+
   // Retrieve all appointment hour count
   router.get(
     "/group/:groupId/hours/week/:currWeek",
