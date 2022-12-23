@@ -43,7 +43,7 @@ exports.findAll = (req, res) => {
   const id = req.query.id;
   var condition = id ? { id: { [Op.like]: `%${id}%` } } : null;
 
-  Group.findAll({ where: condition })
+  Group.findAll({ where: condition, order: [["name", "ASC"]] })
     .then((data) => {
       res.send(data);
     })
@@ -58,7 +58,7 @@ exports.findAll = (req, res) => {
 exports.findOneByName = (req, res) => {
   const name = req.params.name;
 
-  Group.findAll({ where: { name: name } })
+  Group.findAll({ where: { name: name }, order: [["name", "ASC"]] })
     .then((data) => {
       res.send(data);
     })
