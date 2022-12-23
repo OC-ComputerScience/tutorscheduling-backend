@@ -1,9 +1,6 @@
 const db = require("../models");
 const Topic = db.topic;
 const PersonTopic = db.persontopic;
-const Person = db.person;
-const PersonAppointment = db.personappointment;
-const Appointment = db.appointment;
 const Op = db.Sequelize.Op;
 
 // Create and Save a new Topic
@@ -19,9 +16,10 @@ exports.create = (req, res) => {
   // Create a Topic
   const topic = {
     id: req.body.id,
-    groupId: req.body.groupId,
     name: req.body.name,
     abbr: req.body.abbr,
+    status: req.body.status ? req.body.status : "active",
+    groupId: req.body.groupId,
   };
 
   // Save Topic in the database
@@ -57,6 +55,23 @@ exports.findAllForGroup = (req, res) => {
   const id = req.params.groupId;
 
   Topic.findAll({ where: { groupId: id } })
+    .then((data) => {
+      res.send(data);
+    })
+    .catch((err) => {
+      res.status(500).send({
+        message:
+          err.message ||
+          "Some error occurred while retrieving topics for group.",
+      });
+    });
+};
+
+// Retrieve all active locations for a group from the database.
+exports.findActiveForGroup = (req, res) => {
+  const id = req.params.groupId;
+
+  Topic.findAll({ where: { groupId: id, status: "active" } })
     .then((data) => {
       res.send(data);
     })
