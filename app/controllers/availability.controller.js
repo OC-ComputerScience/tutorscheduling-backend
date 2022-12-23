@@ -211,7 +211,7 @@ exports.delete = (req, res) => {
             if (num == 1) {
               let tutorId = availability.personId;
               let date = availability.date;
-              date.setHours(date.getHours() + 5);
+              date.setHours(date.getHours() + date.getTimezoneOffset() / 60);
               let startTime = availability.startTime;
               console.log(tutorId);
               let endTime = availability.endTime;
