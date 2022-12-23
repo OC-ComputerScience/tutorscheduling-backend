@@ -45,7 +45,13 @@ exports.findAll = (req, res) => {
   const id = req.query.id;
   var condition = id ? { id: { [Op.like]: `%${id}%` } } : null;
 
-  Request.findAll({ where: condition })
+  Request.findAll({
+    where: condition,
+    order: [
+      ["status", "DESC"],
+      ["createdAt", "ASC"],
+    ],
+  })
     .then((data) => {
       res.send(data);
     })
@@ -94,6 +100,10 @@ exports.findAllForGroup = (req, res) => {
         as: "topic",
         required: false,
       },
+    ],
+    order: [
+      ["status", "DESC"],
+      ["createdAt", "ASC"],
     ],
   })
     .then((data) => {

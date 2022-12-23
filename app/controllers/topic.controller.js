@@ -39,7 +39,13 @@ exports.findAll = (req, res) => {
   const id = req.query.id;
   var condition = id ? { id: { [Op.like]: `%${id}%` } } : null;
 
-  Topic.findAll({ where: condition })
+  Topic.findAll({
+    where: condition,
+    order: [
+      ["status", "ASC"],
+      ["name", "ASC"],
+    ],
+  })
     .then((data) => {
       res.send(data);
     })
@@ -54,7 +60,13 @@ exports.findAll = (req, res) => {
 exports.findAllForGroup = (req, res) => {
   const id = req.params.groupId;
 
-  Topic.findAll({ where: { groupId: id } })
+  Topic.findAll({
+    where: { groupId: id },
+    order: [
+      ["status", "ASC"],
+      ["name", "ASC"],
+    ],
+  })
     .then((data) => {
       res.send(data);
     })
@@ -71,7 +83,10 @@ exports.findAllForGroup = (req, res) => {
 exports.findActiveForGroup = (req, res) => {
   const id = req.params.groupId;
 
-  Topic.findAll({ where: { groupId: id, status: "active" } })
+  Topic.findAll({
+    where: { groupId: id, status: "active" },
+    order: [["name", "ASC"]],
+  })
     .then((data) => {
       res.send(data);
     })
@@ -126,7 +141,7 @@ exports.getAppointmentHourCount = (req, res) => {
         "FROM appointments a JOIN personappointments pa on a.id = pa.appointmentId JOIN persontopics pt on pt.personId = pa.personId) AS potentialHours " +
         "FROM topics as t WHERE t.groupId = " +
         id +
-        ";",
+        " AND t.status = 'active' ORDER BY t.name ASC;",
       {
         type: db.sequelize.QueryTypes.SELECT,
       }
@@ -146,13 +161,20 @@ exports.findTopicByGroupForPerson = (req, res) => {
   const groupId = req.params.groupId;
 
   Topic.findAll({
-    where: { "$persontopic.personId$": personId, groupId: groupId },
+    where: {
+      "$persontopic.personId$": personId,
+      groupId: groupId,
+    },
     include: [
       {
         model: PersonTopic,
         as: "persontopic",
         right: true,
       },
+    ],
+    order: [
+      ["status", "ASC"],
+      ["name", "ASC"],
     ],
   })
     .then((data) => {
@@ -176,6 +198,7 @@ exports.findTopicForPerson = (req, res) => {
         right: true,
       },
     ],
+    order: [["name", "ASC"]],
   })
     .then((data) => {
       res.send(data);

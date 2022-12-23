@@ -91,6 +91,10 @@ exports.getTopicForPersonGroup = (req, res) => {
         ],
       },
     ],
+    order: [
+      ["status", "ASC"],
+      ["name", "ASC"],
+    ],
   })
     .then((data) => {
       res.send(data);

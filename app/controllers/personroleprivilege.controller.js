@@ -37,7 +37,11 @@ exports.findAll = (req, res) => {
   const id = req.query.id;
   var condition = id ? { id: { [Op.like]: `%${id}%` } } : null;
 
-  PersonRolePrivilege.findAll({ where: condition, include: ["person"] })
+  PersonRolePrivilege.findAll({
+    where: condition,
+    include: ["person"],
+    order: [["privilege", "ASC"]],
+  })
     .then((data) => {
       res.send(data);
     })
@@ -56,6 +60,7 @@ exports.findPrivilegeByPersonRole = (req, res) => {
 
   PersonRolePrivilege.findAll({
     where: { personroleId: personroleId },
+    order: [["privilege", "ASC"]],
   })
     .then((data) => {
       res.send(data);

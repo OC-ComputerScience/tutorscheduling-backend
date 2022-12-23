@@ -41,7 +41,13 @@ exports.findAll = (req, res) => {
   const id = req.query.id;
   var condition = id ? { id: { [Op.like]: `%${id}%` } } : null;
 
-  Location.findAll({ where: condition })
+  Location.findAll({
+    where: condition,
+    order: [
+      ["status", "ASC"],
+      ["name", "ASC"],
+    ],
+  })
     .then((data) => {
       res.send(data);
     })
@@ -57,7 +63,13 @@ exports.findAll = (req, res) => {
 exports.findAllForGroup = (req, res) => {
   const id = req.params.groupId;
 
-  Location.findAll({ where: { groupId: id } })
+  Location.findAll({
+    where: { groupId: id },
+    order: [
+      ["status", "ASC"],
+      ["name", "ASC"],
+    ],
+  })
     .then((data) => {
       res.send(data);
     })
@@ -74,7 +86,10 @@ exports.findAllForGroup = (req, res) => {
 exports.findActiveForGroup = (req, res) => {
   const id = req.params.groupId;
 
-  Location.findAll({ where: { groupId: id, status: "active" } })
+  Location.findAll({
+    where: { groupId: id, status: "active" },
+    order: [["name", "ASC"]],
+  })
     .then((data) => {
       res.send(data);
     })

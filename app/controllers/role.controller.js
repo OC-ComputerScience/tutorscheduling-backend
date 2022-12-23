@@ -39,7 +39,11 @@ exports.findAll = (req, res) => {
   const id = req.query.id;
   var condition = id ? { id: { [Op.like]: `%${id}%` } } : null;
 
-  Role.findAll({ where: condition, include: ["group"] })
+  Role.findAll({
+    where: condition,
+    include: ["group"],
+    order: [["type", "ASC"]],
+  })
     .then((data) => {
       res.send(data);
     })
@@ -54,7 +58,7 @@ exports.findAll = (req, res) => {
 exports.findAllForGroup = (req, res) => {
   const id = req.params.groupId;
 
-  Role.findAll({ where: { groupId: id } })
+  Role.findAll({ where: { groupId: id }, order: [["type", "ASC"]] })
     .then((data) => {
       res.send(data);
     })
