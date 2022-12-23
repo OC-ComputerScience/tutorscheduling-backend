@@ -144,6 +144,68 @@ exports.findAppointmentsForGroup = (req, res) => {
     });
 };
 
+// Retrieve all Appointment from the database.
+exports.findOneForText = (req, res) => {
+  const id = req.params.id;
+
+  Appointment.findAll({
+    where: { id: id },
+    include: [
+      {
+        model: Location,
+        as: "location",
+        required: true,
+      },
+      {
+        model: Topic,
+        as: "topic",
+        required: true,
+      },
+      {
+        model: PersonAppointment,
+        as: "personappointment",
+        required: true,
+        include: [
+          {
+            model: Person,
+            as: "person",
+            required: true,
+            right: true,
+            include: [
+              {
+                model: PersonTopic,
+                as: "persontopic",
+                required: false,
+                include: [
+                  {
+                    model: Topic,
+                    as: "topic",
+                    required: true,
+                    right: true,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    order: [
+      ["date", "ASC"],
+      ["startTime", "ASC"],
+    ],
+  })
+    .then((data) => {
+      res.send(data);
+    })
+    .catch((err) => {
+      res.status(500).send({
+        message:
+          err.message || "Some error occurred while retrieving Appointments.",
+      });
+    });
+};
+
 // Retrieve all upcoming appointments for a person from the database to help check conflicts
 exports.findAllUpcomingForPerson = (req, res) => {
   const personId = req.params.personId;
