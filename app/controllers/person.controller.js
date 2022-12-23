@@ -286,6 +286,7 @@ exports.findPendingTutorsForGroup = (req, res) => {
       },
     ],
     order: [
+      ["createdAt", "ASC"],
       ["lName", "ASC"],
       ["fName", "ASC"],
     ],
