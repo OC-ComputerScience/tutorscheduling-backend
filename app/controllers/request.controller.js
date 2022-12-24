@@ -168,6 +168,26 @@ exports.delete = (req, res) => {
     });
 };
 
+// Delete all PersonTopic for person from the database.
+exports.deleteAllForPersonForGroup = (req, res) => {
+  const personId = req.params.personId;
+  const groupId = req.params.personId;
+
+  Request.destroy({
+    where: { personId: personId, groupId: groupId },
+    truncate: false,
+  })
+    .then((nums) => {
+      res.send({ message: `${nums} PersonTopic were deleted successfully!` });
+    })
+    .catch((err) => {
+      res.status(500).send({
+        message:
+          err.message || "Some error occurred while removing all PersonTopic.",
+      });
+    });
+};
+
 // Delete all Request from the database.
 exports.deleteAll = (req, res) => {
   Request.destroy({

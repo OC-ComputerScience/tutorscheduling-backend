@@ -26,6 +26,13 @@ module.exports = (app) => {
   router.delete("/:id", [authenticate], request.delete);
 
   // Delete all Request
+  router.delete(
+    "/person/:personId/group/:groupId",
+    [authenticate],
+    request.deleteAllForPersonForGroup
+  );
+
+  // Delete all Request
   router.delete("/", [authenticate], request.deleteAll);
 
   app.use("/request", router);

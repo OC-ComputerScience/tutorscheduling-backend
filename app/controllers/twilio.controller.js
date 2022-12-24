@@ -11,7 +11,10 @@ exports.send = (req, res) => {
       from: phoneNum,
       to: req.body.phoneNum,
     })
-    .then((message) => console.log("sent" + message.sid))
+    .then((message) => {
+      console.log("sent " + message.sid);
+      res.send({ message: "sent " + message.sid });
+    })
     .catch((err) => {
       console.log("Could not send messsage" + err);
       res.status(500).send({
