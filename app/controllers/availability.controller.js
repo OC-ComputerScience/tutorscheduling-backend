@@ -41,7 +41,13 @@ exports.findAll = (req, res) => {
   const id = req.query.id;
   var condition = id ? { id: { [Op.like]: `%${id}%` } } : null;
 
-  Availability.findAll({ where: condition })
+  Availability.findAll({
+    where: condition,
+    order: [
+      ["date", "ASC"],
+      ["startTime", "ASC"],
+    ],
+  })
     .then((data) => {
       res.send(data);
     })
@@ -57,7 +63,13 @@ exports.findAll = (req, res) => {
 exports.findAllForPerson = (req, res) => {
   const id = req.params.personId;
 
-  Availability.findAll({ where: { personId: id } })
+  Availability.findAll({
+    where: { personId: id },
+    order: [
+      ["date", "ASC"],
+      ["startTime", "ASC"],
+    ],
+  })
     .then((data) => {
       res.send(data);
     })
@@ -73,7 +85,13 @@ exports.findAllForPerson = (req, res) => {
 // Retrieve all availabilities for a group from the database.
 exports.findAllForGroup = (req, res) => {
   const id = req.params.personId;
-  Availability.findAll({ where: { personId: id } })
+  Availability.findAll({
+    where: { personId: id },
+    order: [
+      ["date", "ASC"],
+      ["startTime", "ASC"],
+    ],
+  })
     .then((data) => {
       res.send(data);
     })
@@ -115,6 +133,10 @@ exports.findAllUpcomingForPerson = (req, res) => {
         },
       ],
     },
+    order: [
+      ["date", "ASC"],
+      ["startTime", "ASC"],
+    ],
   })
     .then((data) => {
       res.send(data);
@@ -189,7 +211,7 @@ exports.delete = (req, res) => {
             if (num == 1) {
               let tutorId = availability.personId;
               let date = availability.date;
-              date.setHours(date.getHours() + 5);
+              date.setHours(date.getHours() + date.getTimezoneOffset() / 60);
               let startTime = availability.startTime;
               console.log(tutorId);
               let endTime = availability.endTime;

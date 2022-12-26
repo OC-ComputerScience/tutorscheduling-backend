@@ -1,9 +1,6 @@
 const db = require("../models");
 const Topic = db.topic;
 const PersonTopic = db.persontopic;
-const Person = db.person;
-const PersonAppointment = db.personappointment;
-const Appointment = db.appointment;
 const Op = db.Sequelize.Op;
 
 // Create and Save a new Topic
@@ -19,9 +16,10 @@ exports.create = (req, res) => {
   // Create a Topic
   const topic = {
     id: req.body.id,
-    groupId: req.body.groupId,
     name: req.body.name,
     abbr: req.body.abbr,
+    status: req.body.status ? req.body.status : "active",
+    groupId: req.body.groupId,
   };
 
   // Save Topic in the database
@@ -41,7 +39,13 @@ exports.findAll = (req, res) => {
   const id = req.query.id;
   var condition = id ? { id: { [Op.like]: `%${id}%` } } : null;
 
-  Topic.findAll({ where: condition })
+  Topic.findAll({
+    where: condition,
+    order: [
+      ["status", "ASC"],
+      ["name", "ASC"],
+    ],
+  })
     .then((data) => {
       res.send(data);
     })
@@ -56,7 +60,30 @@ exports.findAll = (req, res) => {
 exports.findAllForGroup = (req, res) => {
   const id = req.params.groupId;
 
-  Topic.findAll({ where: { groupId: id } })
+  Topic.findAll({
+    where: { groupId: id },
+    order: [["name", "ASC"]],
+  })
+    .then((data) => {
+      res.send(data);
+    })
+    .catch((err) => {
+      res.status(500).send({
+        message:
+          err.message ||
+          "Some error occurred while retrieving topics for group.",
+      });
+    });
+};
+
+// Retrieve all active locations for a group from the database.
+exports.findActiveForGroup = (req, res) => {
+  const id = req.params.groupId;
+
+  Topic.findAll({
+    where: { groupId: id, status: "active" },
+    order: [["name", "ASC"]],
+  })
     .then((data) => {
       res.send(data);
     })
@@ -111,7 +138,7 @@ exports.getAppointmentHourCount = (req, res) => {
         "FROM appointments a JOIN personappointments pa on a.id = pa.appointmentId JOIN persontopics pt on pt.personId = pa.personId) AS potentialHours " +
         "FROM topics as t WHERE t.groupId = " +
         id +
-        ";",
+        " AND t.status = 'active' ORDER BY t.name ASC;",
       {
         type: db.sequelize.QueryTypes.SELECT,
       }
@@ -131,13 +158,20 @@ exports.findTopicByGroupForPerson = (req, res) => {
   const groupId = req.params.groupId;
 
   Topic.findAll({
-    where: { "$persontopic.personId$": personId, groupId: groupId },
+    where: {
+      "$persontopic.personId$": personId,
+      groupId: groupId,
+    },
     include: [
       {
         model: PersonTopic,
         as: "persontopic",
         right: true,
       },
+    ],
+    order: [
+      ["status", "ASC"],
+      ["name", "ASC"],
     ],
   })
     .then((data) => {
@@ -161,6 +195,7 @@ exports.findTopicForPerson = (req, res) => {
         right: true,
       },
     ],
+    order: [["name", "ASC"]],
   })
     .then((data) => {
       res.send(data);

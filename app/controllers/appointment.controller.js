@@ -58,7 +58,13 @@ exports.findAll = (req, res) => {
   const id = req.query.id;
   var condition = id ? { id: { [Op.like]: `%${id}%` } } : null;
 
-  Appointment.findAll({ where: condition })
+  Appointment.findAll({
+    where: condition,
+    order: [
+      ["date", "ASC"],
+      ["startTime", "ASC"],
+    ],
+  })
     .then((data) => {
       res.send(data);
     })
@@ -121,6 +127,72 @@ exports.findAppointmentsForGroup = (req, res) => {
           },
         ],
       },
+    ],
+    order: [
+      ["date", "ASC"],
+      ["startTime", "ASC"],
+    ],
+  })
+    .then((data) => {
+      res.send(data);
+    })
+    .catch((err) => {
+      res.status(500).send({
+        message:
+          err.message || "Some error occurred while retrieving Appointments.",
+      });
+    });
+};
+
+// Retrieve all Appointment from the database.
+exports.findOneForText = (req, res) => {
+  const id = req.params.id;
+
+  Appointment.findAll({
+    where: { id: id },
+    include: [
+      {
+        model: Location,
+        as: "location",
+        required: true,
+      },
+      {
+        model: Topic,
+        as: "topic",
+        required: true,
+      },
+      {
+        model: PersonAppointment,
+        as: "personappointment",
+        required: true,
+        include: [
+          {
+            model: Person,
+            as: "person",
+            required: true,
+            right: true,
+            include: [
+              {
+                model: PersonTopic,
+                as: "persontopic",
+                required: false,
+                include: [
+                  {
+                    model: Topic,
+                    as: "topic",
+                    required: true,
+                    right: true,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    order: [
+      ["date", "ASC"],
+      ["startTime", "ASC"],
     ],
   })
     .then((data) => {
@@ -257,6 +329,10 @@ exports.findAllUpcomingForPersonForGroup = (req, res) => {
         ],
       },
     ],
+    order: [
+      ["date", "ASC"],
+      ["startTime", "ASC"],
+    ],
   })
     .then((data) => {
       res.send(data);
@@ -319,6 +395,10 @@ exports.findAllPassedForPersonForGroupTutor = (req, res) => {
         required: true,
       },
     ],
+    order: [
+      ["date", "ASC"],
+      ["startTime", "ASC"],
+    ],
   })
     .then((data) => {
       res.send(data);
@@ -355,6 +435,10 @@ exports.findAllPassedForPersonForGroupStudent = (req, res) => {
         required: true,
       },
     ],
+    order: [
+      ["date", "ASC"],
+      ["startTime", "ASC"],
+    ],
   })
     .then((data) => {
       res.send(data);
@@ -387,6 +471,10 @@ exports.findAllForPersonForGroup = (req, res) => {
         as: "topic",
         required: true,
       },
+    ],
+    order: [
+      ["date", "ASC"],
+      ["startTime", "ASC"],
     ],
   })
     .then((data) => {
@@ -448,6 +536,10 @@ exports.findAllUpcomingForGroup = (req, res) => {
       groupId: groupId,
       date: { [Op.gte]: date },
     },
+    order: [
+      ["date", "ASC"],
+      ["startTime", "ASC"],
+    ],
   })
     .then((data) => {
       res.send(data);
@@ -519,6 +611,10 @@ exports.getAppointmentHourCount = (req, res) => {
         "noshow",
       ],
     ],
+    order: [
+      ["date", "ASC"],
+      ["startTime", "ASC"],
+    ],
   })
     .then((data) => {
       res.send(data);
@@ -579,6 +675,10 @@ exports.findAllForGroup = (req, res) => {
           },
         ],
       },
+    ],
+    order: [
+      ["date", "ASC"],
+      ["startTime", "ASC"],
     ],
   })
     .then((data) => {
@@ -652,6 +752,10 @@ exports.findFeedbackApptForPerson = (req, res) => {
           },
         ],
       },
+    ],
+    order: [
+      ["date", "ASC"],
+      ["startTime", "ASC"],
     ],
   })
     .then((data) => {

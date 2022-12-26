@@ -91,6 +91,10 @@ exports.getTopicForPersonGroup = (req, res) => {
         ],
       },
     ],
+    order: [
+      ["status", "ASC"],
+      ["name", "ASC"],
+    ],
   })
     .then((data) => {
       res.send(data);
@@ -172,6 +176,52 @@ exports.delete = (req, res) => {
       res.status(500).send({
         message: "Could not delete PersonTopic with id=" + id,
       });
+    });
+};
+
+// Delete a PersonTopic with the specified id in the request
+exports.deleteWithTopicId = (req, res) => {
+  const id = req.params.id;
+
+  Topic.findAll({
+    where: { "$persontopic.topicId$": id, status: "disabled" },
+    include: [
+      {
+        model: PersonTopic,
+        as: "persontopic",
+        // right: true,
+      },
+    ],
+  })
+    .then(async (data) => {
+      if (data[0] !== undefined) {
+        for (let i = 0; i < data[0].dataValues.persontopic.length; i++) {
+          let personTopic = data[0].dataValues.persontopic[i];
+          await PersonTopic.destroy({
+            where: { id: personTopic.id },
+          })
+            .then((num) => {
+              if (num == 1) {
+                console.log("PersonTopic was deleted successfully!");
+              } else {
+                res.send({
+                  message: `Cannot delete PersonTopic with id=${id}. Maybe PersonTopic was not found!`,
+                });
+              }
+            })
+            .catch((err) => {
+              res.status(500).send({
+                message: "Could not delete PersonTopic with id=" + id,
+              });
+            });
+        }
+      }
+      res.send({
+        message: `PersonTopics were deleted successfully!`,
+      });
+    })
+    .catch((err) => {
+      res.status(500).send({ message: err.message });
     });
 };
 

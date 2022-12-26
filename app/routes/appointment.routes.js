@@ -19,6 +19,9 @@ module.exports = (app) => {
   // Retrieve all Appointment for reporting (literally all)
   router.get("/group/:groupId", [authenticate], appointment.findAllForGroup);
 
+  // Retrieve all Appointment for reporting (literally all)
+  router.get("/text/:id", [authenticate], appointment.findOneForText);
+
   // -------------------------------------------- FOR GROUP ---------------------------------------
   // Retrieve all appointment hour count
   router.get(

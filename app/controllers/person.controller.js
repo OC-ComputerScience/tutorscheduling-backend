@@ -48,7 +48,13 @@ exports.findAll = (req, res) => {
   const id = req.query.id;
   var condition = id ? { id: { [Op.like]: `%${id}%` } } : null;
 
-  Person.findAll({ where: condition })
+  Person.findAll({
+    where: condition,
+    order: [
+      ["lName", "ASC"],
+      ["fName", "ASC"],
+    ],
+  })
     .then((data) => {
       res.send(data);
     })
@@ -79,6 +85,10 @@ exports.findFirstTutorForAppointment = (req, res) => {
           },
         ],
       },
+    ],
+    order: [
+      ["lName", "ASC"],
+      ["fName", "ASC"],
     ],
   })
     .then((data) => {
@@ -158,6 +168,10 @@ exports.findAllForGroup = (req, res) => {
         ],
       },
     ],
+    order: [
+      ["lName", "ASC"],
+      ["fName", "ASC"],
+    ],
   })
     .then((data) => {
       res.send(data);
@@ -221,7 +235,7 @@ exports.getAppointmentHourCount = (req, res) => {
         " and r.type = 'Tutor') AS payingHours  " +
         " FROM roles as r, people as p, personroles as pr WHERE pr.roleId = r.id AND p.id = pr.personId AND r.groupId = " +
         id +
-        " AND r.type = 'Tutor';",
+        " AND r.type = 'Tutor' ORDER BY p.lName ASC, p.fName ASC;",
       {
         type: db.sequelize.QueryTypes.SELECT,
       }
@@ -271,6 +285,11 @@ exports.findPendingTutorsForGroup = (req, res) => {
         ],
       },
     ],
+    order: [
+      ["createdAt", "ASC"],
+      ["lName", "ASC"],
+      ["fName", "ASC"],
+    ],
   })
     .then((data) => {
       res.send(data);
@@ -306,6 +325,10 @@ exports.findApprovedTutorsForGroup = (req, res) => {
           },
         ],
       },
+    ],
+    order: [
+      ["lName", "ASC"],
+      ["fName", "ASC"],
     ],
   })
     .then((data) => {

@@ -32,6 +32,9 @@ module.exports = (app) => {
   // Delete a PersonTopic with id
   router.delete("/:id", [authenticate], persontopic.delete);
 
+  // Delete a PersonTopic with topic id
+  router.delete("/topic/:id", [authenticate], persontopic.deleteWithTopicId);
+
   // Delete all PersonTopic
   router.delete("/", [authenticate], persontopic.deleteAll);
 
