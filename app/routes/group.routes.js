@@ -37,7 +37,7 @@ module.exports = (app) => {
   router.get("/:id", [authenticate], group.findOne);
 
   // Update a Group with id
-  router.put("/:id", [authenticate, isSuperAdmin], group.update);
+  router.put("/:id", [authenticate, isAdmin], group.update);
 
   // Delete a Group with id
   router.delete(
