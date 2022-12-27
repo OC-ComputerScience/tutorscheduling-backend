@@ -265,20 +265,29 @@ exports.findAllUpcomingForPerson = (req, res) => {
 };
 
 // Retrieve all upcoming appointments for a person for a group from the database.
-exports.findAllUpcomingForPersonForGroup = (req, res) => {
+exports.findAllUpcomingForPersonForGroup = async (req, res) => {
   const personId = req.params.personId;
   const groupId = req.params.groupId;
   const date = new Date();
+  let group = {};
   date.setHours(date.getHours() - date.getTimezoneOffset() / 60);
   date.setHours(0, 0, 0, 0);
 
-  let checkTime = new Date();
-  checkTime =
-    checkTime.getHours() +
-    ":" +
-    checkTime.getMinutes() +
-    ":" +
-    checkTime.getSeconds();
+  await Group.findAll({ where: { id: groupId } })
+    .then((data) => {
+      group = data[0].dataValues;
+    })
+    .catch((err) => {
+      console.log("some error occurred retrieving the group: " + err);
+    });
+
+  let delTime = new Date().toLocaleTimeString("it-IT");
+  console.log(delTime);
+  console.log(group.bookPastMinutes);
+
+  // need to get appointments outside of the book past minutes buffer
+  let checkTime = subtractMinsFromTime(group.bookPastMinutes, delTime);
+  console.log(checkTime);
 
   Appointment.findAll({
     where: {
@@ -1382,6 +1391,39 @@ getAccessToken = async (appointmentId) => {
   oAuth2Client.setCredentials(creds);
   return oAuth2Client;
 };
+
+function subtractMinsFromTime(mins, time) {
+  // get the times hour and min value
+  var [timeHrs, timeMins] = getHoursAndMinsFromTime(time);
+
+  // time arithmetic (subtraction)
+  if (timeMins - mins <= 0) {
+    var subtractedHrs = parseInt((timeMins - mins) / 60);
+    timeMins = ((timeMins - mins) % 60) + 60;
+
+    if (timeHrs - subtractedHrs < 0) {
+      timeHrs = ((timeHrs - subtractedHrs) % 24) + 24;
+    } else {
+      timeHrs -= subtractedHrs;
+    }
+  } else {
+    timeMins -= mins;
+  }
+
+  // make sure the time slots are padded correctly
+  return (
+    String("00" + timeHrs).slice(-2) +
+    ":" +
+    String("00" + timeMins).slice(-2) +
+    ":00"
+  );
+}
+
+function getHoursAndMinsFromTime(time) {
+  return time.split(":").map(function (str) {
+    return parseInt(str);
+  });
+}
 
 function getWeekFromDate(date) {
   var year = parseInt(date.substring(0, 4));
