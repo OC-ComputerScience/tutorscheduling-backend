@@ -876,7 +876,7 @@ exports.updateForGoogle = async (req, res) => {
               req.body.status === "studentCancel" ||
               req.body.status === "tutorCancel"
             ) {
-              await deleteFromGoogle(id)
+              await this.deleteFromGoogle(id)
                 .then(() => {
                   console.log("successfully deleted appointment from google");
                   res.send({
@@ -904,9 +904,7 @@ exports.updateForGoogle = async (req, res) => {
                   });
                 })
                 .catch((err) => {
-                  console.log(
-                    "Error updating apppointment with google: " + err
-                  );
+                  console.log("Error updating appointment with google: " + err);
                   res.status(500).send({
                     message: "Error updating appointment with google",
                   });
@@ -918,7 +916,7 @@ exports.updateForGoogle = async (req, res) => {
               req.body.status === "cancelled" ||
               req.body.status === "tutorCancel"
             ) {
-              await deleteFromGoogle(id)
+              await this.deleteFromGoogle(id)
                 .then(() => {
                   console.log("successfully deleted appointment from google");
                   res.send({
@@ -963,7 +961,8 @@ exports.updateForGoogle = async (req, res) => {
       })
       .catch((err) => {
         res.status(500).send({
-          message: "Error updating Appointment with id=" + id,
+          message:
+            "Error updating Appointment with id=" + id + " error: " + err,
         });
       });
   }
@@ -1273,8 +1272,49 @@ updateAppointmentGoogleId = async (appointmentId, eventId) => {
     });
 };
 
-deleteFromGoogle = async (appointmentId) => {
+exports.getFromGoogle = async (appointmentId) => {
   let eventId = "";
+
+  console.log("in delete from google");
+
+  await Appointment.findAll({ where: { id: appointmentId } })
+    .then((data) => {
+      eventId = data[0].dataValues.googleEventId;
+    })
+    .catch((err) => {
+      console.log("Some error occurred while retrieving Appointment. " + err);
+    });
+
+  console.log(eventId);
+
+  let auth = await getAccessToken(appointmentId);
+
+  var params = {
+    auth: auth,
+    calendarId: "primary",
+    eventId: eventId,
+  };
+
+  const calendar = google.calendar({
+    version: "v3",
+    auth: auth,
+  });
+
+  calendar.events.get(params, function (err) {
+    if (err) {
+      console.log("The API returned an error: " + err);
+      if (err.includes("Not Found")) {
+        // we need to delete the appointment on our side or update it to tutorCancel
+      }
+    }
+    console.log("Event retrieved from Google calendar.");
+  });
+};
+
+exports.deleteFromGoogle = async (appointmentId) => {
+  let eventId = "";
+
+  console.log("in delete from google");
 
   await Appointment.findAll({ where: { id: appointmentId } })
     .then((data) => {
@@ -1304,7 +1344,7 @@ deleteFromGoogle = async (appointmentId) => {
       console.log("The API returned an error: " + err);
       return;
     }
-    console.log("Event deleted.");
+    console.log("Event deleted from Google calendar.");
   });
 };
 

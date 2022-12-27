@@ -5,9 +5,8 @@ const PersonAppointment = db.personappointment;
 const Person = db.person;
 const Topic = db.topic;
 const Location = db.location;
-const sms = require("../controllers/twilio.controller.js");
+// const sms = require("../controllers/twilio.controller.js");
 const Op = db.Sequelize.Op;
-const Group = db.group;
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken =
   process.env.TWILIO_AUTH_TOKEN1 + process.env.TWILIO_AUTH_TOKEN2;
@@ -27,6 +26,7 @@ exports.hourlyTasks = () => {
   });
 };
 
+// this gets appointments around 2 hours from now
 async function notifyUpcomingAppointments() {
   let date = new Date().setHours(0, 0, 0);
   let startDate = new Date();
