@@ -9,6 +9,7 @@ const PersonTopic = db.persontopic;
 const Op = db.Sequelize.Op;
 
 const { google } = require("googleapis");
+const { session } = require("../models");
 let token = "";
 let eventId = "";
 
@@ -185,6 +186,12 @@ exports.findOneForText = (req, res) => {
                   },
                 ],
               },
+              {
+                model: session,
+                as: "session",
+                required: true,
+                where: { token: { [Op.ne]: "" } },
+              },
             ],
           },
         ],
@@ -282,8 +289,6 @@ exports.findAllUpcomingForPersonForGroup = async (req, res) => {
     });
 
   let delTime = new Date().toLocaleTimeString("it-IT");
-  console.log(delTime);
-  console.log(group.bookPastMinutes);
 
   // need to get appointments outside of the book past minutes buffer
   let checkTime = subtractMinsFromTime(group.bookPastMinutes, delTime);
