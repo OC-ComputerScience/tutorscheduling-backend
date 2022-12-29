@@ -22,6 +22,7 @@ exports.create = (req, res) => {
     name: req.body.name,
     description: req.body.description,
     timeInterval: req.body.timeInterval,
+    minApptTime: req.body.minApptTime,
     bookPastMinutes: req.body.bookPastMinutes,
     allowSplittingAppointments: req.body.allowSplittingAppointments,
   };
