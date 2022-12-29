@@ -1,243 +1,112 @@
-const { persontopic } = require("../models");
 const db = require("../models");
 const PersonTopic = db.persontopic;
-const Topic = db.topic;
-const Op = db.Sequelize.Op;
+const Topic = require("../utils/topic.js");
 
-// Create and Save a new PersonTopic
-exports.create = (req, res) => {
-  // Validate request
-  if (!req.body.skillLevel) {
-    res.status(400).send({
-      message: "Content can not be empty!",
-    });
-    return;
-  }
-
-  // Create a PersonTopic
+exports.createPersonTopic = async (personTopicData) => {
+  // Create a persontopic
   const persontopic = {
-    id: req.body.id,
-    personId: req.body.personId,
-    topicId: req.body.topicId,
-    skillLevel: req.body.skillLevel,
+    id: personTopicData.id,
+    personId: personTopicData.personId,
+    topicId: personTopicData.topicId,
+    skillLevel: personTopicData.skillLevel,
   };
 
-  // Save PersonTopic in the database
-  PersonTopic.create(persontopic)
+  // Save persontopic in the database
+  return await PersonTopic.create(persontopic)
     .then((data) => {
-      res.send(data);
+      return data;
     })
     .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message || "Some error occurred while creating the PersonTopic.",
-      });
+      return err;
     });
 };
 
-// Retrieve all PersonTopic from the database.
-exports.findAll = (req, res) => {
-  const id = req.query.id;
-  var condition = id ? { id: { [Op.like]: `%${id}%` } } : null;
-
-  PersonTopic.findAll({ where: condition })
+exports.findAllPersonTopics = async () => {
+  return await PersonTopic.findAll()
     .then((data) => {
-      res.send(data);
+      return data;
     })
     .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message || "Some error occurred while retrieving PersonTopic.",
-      });
+      return err;
     });
 };
 
-// Retrieve all Person Topics for a person from the database.
-exports.findAllForPerson = (req, res) => {
-  const id = req.params.personId;
-
-  PersonTopic.findAll({ where: { personId: id } })
+exports.findAllPersonTopicsForPerson = async (personId) => {
+  return await PersonTopic.findAll({ where: { personId: personId } })
     .then((data) => {
-      res.send(data);
+      return data;
     })
     .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message ||
-          "Some error occurred while retrieving persontopics for person.",
-      });
+      return err;
     });
 };
 
-// Retrieve all Person Topics for a person from the database.
-exports.getTopicForPersonGroup = (req, res) => {
-  const personId = req.params.personId;
-  const groupId = req.params.groupId;
-
-  Topic.findAll({
-    include: [
-      {
-        model: persontopic,
-        as: "persontopic",
-        required: true,
-        where: { personId: personId },
-        include: [
-          {
-            model: Topic,
-            as: "topic",
-            required: true,
-            where: { groupId: groupId },
-          },
-        ],
-      },
-    ],
-    order: [
-      ["status", "ASC"],
-      ["name", "ASC"],
-    ],
-  })
+exports.findOnePersonTopic = async (id) => {
+  return await PersonTopic.findByPk(id)
     .then((data) => {
-      res.send(data);
+      return data;
     })
     .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message ||
-          "Some error occurred while retrieving topics for person.",
-      });
+      return err;
     });
 };
 
-// Find a single PersonTopic with an id
-exports.findOne = (req, res) => {
-  const id = req.params.id;
-
-  PersonTopic.findByPk(id)
-    .then((data) => {
-      if (data) {
-        res.send(data);
-      } else {
-        res.status(404).send({
-          message: `Cannot find PersonTopic with id=${id}.`,
-        });
-      }
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message: "Error retrieving PersonTopic with id=" + id,
-      });
-    });
-};
-
-// Update a PersonTopic by the id in the request
-exports.update = (req, res) => {
-  const id = req.params.id;
-
-  PersonTopic.update(req.body, {
+exports.updatePersonTopic = async (persontopic, id) => {
+  return await PersonTopic.update(persontopic, {
     where: { id: id },
   })
-    .then((num) => {
-      if (num == 1) {
-        res.send({
-          message: "PersonTopic was updated successfully.",
-        });
-      } else {
-        res.send({
-          message: `Cannot update PersonTopic with id=${id}. Maybe PersonTopic was not found or req.body is empty!`,
-        });
-      }
+    .then((data) => {
+      return data;
     })
     .catch((err) => {
-      res.status(500).send({
-        message: "Error updating PersonTopic with id=" + id,
-      });
+      return err;
     });
 };
 
-// Delete a PersonTopic with the specified id in the request
-exports.delete = (req, res) => {
-  const id = req.params.id;
+exports.deletePersonTopicWithTopic = async (topicId) => {
+  let disableTopics = await Topic.findAllDisabledTopics(topicId);
+  let error;
 
-  PersonTopic.destroy({
+  if (disableTopics[0] !== undefined && disableTopics !== null) {
+    for (let i = 0; i < disableTopics[0].persontopic.length; i++) {
+      let personTopic = disableTopics[0].persontopic[i];
+      await this.deleteOnePersonTopic(personTopic.id).catch((err) => {
+        error = err;
+        return;
+      });
+    }
+  } else {
+    return `No person topics found for that disabled topic!`;
+  }
+
+  if (error !== undefined) {
+    throw error;
+  } else {
+    return `Person topics were deleted successfully!`;
+  }
+};
+
+exports.deleteOnePersonTopic = async (id) => {
+  return await PersonTopic.destroy({
     where: { id: id },
   })
-    .then((num) => {
-      if (num == 1) {
-        res.send({
-          message: "PersonTopic was deleted successfully!",
-        });
-      } else {
-        res.send({
-          message: `Cannot delete PersonTopic with id=${id}. Maybe PersonTopic was not found!`,
-        });
-      }
+    .then((data) => {
+      return data;
     })
     .catch((err) => {
-      res.status(500).send({
-        message: "Could not delete PersonTopic with id=" + id,
-      });
+      return err;
     });
 };
 
-// Delete a PersonTopic with the specified id in the request
-exports.deleteWithTopicId = (req, res) => {
-  const id = req.params.id;
-
-  Topic.findAll({
-    where: { "$persontopic.topicId$": id, status: "disabled" },
-    include: [
-      {
-        model: PersonTopic,
-        as: "persontopic",
-        // right: true,
-      },
-    ],
-  })
-    .then(async (data) => {
-      if (data[0] !== undefined) {
-        for (let i = 0; i < data[0].dataValues.persontopic.length; i++) {
-          let personTopic = data[0].dataValues.persontopic[i];
-          await PersonTopic.destroy({
-            where: { id: personTopic.id },
-          })
-            .then((num) => {
-              if (num == 1) {
-                console.log("PersonTopic was deleted successfully!");
-              } else {
-                res.send({
-                  message: `Cannot delete PersonTopic with id=${id}. Maybe PersonTopic was not found!`,
-                });
-              }
-            })
-            .catch((err) => {
-              res.status(500).send({
-                message: "Could not delete PersonTopic with id=" + id,
-              });
-            });
-        }
-      }
-      res.send({
-        message: `PersonTopics were deleted successfully!`,
-      });
-    })
-    .catch((err) => {
-      res.status(500).send({ message: err.message });
-    });
-};
-
-// Delete all PersonTopic from the database.
-exports.deleteAll = (req, res) => {
-  PersonTopic.destroy({
+exports.deleteAllPersonTopics = async () => {
+  return await PersonTopic.destroy({
     where: {},
     truncate: false,
   })
-    .then((nums) => {
-      res.send({ message: `${nums} PersonTopic were deleted successfully!` });
+    .then((data) => {
+      return data;
     })
     .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message || "Some error occurred while removing all PersonTopic.",
-      });
+      return err;
     });
 };

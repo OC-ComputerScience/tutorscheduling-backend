@@ -67,6 +67,25 @@ exports.findActiveTopicsForGroup = async (groupId) => {
     });
 };
 
+exports.findAllDisabledTopics = async (id) => {
+  return await Topic.findAll({
+    where: { "$persontopic.topicId$": id, status: "disabled" },
+    include: [
+      {
+        model: PersonTopic,
+        as: "persontopic",
+      },
+    ],
+    order: [["name", "ASC"]],
+  })
+    .then((data) => {
+      return data;
+    })
+    .catch((err) => {
+      return err;
+    });
+};
+
 exports.findTopicsForPersonForGroup = async (groupId, personId) => {
   return await Topic.findAll({
     where: {

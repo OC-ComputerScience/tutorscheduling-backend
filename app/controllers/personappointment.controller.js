@@ -53,37 +53,11 @@ exports.findAllForPerson = async (req, res) => {
     });
 };
 
-exports.findAllForPerson = async (req, res) => {
-  const id = req.params.personId;
-
-  PersonAppointment.findAll({ where: { personId: id } })
-    .then((data) => {
-      res.send(data);
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message ||
-          "Some error occurred while retrieving personroles for person.",
-      });
-    });
-};
-
-// Find a single PersonAppointment with a personId and a appointment
 exports.findPersonAppointmentByPersonAndAppointment = async (req, res) => {
-  const personId = req.params.personId;
-  const appointmentId = req.params.appointmentId;
-
-  PersonAppointment.findOne({
-    where: { personId: personId, appointmentId: appointmentId },
-    include: [
-      {
-        model: Appointment,
-        as: "appointment",
-        required: true,
-      },
-    ],
-  })
+  await PersonAppointment.findPersonAppointmentForPersonForAppointment(
+    req.params.appointmentId,
+    req.params.personId
+  )
     .then((data) => {
       res.send(data);
     })
@@ -91,25 +65,13 @@ exports.findPersonAppointmentByPersonAndAppointment = async (req, res) => {
       res.status(500).send({
         message:
           err.message ||
-          "Some error occurred while retrieving personroles for person and role.",
+          "Some error occurred while retrieving person appointments for person for appointment.",
       });
     });
 };
 
-// Retrieve all upcoming appointments for a person for a group from the database.
 exports.findStudentDataForTable = async (req, res) => {
-  const appointmentId = req.params.appointmentId;
-
-  PersonAppointment.findAll({
-    where: { appointmentId: appointmentId, isTutor: false },
-    include: [
-      {
-        model: Person,
-        as: "person",
-        required: true,
-      },
-    ],
-  })
+  await PersonAppointment.findStudentDataForTable(req.params.appointmentId)
     .then((data) => {
       res.send(data);
     })
@@ -118,25 +80,13 @@ exports.findStudentDataForTable = async (req, res) => {
       res.status(500).send({
         message:
           err.message ||
-          "Some error occurred while retrieving appointments for person for group.",
+          "Some error occurred while retrieving student data based on an appointment id.",
       });
     });
 };
 
-// Retrieve all upcoming appointments for a person for a group from the database.
 exports.findTutorDataForTable = async (req, res) => {
-  const appointmentId = req.params.appointmentId;
-
-  PersonAppointment.findAll({
-    where: { appointmentId: appointmentId, isTutor: true },
-    include: [
-      {
-        model: Person,
-        as: "person",
-        required: true,
-      },
-    ],
-  })
+  await PersonAppointment.findTutorDataForTable(req.params.appointmentId)
     .then((data) => {
       res.send(data);
     })
@@ -144,97 +94,85 @@ exports.findTutorDataForTable = async (req, res) => {
       res.status(500).send({
         message:
           err.message ||
-          "Some error occurred while retrieving appointments for person for group.",
+          "Some error occurred while retrieving tutor data based on an appointment id.",
       });
     });
 };
 
 exports.findOne = async (req, res) => {
-  const id = req.params.id;
-
-  PersonAppointment.findByPk(id)
+  await PersonAppointment.findOnePersonAppointment(req.params.id)
     .then((data) => {
       if (data) {
         res.send(data);
       } else {
         res.status(404).send({
-          message: `Cannot find PersonAppointment with id = ${req.params.id}.`,
+          message: `Cannot find person appointment with id = ${req.params.id}.`,
         });
       }
     })
     .catch((err) => {
+      console.log(err);
       res.status(500).send({
-        message: "Error retrieving PersonAppointment with id = " + id,
+        message:
+          "Error retrieving person appointment with id = " + req.params.id,
       });
     });
 };
 
-// Update a PersonAppointment by the id in the request
 exports.update = async (req, res) => {
-  const id = req.params.id;
-
-  PersonAppointment.update(req.body, {
-    where: { id: id },
-  })
+  await PersonAppointment.updatePersonAppointment(req.body, req.params.id)
     .then((num) => {
       if (num == 1) {
         res.send({
-          message: "PersonAppointment was updated successfully.",
+          message: "Person appointment was updated successfully.",
         });
       } else {
         res.send({
-          message: `Cannot update PersonAppointment with id = ${req.params.id}. Maybe PersonAppointment was not found or req.body is empty!`,
+          message: `Cannot update person appointment with id = ${req.params.id}. Maybe person appointment was not found or req.body was empty!`,
         });
       }
     })
     .catch((err) => {
+      console.log(err);
       res.status(500).send({
-        message: "Error updating PersonAppointment with id = " + id,
+        message: "Error updating person appointment with id = " + req.params.id,
       });
     });
 };
 
-// Delete a PersonAppointment with the specified id in the request
 exports.delete = async (req, res) => {
-  const id = req.params.id;
-
-  PersonAppointment.destroy({
-    where: { id: id },
-  })
+  await PersonAppointment.deletePersonAppointment(req.params.id)
     .then((num) => {
       if (num == 1) {
         res.send({
-          message: "PersonAppointment was deleted successfully!",
+          message: "Person appointment was deleted successfully!",
         });
       } else {
         res.send({
-          message: `Cannot delete PersonAppointment with id = ${req.params.id}. Maybe PersonAppointment was not found!`,
+          message: `Cannot delete person appointment with id = ${req.params.id}. Maybe person appointment was not found!`,
         });
       }
     })
     .catch((err) => {
+      console.log(err);
       res.status(500).send({
-        message: "Could not delete PersonAppointment with id = " + id,
+        message: "Could not delete person appointment with id = " + id,
       });
     });
 };
 
-// Delete all PersonAppointment from the database.
-exports.deleteAll = async (req, res) => {
-  PersonAppointment.destroy({
-    where: {},
-    truncate: false,
-  })
+exports.deleteAll = async (res) => {
+  await PersonAppointment.deleteAllPersonAppointments()
     .then((nums) => {
       res.send({
-        message: `${nums} PersonAppointment were deleted successfully!`,
+        message: `${nums} person appointments were deleted successfully!`,
       });
     })
     .catch((err) => {
       res.status(500).send({
         message:
           err.message ||
-          "Some error occurred while removing all PersonAppointment.",
+          "Some error occurred while removing all person appointments.",
       });
     });
 };

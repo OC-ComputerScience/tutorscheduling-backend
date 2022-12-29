@@ -2,7 +2,6 @@ const db = require("../models");
 const PersonAppointment = db.personappointment;
 const Person = db.person;
 const Appointment = db.appointment;
-const Op = db.Sequelize.Op;
 
 exports.createPersonAppointment = async (personAppointmentData) => {
   // Create a personappointment

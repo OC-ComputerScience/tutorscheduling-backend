@@ -1,166 +1,93 @@
 const db = require("../models");
 const PersonRolePrivilege = db.personroleprivilege;
-const Op = db.Sequelize.Op;
 
-// Create and Save a new PersonRolePrivilege
-exports.create = (req, res) => {
-  // Validate request
-  if (!req.body.privilege) {
-    res.status(400).send({
-      message: "Content can not be empty!",
-    });
-    return;
-  }
-
-  // Create a PersonRolePrivilege
+exports.createPrivilege = async (personRolePrivilegeData) => {
+  // Create a personroleprivilege
   const personroleprivilege = {
-    id: req.body.id,
-    personroleId: req.body.personroleId,
-    privilege: req.body.privilege,
+    id: personRolePrivilegeData.id,
+    personroleId: personRolePrivilegeData.personroleId,
+    privilege: personRolePrivilegeData.privilege,
   };
 
-  // Save PersonRolePrivilege in the database
-  PersonRolePrivilege.create(personroleprivilege)
+  // Save personroleprivilege in the database
+  return await PersonRolePrivilege.create(personroleprivilege)
     .then((data) => {
-      res.send(data);
+      return data;
     })
     .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message || "Some error occurred while creating the Person.",
-      });
+      return err;
     });
 };
 
-// Retrieve all PeopleRole from the database.
-exports.findAll = (req, res) => {
-  const id = req.query.id;
-  var condition = id ? { id: { [Op.like]: `%${id}%` } } : null;
-
-  PersonRolePrivilege.findAll({
-    where: condition,
+exports.findAllPrivileges = async () => {
+  return await PersonRolePrivilege.findAll({
     include: ["person"],
     order: [["privilege", "ASC"]],
   })
     .then((data) => {
-      res.send(data);
+      return data;
     })
     .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message ||
-          "Some error occurred while retrieving personroleprivileges.",
-      });
+      return err;
     });
 };
 
-// Retrieve the privileges for a person role id from the database.
-exports.findPrivilegeByPersonRole = (req, res) => {
-  const personroleId = req.params.personroleId;
-
-  PersonRolePrivilege.findAll({
-    where: { personroleId: personroleId },
+exports.findPrivilegeByPersonRole = async (personRoleId) => {
+  return await PersonRolePrivilege.findAll({
+    where: { personroleId: personRoleId },
     order: [["privilege", "ASC"]],
   })
     .then((data) => {
-      res.send(data);
+      return data;
     })
     .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message ||
-          "Some error occurred while retrieving privileges for personrole.",
-      });
+      return err;
     });
 };
 
-// Find a single PersonRolePrivilege with an id
-exports.findOne = (req, res) => {
-  const id = req.params.id;
-
-  PersonRolePrivilege.findByPk(id)
+exports.findOnePrivilege = async (id) => {
+  return await PersonRolePrivilege.findByPk(id)
     .then((data) => {
-      if (data) {
-        res.send(data);
-      } else {
-        res.status(404).send({
-          message: `Cannot find PersonRolePrivilege with id=${id}.`,
-        });
-      }
+      return data;
     })
     .catch((err) => {
-      res.status(500).send({
-        message: "Error retrieving PersonRolePrivilege with id=" + id,
-      });
+      return err;
     });
 };
 
-// Update a PersonRolePrivilege by the id in the request
-exports.update = (req, res) => {
-  const id = req.params.id;
-
-  PersonRolePrivilege.update(req.body, {
+exports.updatePrivilege = async (privilege, id) => {
+  return await PersonRolePrivilege.update(privilege, {
     where: { id: id },
   })
-    .then((num) => {
-      if (num == 1) {
-        res.send({
-          message: "PersonRolePrivilege was updated successfully.",
-        });
-      } else {
-        res.send({
-          message: `Cannot update PersonRolePrivilege with id=${id}. Maybe PersonRolePrivilege was not found or req.body is empty!`,
-        });
-      }
+    .then((data) => {
+      return data;
     })
     .catch((err) => {
-      res.status(500).send({
-        message: "Error updating PersonRolePrivilege with id=" + id,
-      });
+      return err;
     });
 };
 
-// Delete a PersonRolePrivilege with the specified id in the request
-exports.delete = (req, res) => {
-  const id = req.params.id;
-
-  PersonRolePrivilege.destroy({
+exports.deletePrivilege = async (id) => {
+  return await PersonRolePrivilege.destroy({
     where: { id: id },
   })
-    .then((num) => {
-      if (num == 1) {
-        res.send({
-          message: "PersonRolePrivilege was deleted successfully!",
-        });
-      } else {
-        res.send({
-          message: `Cannot delete PersonRolePrivilege with id=${id}. Maybe PersonRolePrivilege was not found!`,
-        });
-      }
+    .then((data) => {
+      return data;
     })
     .catch((err) => {
-      res.status(500).send({
-        message: "Could not delete PersonRolePrivilege with id=" + id,
-      });
+      return err;
     });
 };
 
-// Delete all PersonRolePrivilege from the database.
-exports.deleteAll = (req, res) => {
-  PersonRolePrivilege.destroy({
+exports.deleteAllPrivileges = async () => {
+  return await PersonRolePrivilege.destroy({
     where: {},
     truncate: false,
   })
-    .then((nums) => {
-      res.send({
-        message: `${nums} PersonRolePrivileges were deleted successfully!`,
-      });
+    .then((data) => {
+      return data;
     })
     .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message ||
-          "Some error occurred while removing all personroleprivileges.",
-      });
+      return err;
     });
 };
