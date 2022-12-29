@@ -12,80 +12,57 @@ const { google } = require("googleapis");
 let token = "";
 let eventId = "";
 
-// Create and Save a new Appointment
-exports.create = async (req, res) => {
-  // Validate request
-  if (!req.body.date) {
-    res.status(400).send({
-      message: "Content can not be empty!",
-    });
-    return;
-  }
-
+exports.createAppointment = async (appointmentData) => {
   // Create a Appointment
   const appointment = {
-    id: req.body.id,
-    googleEventId: req.body.googleEventId,
-    groupId: req.body.groupId,
-    topicId: req.body.topicId,
-    locationId: req.body.locationId,
-    date: req.body.date,
-    startTime: req.body.startTime,
-    endTime: req.body.endTime,
-    type: req.body.type,
-    status: req.body.status,
-    tutorStart: req.body.tutorStart,
-    tutorEnd: req.body.tutorEnd,
-    URL: req.body.URL,
-    preSessionInfo: req.body.preSessionInfo,
+    id: appointmentData.id,
+    googleEventId: appointmentData.googleEventId,
+    groupId: appointmentData.groupId,
+    topicId: appointmentData.topicId,
+    locationId: appointmentData.locationId,
+    date: appointmentData.date,
+    startTime: appointmentData.startTime,
+    endTime: appointmentData.endTime,
+    type: appointmentData.type,
+    status: appointmentData.status,
+    tutorStart: appointmentData.tutorStart,
+    tutorEnd: appointmentData.tutorEnd,
+    URL: appointmentData.URL,
+    preSessionInfo: appointmentData.preSessionInfo,
   };
 
   // Save Appointment in the database
-  await Appointment.create(appointment)
+  return await Appointment.create(appointment)
     .then((data) => {
-      res.send(data);
+      return data;
     })
     .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message || "Some error occurred while creating the Appointment.",
-      });
+      return err;
     });
 };
 
-// Retrieve all Appointment from the database.
-exports.findAll = (req, res) => {
-  const id = req.query.id;
-  var condition = id ? { id: { [Op.like]: `%${req.params.id}%` } } : null;
-
-  Appointment.findAll({
-    where: condition,
+exports.findAllAppointments = async () => {
+  return await Appointment.findAll({
     order: [
       ["date", "ASC"],
       ["startTime", "ASC"],
     ],
   })
     .then((data) => {
-      res.send(data);
+      return data;
     })
     .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message || "Some error occurred while retrieving Appointment.",
-      });
+      return err;
     });
 };
 
-// Retrieve all Appointment from the database.
-exports.findAppointmentsForGroup = (req, res) => {
-  const groupId = req.params.groupId;
+exports.findAllAppointmentsFromOneMonthAgoForGroup = async (groupId) => {
   var oneMonthAgo = new Date(
     new Date().getFullYear(),
     new Date().getMonth() - 1,
     new Date().getDate()
   );
-
-  Appointment.findAll({
+  return await Appointment.findAll({
     where: { groupId: groupId, date: { [Op.gt]: oneMonthAgo } },
     include: [
       {
@@ -134,81 +111,14 @@ exports.findAppointmentsForGroup = (req, res) => {
     ],
   })
     .then((data) => {
-      res.send(data);
+      return data;
     })
     .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message || "Some error occurred while retrieving Appointments.",
-      });
+      return err;
     });
 };
 
-// Retrieve all Appointment from the database.
-exports.findOneForText = (req, res) => {
-  const id = req.params.id;
-
-  Appointment.findAll({
-    where: { id: id },
-    include: [
-      {
-        model: Location,
-        as: "location",
-        required: true,
-      },
-      {
-        model: Topic,
-        as: "topic",
-        required: true,
-      },
-      {
-        model: PersonAppointment,
-        as: "personappointment",
-        required: true,
-        include: [
-          {
-            model: Person,
-            as: "person",
-            required: true,
-            right: true,
-            include: [
-              {
-                model: PersonTopic,
-                as: "persontopic",
-                required: false,
-                include: [
-                  {
-                    model: Topic,
-                    as: "topic",
-                    required: true,
-                    right: true,
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-    ],
-    order: [
-      ["date", "ASC"],
-      ["startTime", "ASC"],
-    ],
-  })
-    .then((data) => {
-      res.send(data);
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message || "Some error occurred while retrieving Appointments.",
-      });
-    });
-};
-
-// Retrieve all upcoming appointments for a person from the database to help check conflicts
-exports.findAllUpcomingForPerson = (req, res) => {
-  const personId = req.params.personId;
+exports.findAllUpcomingForPerson = async (personId) => {
   const date = new Date();
   date.setHours(date.getHours() - date.getTimezoneOffset() / 60);
   date.setHours(0, 0, 0, 0);
@@ -221,7 +131,7 @@ exports.findAllUpcomingForPerson = (req, res) => {
     ":" +
     checkTime.getSeconds();
 
-  Appointment.findAll({
+  return await Appointment.findAll({
     where: {
       [Op.or]: [
         {
@@ -253,21 +163,14 @@ exports.findAllUpcomingForPerson = (req, res) => {
     ],
   })
     .then((data) => {
-      res.send(data);
+      return data;
     })
     .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message ||
-          "Some error occurred while retrieving appointments for person for group.",
-      });
+      return err;
     });
 };
 
-// Retrieve all upcoming appointments for a person for a group from the database.
-exports.findAllUpcomingForPersonForGroup = (req, res) => {
-  const personId = req.params.personId;
-  const groupId = req.params.groupId;
+exports.findAllUpcomingForPersonForGroup = async (groupId, personId) => {
   const date = new Date();
   date.setHours(date.getHours() - date.getTimezoneOffset() / 60);
   date.setHours(0, 0, 0, 0);
@@ -280,7 +183,7 @@ exports.findAllUpcomingForPersonForGroup = (req, res) => {
     ":" +
     checkTime.getSeconds();
 
-  Appointment.findAll({
+  return await Appointment.findAll({
     where: {
       groupId: groupId,
       [Op.or]: [
@@ -335,28 +238,19 @@ exports.findAllUpcomingForPersonForGroup = (req, res) => {
     ],
   })
     .then((data) => {
-      res.send(data);
+      return data;
     })
     .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message ||
-          "Some error occurred while retrieving appointments for person for group.",
-      });
+      return err;
     });
 };
 
-// Retrieve all passed appointments for a person for a group from the database.
-exports.findAllPassedForPersonForGroupTutor = (req, res) => {
-  const personId = req.params.personId;
-  const groupId = req.params.groupId;
-  let date = new Date();
+exports.findAllPassedForTutorForGroup = async (groupId, personId) => {
   let endTime = date.toLocaleTimeString("it-IT");
   date.setHours(date.getHours() - date.getTimezoneOffset() / 60);
   date.setHours(0, 0, 0);
 
-  // Note: had to put the the two OP.or in an Op.and to get Sequelize to generate SQL correctly
-  Appointment.findAll({
+  return await Appointment.findAll({
     where: {
       groupId: groupId,
       [Op.and]: [
@@ -401,23 +295,17 @@ exports.findAllPassedForPersonForGroupTutor = (req, res) => {
     ],
   })
     .then((data) => {
-      res.send(data);
+      return data;
     })
     .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message ||
-          "Some error occurred while retrieving appointments for person for group.",
-      });
+      return err;
     });
 };
-// Retrieve all passed appointments for a person for a group from the database.
-exports.findAllPassedForPersonForGroupStudent = (req, res) => {
-  const personId = req.params.personId;
-  const groupId = req.params.groupId;
+
+exports.findAllPassedForStudentForGroup = async (groupId, personId) => {
   const date = new Date();
 
-  Appointment.findAll({
+  return await Appointment.findAll({
     where: {
       groupId: groupId,
       date: { [Op.lte]: date },
@@ -441,23 +329,15 @@ exports.findAllPassedForPersonForGroupStudent = (req, res) => {
     ],
   })
     .then((data) => {
-      res.send(data);
+      return data;
     })
     .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message ||
-          "Some error occurred while retrieving appointments for person for group.",
-      });
+      return err;
     });
 };
 
-// Retrieve all appointments for a person for a group from the database.
-exports.findAllForPersonForGroup = (req, res) => {
-  const personId = req.params.personId;
-  const groupId = req.params.groupId;
-
-  Appointment.findAll({
+exports.findAllForPersonForGroup = async (groupId, personId) => {
+  return await Appointment.findAll({
     where: { groupId: groupId },
     include: [
       {
@@ -478,80 +358,61 @@ exports.findAllForPersonForGroup = (req, res) => {
     ],
   })
     .then((data) => {
-      res.send(data);
+      return data;
     })
     .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message ||
-          "Some error occurred while retrieving appointments for person for group.",
-      });
+      return err;
     });
 };
 
-// Retrieve all appointments for a person for a group from the database.
-exports.getTutorForAppointment = (req, res) => {
-  //const personId = req.params.personId;
-  //const groupId = req.params.groupId;
-  const appId = req.params.id;
-
-  Person.findOne({
+exports.findAllUpcomingForPersonForGroup = async (groupId, personId) => {
+  return await Appointment.findAll({
+    where: { groupId: groupId },
     include: [
       {
+        where: { "$personappointment.personId$": personId },
         model: PersonAppointment,
         as: "personappointment",
         required: true,
-        where: {
-          isTutor: true,
-          appointmentId: appId,
-        },
-      } /*,
+      },
       {
         model: Topic,
-        as: 'topic',
-        required: true
-      }*/,
+        as: "topic",
+        required: true,
+      },
     ],
-  })
-    .then((data) => {
-      res.send(data);
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message ||
-          "Some error occurred while retrieving appointments for person for group.",
-      });
-    });
-};
-
-// Retrieve all appointments for a person for a group from the database.
-exports.findAllUpcomingForGroup = (req, res) => {
-  const groupId = req.params.groupId;
-  const date = new Date();
-  // const time = date.toLocaleTimeString('en-US', { hour12: false });
-
-  Appointment.findAll({
-    where: {
-      groupId: groupId,
-      date: { [Op.gte]: date },
-    },
     order: [
       ["date", "ASC"],
       ["startTime", "ASC"],
     ],
   })
     .then((data) => {
-      res.send(data);
+      return data;
     })
     .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message ||
-          "Some error occurred while retrieving appointments for group.",
-      });
+      return err;
     });
 };
+
+exports.findAllUpcomingForForGroup = async (groupId) => {
+  const date = new Date();
+
+  return await Appointment.findAll({
+    where: { groupId: groupId, date: { [Op.gte]: date } },
+    order: [
+      ["date", "ASC"],
+      ["startTime", "ASC"],
+    ],
+  })
+    .then((data) => {
+      return data;
+    })
+    .catch((err) => {
+      return err;
+    });
+};
+
+//TODO
 
 exports.getAppointmentHourCount = (req, res) => {
   const groupId = req.params.groupId;
@@ -718,6 +579,68 @@ exports.findAllForPerson = (req, res) => {
     });
 };
 
+// Retrieve all Appointment from the database.
+exports.findOneForText = (req, res) => {
+  const id = req.params.id;
+
+  Appointment.findAll({
+    where: { id: id },
+    include: [
+      {
+        model: Location,
+        as: "location",
+        required: true,
+      },
+      {
+        model: Topic,
+        as: "topic",
+        required: true,
+      },
+      {
+        model: PersonAppointment,
+        as: "personappointment",
+        required: true,
+        include: [
+          {
+            model: Person,
+            as: "person",
+            required: true,
+            right: true,
+            include: [
+              {
+                model: PersonTopic,
+                as: "persontopic",
+                required: false,
+                include: [
+                  {
+                    model: Topic,
+                    as: "topic",
+                    required: true,
+                    right: true,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    order: [
+      ["date", "ASC"],
+      ["startTime", "ASC"],
+    ],
+  })
+    .then((data) => {
+      res.send(data);
+    })
+    .catch((err) => {
+      res.status(500).send({
+        message:
+          err.message || "Some error occurred while retrieving Appointments.",
+      });
+    });
+};
+
 exports.findFeedbackApptForPerson = (req, res) => {
   const appointmentId = req.params.appointmentId;
 
@@ -779,13 +702,13 @@ exports.findOne = (req, res) => {
         res.send(data);
       } else {
         res.status(404).send({
-          message: `Cannot find Appointment with id = ${req.params.id}.`,
+          message: `Cannot find Appointment with id=${id}.`,
         });
       }
     })
     .catch((err) => {
       res.status(500).send({
-        message: "Error retrieving Appointment with id = " + id,
+        message: "Error retrieving Appointment with id=" + id,
       });
     });
 };
@@ -804,13 +727,13 @@ exports.update = (req, res) => {
         });
       } else {
         res.send({
-          message: `Cannot update Appointment with id = ${req.params.id}. Maybe Appointment was not found or req.body is empty!`,
+          message: `Cannot update Appointment with id=${id}. Maybe Appointment was not found or req.body is empty!`,
         });
       }
     })
     .catch((err) => {
       res.status(500).send({
-        message: "Error updating Appointment with id = " + id,
+        message: "Error updating Appointment with id=" + id,
       });
     });
 };
@@ -955,14 +878,14 @@ exports.updateForGoogle = async (req, res) => {
           }
         } else {
           res.send({
-            message: `Cannot update Appointment with id = ${req.params.id}. Maybe Appointment was not found or req.body is empty!`,
+            message: `Cannot update Appointment with id=${id}. Maybe Appointment was not found or req.body is empty!`,
           });
         }
       })
       .catch((err) => {
         res.status(500).send({
           message:
-            "Error updating Appointment with id = " + id + " error: " + err,
+            "Error updating Appointment with id=" + id + " error: " + err,
         });
       });
   }
@@ -982,13 +905,13 @@ exports.delete = (req, res) => {
         });
       } else {
         res.send({
-          message: `Cannot delete Appointment with id = ${req.params.id}. Maybe Appointment was not found!`,
+          message: `Cannot delete Appointment with id=${id}. Maybe Appointment was not found!`,
         });
       }
     })
     .catch((err) => {
       res.status(500).send({
-        message: "Could not delete Appointment with id = " + id,
+        message: "Could not delete Appointment with id=" + id,
       });
     });
 };
@@ -1052,11 +975,11 @@ getAllAppointmentInfo = async (appointmentId) => {
         console.log(data);
         appointments = data;
       } else {
-        console.log(`Cannot find Appointment with id = ${req.params.id}.`);
+        console.log(`Cannot find Appointment with id=${id}.`);
       }
     })
     .catch((err) => {
-      console.log("Error retrieving Appointment with id = " + id);
+      console.log("Error retrieving Appointment with id=" + id);
       console.log(err);
     });
 

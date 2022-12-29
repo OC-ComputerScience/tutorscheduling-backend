@@ -13,12 +13,12 @@ let groups = [];
 
 exports.fifteenMinuteTasks = () => {
   // for prod, runs at 3 minutes before every 15 minutes every hour
-  // cron.schedule("12,27,42,57 * * * *", async function () {
-  // for testing, runs every minute
-  cron.schedule("* * * * *", async function () {
+  cron.schedule("12,27,42,57 * * * *", async function () {
+    // for testing, runs every minute
+    // cron.schedule("* * * * *", async function () {
     console.log("Scheduled task every 15 mins");
     await getGroups();
-    await checkGoogleEvents();
+    // await checkGoogleEvents();
     await deletePastAppointments();
   });
 };
