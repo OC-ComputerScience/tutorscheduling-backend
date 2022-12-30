@@ -7,6 +7,7 @@ const Location = db.location;
 const Topic = db.topic;
 const PersonTopic = db.persontopic;
 const Op = db.Sequelize.Op;
+const Time = require("../utils/timeFunctions.js");
 
 const { google } = require("googleapis");
 let token = "";
@@ -43,6 +44,63 @@ exports.createAppointment = async (appointmentData) => {
 
 exports.findAllAppointments = async () => {
   return await Appointment.findAll({
+    order: [
+      ["date", "ASC"],
+      ["startTime", "ASC"],
+    ],
+  })
+    .then((data) => {
+      return data;
+    })
+    .catch((err) => {
+      return err;
+    });
+};
+
+exports.findAllForGroup = async (groupId) => {
+  return await Appointment.findAll({
+    where: { groupId: groupId },
+    include: [
+      {
+        model: Location,
+        as: "location",
+        required: false,
+      },
+      {
+        model: Topic,
+        as: "topic",
+        required: false,
+      },
+      {
+        model: PersonAppointment,
+        as: "personappointment",
+        required: true,
+        include: [
+          {
+            model: Person,
+            as: "person",
+            required: true,
+            right: true,
+            include: [
+              {
+                model: PersonTopic,
+                as: "persontopic",
+                required: false,
+                include: [
+                  {
+                    model: Topic,
+                    as: "topic",
+                    required: true,
+                    right: true,
+                    where: { groupId: groupId },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
     order: [
       ["date", "ASC"],
       ["startTime", "ASC"],
@@ -108,6 +166,25 @@ exports.findAllAppointmentsFromOneMonthAgoForGroup = async (groupId) => {
     order: [
       ["date", "ASC"],
       ["startTime", "ASC"],
+    ],
+  })
+    .then((data) => {
+      return data;
+    })
+    .catch((err) => {
+      return err;
+    });
+};
+
+exports.findAllForPerson = async (personId) => {
+  return await Appointment.findAll({
+    include: [
+      {
+        where: { "$personappointment.personId$": personId },
+        model: PersonAppointment,
+        as: "personappointment",
+        required: true,
+      },
     ],
   })
     .then((data) => {
@@ -394,7 +471,7 @@ exports.findAllUpcomingForPersonForGroup = async (groupId, personId) => {
     });
 };
 
-exports.findAllUpcomingForForGroup = async (groupId) => {
+exports.findAllUpcomingForGroup = async (groupId) => {
   const date = new Date();
 
   return await Appointment.findAll({
@@ -412,16 +489,12 @@ exports.findAllUpcomingForForGroup = async (groupId) => {
     });
 };
 
-//TODO
-
-exports.getAppointmentHourCount = (req, res) => {
-  const groupId = req.params.groupId;
-  const currWeek = req.params.currWeek;
-  console.log("CurrWeek: " + currWeek);
-  var week = getWeekFromDate(currWeek);
+exports.getAppointmentHours = async (groupId, currWeek) => {
+  var week = Time.getWeekFromDate(currWeek);
   var firstDay = week.first;
   var lastDay = week.last;
-  Appointment.findAll({
+
+  return await Appointment.findAll({
     where: {
       groupId: groupId,
       [Op.and]: [
@@ -478,104 +551,10 @@ exports.getAppointmentHourCount = (req, res) => {
     ],
   })
     .then((data) => {
-      res.send(data);
-    })
-
-    .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message ||
-          "Some error occurred while retrieving appointments for group.",
-      });
-    });
-};
-
-// Retrieve all appointments for a person for a group from the database.
-exports.findAllForGroup = (req, res) => {
-  const groupId = req.params.groupId;
-
-  Appointment.findAll({
-    where: { groupId: groupId },
-    include: [
-      {
-        model: Location,
-        as: "location",
-        required: false,
-      },
-      {
-        model: Topic,
-        as: "topic",
-        required: false,
-      },
-      {
-        model: PersonAppointment,
-        as: "personappointment",
-        required: true,
-        include: [
-          {
-            model: Person,
-            as: "person",
-            required: true,
-            right: true,
-            include: [
-              {
-                model: PersonTopic,
-                as: "persontopic",
-                required: false,
-                include: [
-                  {
-                    model: Topic,
-                    as: "topic",
-                    required: true,
-                    right: true,
-                    where: { groupId: groupId },
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-    ],
-    order: [
-      ["date", "ASC"],
-      ["startTime", "ASC"],
-    ],
-  })
-    .then((data) => {
-      res.send(data);
+      return data;
     })
     .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message ||
-          "Some error occurred while retrieving appointments for group.",
-      });
-    });
-};
-
-// Retrieve all Appointments for a person from the database.
-exports.findAllForPerson = (req, res) => {
-  const id = req.params.personId;
-
-  Appointment.findAll({
-    include: [
-      {
-        where: { "$personappointment.personId$": id },
-        model: PersonAppointment,
-        as: "personappointment",
-        required: true,
-      },
-    ],
-  })
-    .then((data) => {
-      res.send(data);
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message || "Some error occurred while retrieving appointments.",
-      });
+      return err;
     });
 };
 

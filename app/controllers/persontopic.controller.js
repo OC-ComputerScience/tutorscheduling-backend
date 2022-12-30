@@ -107,14 +107,20 @@ exports.update = async (req, res) => {
 };
 
 exports.deleteWithTopicId = async (req, res) => {
-  await PersonTopic.deletePersonTopicWithTopic(req.params.id)
-    .then((data) => {
-      // this should return the messages specified in persontopic.js
-      res.send(data);
-    })
-    .catch((err) => {
-      res.status(500).send({ message: err.message });
-    });
+  let disableTopics = await Topic.findAllDisabledTopics(req.params.id);
+  if (disableTopics[0] !== undefined && disableTopics !== null) {
+    for (let i = 0; i < disableTopics[0].persontopic.length; i++) {
+      let personTopic = disableTopics[0].persontopic[i];
+      await PersonTopic.deleteOnePersonTopic(personTopic.id).catch((err) => {
+        res.status(500).send({ message: err.message });
+        return;
+      });
+    }
+  } else {
+    res
+      .status(200)
+      .send({ message: "No person topics found for that disabled topic!" });
+  }
 };
 
 exports.delete = async (req, res) => {

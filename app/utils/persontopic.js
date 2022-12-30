@@ -1,6 +1,5 @@
 const db = require("../models");
 const PersonTopic = db.persontopic;
-const Topic = require("../utils/topic.js");
 
 exports.createPersonTopic = async (personTopicData) => {
   // Create a persontopic
@@ -61,29 +60,6 @@ exports.updatePersonTopic = async (persontopic, id) => {
     .catch((err) => {
       return err;
     });
-};
-
-exports.deletePersonTopicWithTopic = async (topicId) => {
-  let disableTopics = await Topic.findAllDisabledTopics(topicId);
-  let error;
-
-  if (disableTopics[0] !== undefined && disableTopics !== null) {
-    for (let i = 0; i < disableTopics[0].persontopic.length; i++) {
-      let personTopic = disableTopics[0].persontopic[i];
-      await this.deleteOnePersonTopic(personTopic.id).catch((err) => {
-        error = err;
-        return;
-      });
-    }
-  } else {
-    return `No person topics found for that disabled topic!`;
-  }
-
-  if (error !== undefined) {
-    throw error;
-  } else {
-    return `Person topics were deleted successfully!`;
-  }
 };
 
 exports.deleteOnePersonTopic = async (id) => {
