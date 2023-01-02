@@ -1,18 +1,5 @@
-const db = require("../models");
-const Appointment = db.appointment;
-const PersonAppointment = db.personappointment;
-const Person = db.person;
-const Group = db.group;
-const Location = db.location;
-const Topic = db.topic;
-const PersonTopic = db.persontopic;
-const Op = db.Sequelize.Op;
+const Appointment = require("../utils/appointment.js");
 
-const { google } = require("googleapis");
-let token = "";
-let eventId = "";
-
-// Create and Save a new Appointment
 exports.create = async (req, res) => {
   // Validate request
   if (!req.body.date) {
@@ -22,42 +9,23 @@ exports.create = async (req, res) => {
     return;
   }
 
-  // Create a Appointment
-  const appointment = {
-    id: req.body.id,
-    googleEventId: req.body.googleEventId,
-    groupId: req.body.groupId,
-    topicId: req.body.topicId,
-    locationId: req.body.locationId,
-    date: req.body.date,
-    startTime: req.body.startTime,
-    endTime: req.body.endTime,
-    type: req.body.type,
-    status: req.body.status,
-    tutorStart: req.body.tutorStart,
-    tutorEnd: req.body.tutorEnd,
-    URL: req.body.URL,
-    preSessionInfo: req.body.preSessionInfo,
-  };
-
-  // Save Appointment in the database
-  await Appointment.create(appointment)
+  await Appointment.create(req.body)
     .then((data) => {
       res.send(data);
     })
     .catch((err) => {
       res.status(500).send({
         message:
-          err.message || "Some error occurred while creating the Appointment.",
+          err.message || "Some error occurred while creating the appointment.",
       });
     });
 };
 
-// Retrieve all Appointment from the database.
-exports.findAll = (req, res) => {
-  const id = req.query.id;
-  var condition = id ? { id: { [Op.like]: `%${req.params.id}%` } } : null;
+// add asyncs
+// add + id
+// add {id}
 
+exports.findAll = (req, res) => {
   Appointment.findAll({
     where: condition,
     order: [
