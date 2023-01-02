@@ -110,7 +110,7 @@ exports.delete = async (req, res) => {
     });
 };
 
-exports.deleteAll = async (res) => {
+exports.deleteAll = async (req, res) => {
   await Request.deleteAllRequests()
     .then((nums) => {
       res.send({ message: `${nums} requests were deleted successfully!` });

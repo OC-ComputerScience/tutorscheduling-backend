@@ -1,4 +1,5 @@
 const db = require("../models");
+const Time = require("../utils/timeFunctions.js");
 const Person = db.person;
 const PersonRole = db.personrole;
 const PersonTopic = db.persontopic;
@@ -6,7 +7,6 @@ const PersonAppointment = db.personappointment;
 const Appointment = db.appointment;
 const Role = db.role;
 const Topic = db.topic;
-const Time = require("../utils/timeFunctions.js");
 
 exports.createPerson = async (personData) => {
   // Create a person
@@ -130,10 +130,7 @@ exports.findApprovedTutorsForGroup = async (groupId) => {
         model: PersonRole,
         as: "personrole",
         required: true,
-        where: Sequelize.or(
-          { "$personrole.status$": "approved" },
-          { "$personrole.status$": "Approved" }
-        ),
+        where: { "$personrole.status$": "approved" },
         include: [
           {
             model: Role,

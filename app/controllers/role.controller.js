@@ -147,7 +147,7 @@ exports.delete = async (req, res) => {
     });
 };
 
-exports.deleteAll = async (res) => {
+exports.deleteAll = async (req, res) => {
   await Role.deleteAllRoles()
     .then((nums) => {
       res.send({ message: `${nums} roles were deleted successfully!` });

@@ -21,7 +21,7 @@ exports.create = async (req, res) => {
     });
 };
 
-exports.findAll = async (res) => {
+exports.findAll = async (req, res) => {
   await Session.findAllSessions()
     .then((data) => {
       res.send(data);
@@ -95,7 +95,7 @@ exports.delete = async (req, res) => {
     });
 };
 
-exports.deleteAll = async (res) => {
+exports.deleteAll = async (req, res) => {
   await Session.deleteAllSessions()
     .then((nums) => {
       res.send({ message: `${nums} sessions were deleted successfully!` });

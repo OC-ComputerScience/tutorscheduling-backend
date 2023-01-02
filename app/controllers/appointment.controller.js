@@ -1423,7 +1423,7 @@ getAccessToken = async (appointmentId) => {
       "Content-Type": "application/x-www-form-urlencoded",
     },
   })
-    .then((res) => res.json())
+    .then((req, res) => res.json())
     .then((json) => (creds = json));
 
   console.log(creds);

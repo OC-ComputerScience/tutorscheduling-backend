@@ -21,7 +21,7 @@ exports.create = async (req, res) => {
     });
 };
 
-exports.findAll = async (res) => {
+exports.findAll = async (req, res) => {
   await Location.findAllLocations()
     .then((data) => {
       res.send(data);
@@ -123,7 +123,7 @@ exports.delete = async (req, res) => {
     });
 };
 
-exports.deleteAll = async (res) => {
+exports.deleteAll = async (req, res) => {
   await Location.deleteAllLocations()
     .then((nums) => {
       res.send({ message: `${nums} locations were deleted successfully!` });

@@ -144,7 +144,7 @@ exports.delete = async (req, res) => {
     });
 };
 
-exports.deleteAll = async (res) => {
+exports.deleteAll = async (req, res) => {
   await PersonTopic.deleteAllPersonTopics()
     .then((nums) => {
       res.send({ message: `${nums} person topics were deleted successfully!` });

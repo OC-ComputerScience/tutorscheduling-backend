@@ -117,7 +117,7 @@ exports.delete = async (req, res) => {
     });
 };
 
-exports.deleteAll = async (res) => {
+exports.deleteAll = async (req, res) => {
   await Availability.deleteAllAvailabilities()
     .then((nums) => {
       res.send({

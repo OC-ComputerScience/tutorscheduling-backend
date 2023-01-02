@@ -21,7 +21,7 @@ exports.create = async (req, res) => {
     });
 };
 
-exports.findAll = async (res) => {
+exports.findAll = async (req, res) => {
   await Person.findAllPeople()
     .then((data) => {
       res.send(data);
@@ -164,7 +164,7 @@ exports.delete = async (req, res) => {
 };
 
 // Delete all People from the database.
-exports.deleteAll = async (res) => {
+exports.deleteAll = async (req, res) => {
   await Person.deleteAllPeople()
     .then((nums) => {
       res.send({ message: `${nums} people were deleted successfully!` });
