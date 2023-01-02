@@ -110,6 +110,8 @@ exports.findAllForGroup = async (groupId) => {
     });
 };
 
+// TODO test if we need then and catch
+
 exports.findAllUpcomingForGroup = async (groupId) => {
   const date = new Date();
 
