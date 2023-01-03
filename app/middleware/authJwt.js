@@ -8,14 +8,14 @@ verifyToken = (req, res, next) => {
 
   if (!token) {
     return res.status(403).send({
-      message: "No token provided!"
+      message: "No token provided!",
     });
   }
 
   jwt.verify(token, config.secret, (err, decoded) => {
     if (err) {
       return res.status(401).send({
-        message: "Unauthorized!"
+        message: "Unauthorized!",
       });
     }
     req.userId = decoded.id;
@@ -84,8 +84,8 @@ verifyToken = (req, res, next) => {
 
 const authJwt = {
   verifyToken: verifyToken,
-//   isAdmin: isAdmin,
-//   isModerator: isModerator,
-//   isModeratorOrAdmin: isModeratorOrAdmin
+  //   isAdmin: isAdmin,
+  //   isModerator: isModerator,
+  //   isModeratorOrAdmin: isModeratorOrAdmin
 };
 module.exports = authJwt;

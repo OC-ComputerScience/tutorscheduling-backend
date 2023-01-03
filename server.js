@@ -1,4 +1,4 @@
-require('dotenv').config();
+require("dotenv").config();
 //require('dotenv').config({path: '\\nodeapps\\tutor-backend\\.env'});
 const express = require("express");
 const cors = require("cors");
@@ -13,7 +13,7 @@ db.sequelize.sync();
 // });
 
 var corsOptions = {
-  origin: "http://localhost:8081"
+  origin: "http://localhost:8081",
 };
 
 app.use(cors(corsOptions));
@@ -45,10 +45,12 @@ require("./app/routes/topic.routes")(app);
 require("./app/routes/twilio.routes")(app);
 
 // start background tasks
-const tasks = require ("./app/background/hourly.js");
+const tasks = require("./app/background/hourly.js");
 tasks.hourlyTasks();
-const dailyTasks = require ("./app/background/daily.js");
+const dailyTasks = require("./app/background/daily.js");
 dailyTasks.dailyTasks();
+const fifteenMinuteTasks = require("./app/background/fifteen.js");
+fifteenMinuteTasks.fifteenMinuteTasks();
 
 // set port, listen for requests
 const PORT = process.env.PORT || 3002;
