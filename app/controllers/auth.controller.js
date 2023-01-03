@@ -57,6 +57,7 @@ exports.login = async (req, res) => {
           lName: lastName,
           email: email,
           phoneNum: "",
+          textOptIn: true,
         };
       }
     })
