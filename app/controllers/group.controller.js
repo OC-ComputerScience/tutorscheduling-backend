@@ -103,6 +103,41 @@ exports.findAllForPerson = (req, res) => {
     });
 };
 
+// Retrieve all active Groups for a person from the database.
+exports.findAllActiveForPerson = (req, res) => {
+  const id = req.params.personId;
+
+  Group.findAll({
+    include: [
+      {
+        model: Role,
+        include: [
+          {
+            where: {
+              "$role->personrole.personId$": id,
+              status: { [Op.ne]: "disabled" },
+            },
+            model: PersonRole,
+            as: "personrole",
+            required: true,
+          },
+        ],
+        as: "role",
+        required: true,
+      },
+    ],
+    order: [["name", "ASC"]],
+  })
+    .then((data) => {
+      res.send(data);
+    })
+    .catch((err) => {
+      res.status(500).send({
+        message: err.message || "Some error occurred while retrieving groups.",
+      });
+    });
+};
+
 // Retrieve all Groups for a person from the database.
 exports.findContractsNeededForPerson = (req, res) => {
   const id = req.params.personId;
