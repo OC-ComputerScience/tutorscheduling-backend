@@ -1,4 +1,6 @@
+const MessagingResponse = require("twilio/lib/twiml/MessagingResponse");
 const db = require("../models");
+const Op = db.Sequelize.Op;
 const Person = db.person;
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken =
@@ -11,7 +13,7 @@ let person = {};
 getPersonByPhoneNum = async (phoneNumber) => {
   await Person.findOne({
     where: {
-      phoneNum: phoneNumber,
+      phoneNum: { [Op.like]: `%${phoneNumber}%` },
     },
   })
     .then((data) => {
@@ -56,24 +58,34 @@ exports.send = async (req, res) => {
 
 exports.respond = async (req, res) => {
   console.log("twilio request")
-  console.log(req)
-  if (req.OptOutType === "STOP") {
+  console.log(req.body)
+  if (req.body.Body === "STOP") {
+    let phoneNum = req.body.From.substring(2);
     //we need to update person to opt out of texts
-    await getPersonByPhoneNum(req.params.from);
+    await getPersonByPhoneNum(phoneNum);
     person.textOptIn = false;
-    await Person.updatePerson(person, person.id).catch((err) => {
+    console.log(person)
+    await Person.update(person.dataValues, {
+      where: { id: person.id },
+    }).catch((err) => {
       console.log(err);
       res.status(500).send({
         message: "Error updating person's text opt in",
       });
     });
+
     const twiml = new MessagingResponse();
 
-  twiml.message(
-    "You have successfully unsubscribed from OC Tutor Scheduling text notifications."
-  );
+    twiml.message(
+      "You have successfully unsubscribed from OC Tutor Scheduling text notifications."
+    );
 
     res.type("text/xml").send(twiml.toString());
     
-  };
+  }
+  else {
+    res.status(200).send({
+      message: "No need to update person's text opt in",
+    });
+  }
 }
