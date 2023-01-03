@@ -1,4 +1,4 @@
-const { Sequelize, persontopic } = require("../models");
+const { Sequelize } = require("../models");
 const db = require("../models");
 const Person = db.person;
 const PersonRole = db.personrole;
@@ -26,6 +26,7 @@ exports.create = (req, res) => {
     lName: req.body.lName,
     email: req.body.email,
     phoneNum: req.body.phoneNum,
+    textOptIn: req.body.textOptIn ? req.body.textOptIn : true,
     refresh_token: req.body.refresh_token,
     expiration_date: req.body.expiration_date,
   };
@@ -129,6 +130,30 @@ exports.findByEmail = (req, res) => {
   Person.findOne({
     where: {
       email: email,
+    },
+  })
+    .then((data) => {
+      if (data) {
+        res.send(data);
+      } else {
+        res.send({ email: "not found" });
+        /*res.status(404).send({
+          message: `Cannot find Person with email=${email}.`
+        });*/
+      }
+    })
+    .catch((err) => {
+      res.status(500).send({
+        message: "Error retrieving Person with email=" + email,
+      });
+    });
+};
+
+// Find a single Person with a phone number
+exports.findByPhoneNumber = (phoneNumber) => {
+  Person.findOne({
+    where: {
+      phoneNum: phoneNumber,
     },
   })
     .then((data) => {

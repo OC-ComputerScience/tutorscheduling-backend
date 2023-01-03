@@ -7,8 +7,11 @@ module.exports = (app) => {
 
   var router = require("express").Router();
 
-  // Create a new Tutorial
+  // Create a new text
   router.post("/sendMessage", [authenticate], sms.send);
+
+  // send a response to unsubscribing
+  router.post("/respond", sms.respond);
 
   app.use("/twilio", router);
 };

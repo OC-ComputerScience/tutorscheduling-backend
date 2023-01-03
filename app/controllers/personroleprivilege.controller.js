@@ -146,6 +146,28 @@ exports.delete = (req, res) => {
 };
 
 // Delete all PersonRolePrivilege from the database.
+exports.deleteAllForPersonRole = (req, res) => {
+  const personRoleId = req.params.personRoleId;
+
+  PersonRolePrivilege.destroy({
+    where: { personRoleId: personRoleId },
+    truncate: false,
+  })
+    .then((nums) => {
+      res.send({
+        message: `${nums} PersonRolePrivileges were deleted successfully!`,
+      });
+    })
+    .catch((err) => {
+      res.status(500).send({
+        message:
+          err.message ||
+          "Some error occurred while removing all personroleprivileges.",
+      });
+    });
+};
+
+// Delete all PersonRolePrivilege from the database.
 exports.deleteAll = (req, res) => {
   PersonRolePrivilege.destroy({
     where: {},

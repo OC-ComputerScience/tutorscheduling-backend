@@ -225,6 +225,56 @@ exports.deleteWithTopicId = (req, res) => {
     });
 };
 
+// Delete all PersonTopic for person from the database.
+exports.deleteAllForPersonForGroup = (req, res) => {
+  const personId = req.params.personId;
+  const groupId = req.params.groupId;
+
+  Topic.findAll({
+    where: { groupId: groupId },
+    include: [
+      {
+        model: PersonTopic,
+        as: "persontopic",
+        where: { personId: personId },
+        right: true,
+      },
+    ],
+  })
+    .then(async (data) => {
+      if (data[0] !== undefined) {
+        for (let j = 0; j < data.length; j++) {
+          for (let i = 0; i < data[j].dataValues.persontopic.length; i++) {
+            let personTopic = data[j].dataValues.persontopic[i];
+            await PersonTopic.destroy({
+              where: { id: personTopic.id },
+            })
+              .then((num) => {
+                if (num == 1) {
+                  console.log("PersonTopic was deleted successfully!");
+                } else {
+                  res.send({
+                    message: `Cannot delete PersonTopic with id=${id}. Maybe PersonTopic was not found!`,
+                  });
+                }
+              })
+              .catch((err) => {
+                res.status(500).send({
+                  message: "Could not delete PersonTopic with id=" + id,
+                });
+              });
+          }
+        }
+      }
+      res.send({
+        message: `PersonTopics were deleted successfully!`,
+      });
+    })
+    .catch((err) => {
+      res.status(500).send({ message: err.message });
+    });
+};
+
 // Delete all PersonTopic from the database.
 exports.deleteAll = (req, res) => {
   PersonTopic.destroy({

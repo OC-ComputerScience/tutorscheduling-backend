@@ -154,12 +154,12 @@ exports.findOneForText = (req, res) => {
       {
         model: Location,
         as: "location",
-        required: true,
+        required: false,
       },
       {
         model: Topic,
         as: "topic",
-        required: true,
+        required: false,
       },
       {
         model: PersonAppointment,

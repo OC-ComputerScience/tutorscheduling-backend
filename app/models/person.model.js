@@ -20,6 +20,9 @@ module.exports = (sequelize, Sequelize) => {
     phoneNum: {
       type: Sequelize.STRING,
     },
+    textOptIn: {
+      type: Sequelize.BOOLEAN,
+    },
     refresh_token: {
       type: Sequelize.STRING(512),
       allowNull: true,
