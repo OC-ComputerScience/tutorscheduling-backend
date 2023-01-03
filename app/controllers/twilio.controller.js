@@ -55,9 +55,11 @@ exports.send = async (req, res) => {
 };
 
 exports.respond = async (req, res) => {
+  console.log("twilio request")
+  console.log(req)
   if (req.OptOutType === "STOP") {
     //we need to update person to opt out of texts
-    await getPersonByPhoneNum(req.From);
+    await getPersonByPhoneNum(req.params.from);
     person.textOptIn = false;
     await Person.updatePerson(person, person.id).catch((err) => {
       console.log(err);
@@ -65,13 +67,13 @@ exports.respond = async (req, res) => {
         message: "Error updating person's text opt in",
       });
     });
-  }
-
-  const twiml = new MessagingResponse();
+    const twiml = new MessagingResponse();
 
   twiml.message(
     "You have successfully unsubscribed from OC Tutor Scheduling text notifications."
   );
 
-  res.type("text/xml").send(twiml.toString());
-};
+    res.type("text/xml").send(twiml.toString());
+    
+  };
+}
