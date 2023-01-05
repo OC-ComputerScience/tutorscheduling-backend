@@ -13,7 +13,7 @@ let person = {};
 getPersonByPhoneNum = async (phoneNumber) => {
   await Person.findOne({
     where: {
-      phoneNum: { [Op.like]: `%${phoneNumber}%` },
+      phoneNum: phoneNumber,
     },
   })
     .then((data) => {
@@ -29,12 +29,14 @@ getPersonByPhoneNum = async (phoneNumber) => {
 };
 
 exports.send = async (req, res) => {
-  let prefix = "OC Tutor Scheduling: ";
+  let prefix = "OC Tutor Scheduling:\n";
   let postfix = "\nReply STOP to unsubscribe.";
   let message = prefix + req.body.message + postfix;
-  let person = {};
 
   await getPersonByPhoneNum(req.body.phoneNum);
+
+  console.log(person)
+  console.log(message)
 
   if (person.textOptIn) {
     client.messages
@@ -53,6 +55,11 @@ exports.send = async (req, res) => {
           message: err.message || "Could not send message: " + err,
         });
       });
+  }
+  else {
+    res.status(200).send({
+      message: "Person has opted out of texts.",
+    });
   }
 };
 
