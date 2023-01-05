@@ -7,7 +7,7 @@ const Location = db.location;
 const Topic = db.topic;
 const PersonTopic = db.persontopic;
 const Op = db.Sequelize.Op;
-const Time = require("./timeFunctions.js")
+const Time = require("./timeFunctions.js");
 
 exports.createAppointment = async (appointmentData) => {
   // Create a Appointment
@@ -29,13 +29,7 @@ exports.createAppointment = async (appointmentData) => {
   };
 
   // Save Appointment in the database
-  return await Appointment.create(appointment)
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  return await Appointment.create(appointment);
 };
 
 exports.findAllAppointments = async () => {
@@ -44,16 +38,10 @@ exports.findAllAppointments = async () => {
       ["date", "ASC"],
       ["startTime", "ASC"],
     ],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
-exports.findAllForGroup = async (groupId) => {
+exports.findAllAppointmentsForGroup = async (groupId) => {
   return await Appointment.findAll({
     where: { groupId: groupId },
     include: [
@@ -101,13 +89,7 @@ exports.findAllForGroup = async (groupId) => {
       ["date", "ASC"],
       ["startTime", "ASC"],
     ],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 // TODO test if we need then and catch
@@ -121,13 +103,7 @@ exports.findAllUpcomingForGroup = async (groupId) => {
       ["date", "ASC"],
       ["startTime", "ASC"],
     ],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findAllAppointmentsFromOneMonthAgoForGroup = async (groupId) => {
@@ -183,13 +159,7 @@ exports.findAllAppointmentsFromOneMonthAgoForGroup = async (groupId) => {
       ["date", "ASC"],
       ["startTime", "ASC"],
     ],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findAllForPerson = async (personId) => {
@@ -202,13 +172,7 @@ exports.findAllForPerson = async (personId) => {
         required: true,
       },
     ],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findAllUpcomingForPerson = async (personId) => {
@@ -254,27 +218,17 @@ exports.findAllUpcomingForPerson = async (personId) => {
         required: true,
       },
     ],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
-exports.findAllUpcomingForPersonForGroup = async (groupId, personId) => {
+exports.findAllUpcomingForPersonForGroup = async (
+  checkTime,
+  groupId,
+  personId
+) => {
   const date = new Date();
   date.setHours(date.getHours() - date.getTimezoneOffset() / 60);
   date.setHours(0, 0, 0, 0);
-
-  let checkTime = new Date();
-  checkTime =
-    checkTime.getHours() +
-    ":" +
-    checkTime.getMinutes() +
-    ":" +
-    checkTime.getSeconds();
 
   return await Appointment.findAll({
     where: {
@@ -329,13 +283,7 @@ exports.findAllUpcomingForPersonForGroup = async (groupId, personId) => {
       ["date", "ASC"],
       ["startTime", "ASC"],
     ],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findAllPassedForTutorForGroup = async (groupId, personId) => {
@@ -386,13 +334,7 @@ exports.findAllPassedForTutorForGroup = async (groupId, personId) => {
       ["date", "ASC"],
       ["startTime", "ASC"],
     ],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findAllPassedForStudentForGroup = async (groupId, personId) => {
@@ -420,13 +362,7 @@ exports.findAllPassedForStudentForGroup = async (groupId, personId) => {
       ["date", "ASC"],
       ["startTime", "ASC"],
     ],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findAllForPersonForGroup = async (groupId, personId) => {
@@ -449,13 +385,7 @@ exports.findAllForPersonForGroup = async (groupId, personId) => {
       ["date", "ASC"],
       ["startTime", "ASC"],
     ],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findFeedbackApptForPerson = async (id) => {
@@ -495,13 +425,7 @@ exports.findFeedbackApptForPerson = async (id) => {
       ["date", "ASC"],
       ["startTime", "ASC"],
     ],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.getAppointmentHours = async (groupId, currWeek) => {
@@ -564,13 +488,7 @@ exports.getAppointmentHours = async (groupId, currWeek) => {
       ["date", "ASC"],
       ["startTime", "ASC"],
     ],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findOneAppointmentInfo = async (id) => {
@@ -620,13 +538,7 @@ exports.findOneAppointmentInfo = async (id) => {
       ["date", "ASC"],
       ["startTime", "ASC"],
     ],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findRawAppointmentInfo = async (id) => {

@@ -79,13 +79,6 @@ module.exports = (app) => {
     appointment.findAllPassedForPersonForGroupStudent
   );
 
-  // Retrieve tutor for an appointment
-  router.get(
-    "/tutorAppointment/:id",
-    [authenticate],
-    appointment.getTutorForAppointment
-  );
-
   // Retrieve appointment for feedback
   router.get(
     "/feedback/:appointmentId",

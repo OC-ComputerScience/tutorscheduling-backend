@@ -1,6 +1,6 @@
 const db = require("../models");
 const authconfig = require("../config/auth.config");
-const Person = db.person;
+const Person = require("../utils/person.js");
 const Session = db.session;
 const PersonRole = db.personrole;
 const Role = db.role;
@@ -42,11 +42,7 @@ exports.login = async (req, res) => {
   let session = {};
   let access = [];
 
-  await Person.findOne({
-    where: {
-      email: email,
-    },
-  })
+  await Person.findOnePersonByEmail(email)
     .then((data) => {
       if (data != null) {
         person = data.dataValues;

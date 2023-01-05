@@ -17,13 +17,7 @@ exports.createRequest = async (requestData) => {
   };
 
   // Save request in the database
-  return await Request.create(request)
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  return await Request.create(request);
 };
 
 exports.findAllRequests = async () => {
@@ -60,13 +54,7 @@ exports.findAllRequestsForGroup = async (groupId) => {
       ["status", "DESC"],
       ["createdAt", "ASC"],
     ],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findOneRequest = async (id) => {

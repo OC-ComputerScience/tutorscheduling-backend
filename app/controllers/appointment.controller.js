@@ -1,4 +1,7 @@
 const Appointment = require("../utils/appointment.js");
+const GoogleCalendar = require("../utils/googleCalendar");
+const Group = require("../utils/group.js");
+const Time = require("../utils/timeFunctions.js");
 
 exports.create = async (req, res) => {
   // Validate request
@@ -34,8 +37,8 @@ exports.findAll = async (req, res) => {
     });
 };
 
-exports.findAppointmentsForGroup = async (req, res) => {
-  await Appointment.findAllForGroup(req.params.groupId)
+exports.findAllForGroup = async (req, res) => {
+  await Appointment.findAllAppointmentsForGroup(req.params.groupId)
     .then((data) => {
       res.send(data);
     })
@@ -48,7 +51,7 @@ exports.findAppointmentsForGroup = async (req, res) => {
     });
 };
 
-exports.findAllUpcomingForGroup = async (req, res) => {
+exports.findAllFutureUpcomingForGroup = async (req, res) => {
   await Appointment.findAllUpcomingForGroup(req.params.groupId)
     .then((data) => {
       res.send(data);
@@ -57,57 +60,15 @@ exports.findAllUpcomingForGroup = async (req, res) => {
       res.status(500).send({
         message:
           err.message ||
-          "Some error occurred while retrieving appointments for group.",
+          "Some error occurred while retrieving upcoming appointments for group.",
       });
     });
 };
 
-// Retrieve all upcoming appointments for a person from the database to help check conflicts
-exports.findAllUpcomingForPerson = async (req, res) => {
-  const personId = req.params.personId;
-  const date = new Date();
-  date.setHours(date.getHours() - date.getTimezoneOffset() / 60);
-  date.setHours(0, 0, 0, 0);
-
-  let checkTime = new Date();
-  checkTime =
-    checkTime.getHours() +
-    ":" +
-    checkTime.getMinutes() +
-    ":" +
-    checkTime.getSeconds();
-
-  Appointment.findAll({
-    where: {
-      [Op.or]: [
-        {
-          [Op.and]: [
-            { startTime: { [Op.gte]: checkTime } },
-            { date: { [Op.eq]: date } },
-          ],
-        },
-        {
-          date: { [Op.gt]: date },
-        },
-      ],
-      [Op.and]: [
-        {
-          status: { [Op.not]: "studentCancel" },
-        },
-        {
-          status: { [Op.not]: "tutorCancel" },
-        },
-      ],
-    },
-    include: [
-      {
-        where: { "$personappointment.personId$": personId },
-        model: PersonAppointment,
-        as: "personappointment",
-        required: true,
-      },
-    ],
-  })
+exports.findAllUpcomingForGroup = async (req, res) => {
+  await Appointment.findAllAppointmentsFromOneMonthAgoForGroup(
+    req.params.groupId
+  )
     .then((data) => {
       res.send(data);
     })
@@ -115,90 +76,55 @@ exports.findAllUpcomingForPerson = async (req, res) => {
       res.status(500).send({
         message:
           err.message ||
-          "Some error occurred while retrieving appointments for person for group.",
+          "Some error occurred while retrieving upcoming appointments for group.",
       });
     });
 };
 
-// Retrieve all upcoming appointments for a person for a group from the database.
-exports.findAllUpcomingForPersonForGroup = async (req, res) => {
-  const personId = req.params.personId;
-  const groupId = req.params.groupId;
-  const date = new Date();
-  let group = {};
-  date.setHours(date.getHours() - date.getTimezoneOffset() / 60);
-  date.setHours(0, 0, 0, 0);
-
-  await Group.findAll({ where: { id: groupId } })
+exports.findAllForPerson = async (req, res) => {
+  await Appointment.findAllForPerson(req.params.personId)
     .then((data) => {
-      group = data[0].dataValues;
+      res.send(data);
     })
     .catch((err) => {
-      console.log("some error occurred retrieving the group: " + err);
+      res.status(500).send({
+        message:
+          err.message ||
+          "Some error occurred while retrieving appointments for person.",
+      });
     });
+};
+
+exports.findAllUpcomingForPerson = async (req, res) => {
+  await Appointment.findAllUpcomingForPerson(req.params.personId)
+    .then((data) => {
+      res.send(data);
+    })
+    .catch((err) => {
+      res.status(500).send({
+        message:
+          err.message ||
+          "Some error occurred while retrieving upcoming appointments for person.",
+      });
+    });
+};
+
+exports.findAllUpcomingForPersonForGroup = async (req, res) => {
+  let group = await Group.findOneGroup(req.params.groupId);
 
   let delTime = new Date().toLocaleTimeString("it-IT");
   console.log(delTime);
   console.log(group.bookPastMinutes);
 
   // need to get appointments outside of the book past minutes buffer
-  let checkTime = subtractMinsFromTime(group.bookPastMinutes, delTime);
+  let checkTime = Time.subtractMinsFromTime(group.bookPastMinutes, delTime);
   console.log(checkTime);
 
-  Appointment.findAll({
-    where: {
-      groupId: groupId,
-      [Op.or]: [
-        {
-          [Op.and]: [
-            { startTime: { [Op.gte]: checkTime } },
-            { date: { [Op.eq]: date } },
-          ],
-        },
-        {
-          date: { [Op.gt]: date },
-        },
-      ],
-      [Op.and]: [
-        {
-          status: { [Op.not]: "studentCancel" },
-        },
-        {
-          status: { [Op.not]: "tutorCancel" },
-        },
-      ],
-    },
-    include: [
-      {
-        model: Location,
-        as: "location",
-        required: false,
-      },
-      {
-        model: Topic,
-        as: "topic",
-        required: false,
-      },
-      {
-        model: PersonAppointment,
-        as: "personappointment",
-        required: true,
-        include: [
-          {
-            model: Person,
-            as: "person",
-            required: true,
-            right: true,
-            where: { id: personId },
-          },
-        ],
-      },
-    ],
-    order: [
-      ["date", "ASC"],
-      ["startTime", "ASC"],
-    ],
-  })
+  await Appointment.findAllUpcomingForPersonForGroup(
+    checkTime,
+    req.params.groupId,
+    req.params.personId
+  )
     .then((data) => {
       res.send(data);
     })
@@ -206,65 +132,16 @@ exports.findAllUpcomingForPersonForGroup = async (req, res) => {
       res.status(500).send({
         message:
           err.message ||
-          "Some error occurred while retrieving appointments for person for group.",
+          "Some error occurred while retrieving upcoming appointments for person for group while considering group's book past start time.",
       });
     });
 };
 
-// Retrieve all passed appointments for a person for a group from the database.
 exports.findAllPassedForPersonForGroupTutor = async (req, res) => {
-  const personId = req.params.personId;
-  const groupId = req.params.groupId;
-  let date = new Date();
-  let endTime = date.toLocaleTimeString("it-IT");
-  date.setHours(date.getHours() - date.getTimezoneOffset() / 60);
-  date.setHours(0, 0, 0);
-
-  // Note: had to put the the two OP.or in an Op.and to get Sequelize to generate SQL correctly
-  Appointment.findAll({
-    where: {
-      groupId: groupId,
-      [Op.and]: [
-        { status: { [Op.notLike]: "tutorCancel" } },
-        { status: { [Op.notLike]: "studentCancel" } },
-      ],
-      [Op.and]: [
-        {
-          [Op.or]: [
-            { date: { [Op.lt]: date } },
-            {
-              [Op.and]: [
-                { date: { [Op.eq]: date } },
-                { endTime: { [Op.lt]: endTime } },
-              ],
-            },
-          ],
-        },
-        {
-          [Op.or]: [
-            { status: { [Op.like]: "booked" } },
-            { type: { [Op.like]: "Group" } },
-          ],
-        },
-      ],
-    },
-    include: [
-      {
-        where: {
-          "$personappointment.personId$": personId,
-          feedbacknumber: { [Op.eq]: null },
-          feedbacktext: { [Op.eq]: null },
-        },
-        model: PersonAppointment,
-        as: "personappointment",
-        required: true,
-      },
-    ],
-    order: [
-      ["date", "ASC"],
-      ["startTime", "ASC"],
-    ],
-  })
+  await Appointment.findAllPassedForTutorForGroup(
+    req.params.groupId,
+    req.params.personId
+  )
     .then((data) => {
       res.send(data);
     })
@@ -272,39 +149,16 @@ exports.findAllPassedForPersonForGroupTutor = async (req, res) => {
       res.status(500).send({
         message:
           err.message ||
-          "Some error occurred while retrieving appointments for person for group.",
+          "Some error occurred while retrieving passed appointments for tutor for group.",
       });
     });
 };
-// Retrieve all passed appointments for a person for a group from the database.
+
 exports.findAllPassedForPersonForGroupStudent = async (req, res) => {
-  const personId = req.params.personId;
-  const groupId = req.params.groupId;
-  const date = new Date();
-
-  Appointment.findAll({
-    where: {
-      groupId: groupId,
-      date: { [Op.lte]: date },
-      status: { [Op.like]: "complete" },
-    },
-    include: [
-      {
-        where: {
-          "$personappointment.personId$": personId,
-          feedbacknumber: { [Op.eq]: null },
-          feedbacktext: { [Op.eq]: null },
-        },
-        model: PersonAppointment,
-        as: "personappointment",
-        required: true,
-      },
-    ],
-    order: [
-      ["date", "ASC"],
-      ["startTime", "ASC"],
-    ],
-  })
+  await Appointment.findAllPassedForStudentForGroup(
+    req.params.groupId,
+    req.params.personId
+  )
     .then((data) => {
       res.send(data);
     })
@@ -312,36 +166,16 @@ exports.findAllPassedForPersonForGroupStudent = async (req, res) => {
       res.status(500).send({
         message:
           err.message ||
-          "Some error occurred while retrieving appointments for person for group.",
+          "Some error occurred while retrieving passed appointments for student for group.",
       });
     });
 };
 
-// Retrieve all appointments for a person for a group from the database.
 exports.findAllForPersonForGroup = async (req, res) => {
-  const personId = req.params.personId;
-  const groupId = req.params.groupId;
-
-  Appointment.findAll({
-    where: { groupId: groupId },
-    include: [
-      {
-        where: { "$personappointment.personId$": personId },
-        model: PersonAppointment,
-        as: "personappointment",
-        required: true,
-      },
-      {
-        model: Topic,
-        as: "topic",
-        required: true,
-      },
-    ],
-    order: [
-      ["date", "ASC"],
-      ["startTime", "ASC"],
-    ],
-  })
+  await Appointment.findAllForPersonForGroup(
+    req.params.groupId,
+    req.params.personId
+  )
     .then((data) => {
       res.send(data);
     })
@@ -350,401 +184,95 @@ exports.findAllForPersonForGroup = async (req, res) => {
         message:
           err.message ||
           "Some error occurred while retrieving appointments for person for group.",
-      });
-    });
-};
-
-// Retrieve all appointments for a person for a group from the database.
-exports.getTutorForAppointment = async (req, res) => {
-  //const personId = req.params.personId;
-  //const groupId = req.params.groupId;
-  const appId = req.params.id;
-
-  Person.findOne({
-    include: [
-      {
-        model: PersonAppointment,
-        as: "personappointment",
-        required: true,
-        where: {
-          isTutor: true,
-          appointmentId: appId,
-        },
-      } /*,
-      {
-        model: Topic,
-        as: 'topic',
-        required: true
-      }*/,
-    ],
-  })
-    .then((data) => {
-      res.send(data);
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message ||
-          "Some error occurred while retrieving appointments for person for group.",
-      });
-    });
-};
-
-// Retrieve all Appointment from the database.
-exports.findOneForText = async (req, res) => {
-  const id = req.params.id;
-
-  Appointment.findAll({
-    where: { id: id },
-    include: [
-      {
-        model: Location,
-        as: "location",
-        required: true,
-      },
-      {
-        model: Topic,
-        as: "topic",
-        required: true,
-      },
-      {
-        model: PersonAppointment,
-        as: "personappointment",
-        required: true,
-        include: [
-          {
-            model: Person,
-            as: "person",
-            required: true,
-            right: true,
-            include: [
-              {
-                model: PersonTopic,
-                as: "persontopic",
-                required: false,
-                include: [
-                  {
-                    model: Topic,
-                    as: "topic",
-                    required: true,
-                    right: true,
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-    ],
-    order: [
-      ["date", "ASC"],
-      ["startTime", "ASC"],
-    ],
-  })
-    .then((data) => {
-      res.send(data);
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message || "Some error occurred while retrieving Appointments.",
-      });
-    });
-};
-
-exports.getAppointmentHourCount = async (req, res) => {
-  const groupId = req.params.groupId;
-  const currWeek = req.params.currWeek;
-  console.log("CurrWeek: " + currWeek);
-  var week = getWeekFromDate(currWeek);
-  var firstDay = week.first;
-  var lastDay = week.last;
-  Appointment.findAll({
-    where: {
-      groupId: groupId,
-      [Op.and]: [
-        { date: { [Op.gte]: firstDay } },
-        { date: { [Op.lte]: lastDay } },
-      ],
-    },
-    attributes: [
-      [db.sequelize.literal("COUNT(id)"), "count"],
-      [
-        db.sequelize.literal("SUM(TIMESTAMPDIFF(minute,startTime,endTime))"),
-        "hours",
-      ],
-      [
-        db.sequelize.literal(
-          "SUM(CASE WHEN status = 'available' AND type = 'Private' THEN TIMESTAMPDIFF(minute,startTime,endTime) ELSE 0 END)"
-        ),
-        "available",
-      ],
-      [
-        db.sequelize.literal(
-          "SUM(CASE WHEN status = 'available' AND type = 'Group' THEN TIMESTAMPDIFF(minute,startTime,endTime) ELSE 0 END)"
-        ),
-        "group",
-      ],
-      [
-        db.sequelize.literal(
-          "SUM(CASE WHEN status = 'pending' THEN TIMESTAMPDIFF(minute,startTime,endTime) ELSE 0 END)"
-        ),
-        "pending",
-      ],
-      [
-        db.sequelize.literal(
-          "SUM(CASE WHEN status = 'booked' THEN TIMESTAMPDIFF(minute,startTime,endTime) ELSE 0 END)"
-        ),
-        "booked",
-      ],
-      [
-        db.sequelize.literal(
-          "SUM(CASE WHEN status = 'complete' THEN TIMESTAMPDIFF(minute,startTime,endTime) ELSE 0 END)"
-        ),
-        "complete",
-      ],
-      [
-        db.sequelize.literal(
-          "SUM(CASE WHEN status = 'no-show' THEN TIMESTAMPDIFF(minute,startTime,endTime) ELSE 0 END)"
-        ),
-        "noshow",
-      ],
-    ],
-    order: [
-      ["date", "ASC"],
-      ["startTime", "ASC"],
-    ],
-  })
-    .then((data) => {
-      res.send(data);
-    })
-
-    .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message ||
-          "Some error occurred while retrieving appointments for group.",
-      });
-    });
-};
-
-// Retrieve all appointments for a person for a group from the database.
-exports.findAllForGroup = async (req, res) => {
-  const groupId = req.params.groupId;
-
-  Appointment.findAll({
-    where: { groupId: groupId },
-    include: [
-      {
-        model: Location,
-        as: "location",
-        required: false,
-      },
-      {
-        model: Topic,
-        as: "topic",
-        required: false,
-      },
-      {
-        model: PersonAppointment,
-        as: "personappointment",
-        required: true,
-        include: [
-          {
-            model: Person,
-            as: "person",
-            required: true,
-            right: true,
-            include: [
-              {
-                model: PersonTopic,
-                as: "persontopic",
-                required: false,
-                include: [
-                  {
-                    model: Topic,
-                    as: "topic",
-                    required: true,
-                    right: true,
-                    where: { groupId: groupId },
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-    ],
-    order: [
-      ["date", "ASC"],
-      ["startTime", "ASC"],
-    ],
-  })
-    .then((data) => {
-      res.send(data);
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message ||
-          "Some error occurred while retrieving appointments for group.",
-      });
-    });
-};
-
-// Retrieve all Appointments for a person from the database.
-exports.findAllForPerson = async (req, res) => {
-  const id = req.params.personId;
-
-  Appointment.findAll({
-    include: [
-      {
-        where: { "$personappointment.personId$": id },
-        model: PersonAppointment,
-        as: "personappointment",
-        required: true,
-      },
-    ],
-  })
-    .then((data) => {
-      res.send(data);
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message || "Some error occurred while retrieving appointments.",
       });
     });
 };
 
 exports.findFeedbackApptForPerson = async (req, res) => {
-  const appointmentId = req.params.appointmentId;
-
-  Appointment.findAll({
-    where: { id: appointmentId },
-    include: [
-      {
-        model: Location,
-        as: "location",
-        required: true,
-      },
-      {
-        model: Topic,
-        as: "topic",
-        required: true,
-      },
-      {
-        model: Group,
-        as: "group",
-        required: true,
-      },
-      {
-        model: PersonAppointment,
-        as: "personappointment",
-        required: true,
-        include: [
-          {
-            model: Person,
-            as: "person",
-            required: true,
-            right: true,
-          },
-        ],
-      },
-    ],
-    order: [
-      ["date", "ASC"],
-      ["startTime", "ASC"],
-    ],
-  })
+  await Appointment.findFeedbackApptForPerson(req.params.appointmentId)
     .then((data) => {
       res.send(data);
     })
     .catch((err) => {
       res.status(500).send({
         message:
-          err.message || "Some error occurred while retrieving appointments.",
+          err.message ||
+          "Some error occurred while retrieving feedback appointment for person.",
       });
     });
 };
 
-// Find a single Appointment with an id
-exports.findOne = async (req, res) => {
-  const id = req.params.id;
+exports.getAppointmentHourCount = async (req, res) => {
+  await Appointment.getAppointmentHours(req.params.groupId, req.params.currWeek)
+    .then((data) => {
+      res.send(data);
+    })
+    .catch((err) => {
+      res.status(500).send({
+        message: err.message,
+      });
+    });
+};
 
-  Appointment.findByPk(id)
+exports.findOneForText = async (req, res) => {
+  await Appointment.findOneAppointmentInfo(req.params.id)
+    .then((data) => {
+      res.send(data);
+    })
+    .catch((err) => {
+      res.status(500).send({
+        message:
+          err.message ||
+          "Some error occurred while retrieving information for one appointment.",
+      });
+    });
+};
+
+exports.findOne = async (req, res) => {
+  await Appointment.findOneAppointment(req.params.id)
     .then((data) => {
       if (data) {
         res.send(data);
       } else {
         res.status(404).send({
-          message: `Cannot find Appointment with id = ${req.params.id}.`,
+          message: `Cannot find appointment with id = ${req.params.id}.`,
         });
       }
     })
     .catch((err) => {
       res.status(500).send({
-        message: "Error retrieving Appointment with id = " + req.params.id,
+        message: "Error retrieving appointment with id = " + req.params.id,
       });
     });
 };
 
-// Update a Appointment by the id in the request
-exports.update = async (req, res) => {
-  const id = req.params.id;
-
-  Appointment.update(req.body, {
-    where: { id: id },
-  })
-    .then((num) => {
-      if (num == 1) {
-        res.send({
-          message: "Appointment was updated successfully.",
-        });
-      } else {
-        res.send({
-          message: `Cannot update Appointment with id = ${req.params.id}. Maybe Appointment was not found or req.body is empty!`,
-        });
-      }
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message: "Error updating Appointment with id = " + req.params.id,
-      });
-    });
-};
-
-// Update an Appointment's status by the id in the request
 exports.updateForGoogle = async (req, res) => {
-  const id = req.params.id;
-
   // shouldn't need to update appointment
   if (
     req.body.type === "Group" &&
-    (req.body.status === "Available" || req.body.status === "available") &&
+    req.body.status === "available" &&
     (req.body.googleEventId === "" ||
       req.body.googleEventId === undefined ||
       req.body.googleEventId === null)
   ) {
-    await addToGoogle(id)
+    await GoogleCalendar.addAppointmentToGoogle(req.params.id)
       .then(() => {
-        console.log("successfully added appointment to google");
-        res.send({
-          message: "Appointment was successfully added to google.",
-        });
+        console.log("Successfully added appointment to Google");
+        res.send(data);
+        // res.send({
+        //   message: "Appointment was successfully added to Google.",
+        // });
       })
       .catch((err) => {
-        console.log("Error adding apppointment to google: " + err);
+        console.log("Error adding appointment to Google: " + err);
         res.status(500).send({
-          message: "Error adding appointment to google",
+          message: "Error adding appointment to Google",
         });
       });
   }
   // all other cases should require updating
   else {
-    Appointment.update(req.body, {
-      where: { id: id },
-    })
+    Appointment.updateAppointment(req.body, req.params.id)
       .then(async (num) => {
         if (num == 1) {
           if (req.body.type === "Private") {
@@ -755,17 +283,18 @@ exports.updateForGoogle = async (req, res) => {
                 req.body.googleEventId === undefined ||
                 req.body.googleEventId === null)
             ) {
-              await addToGoogle(id)
+              await GoogleCalendar.addAppointmentToGoogle(req.params.id)
                 .then(() => {
-                  console.log("successfully added appointment to google");
-                  res.send({
-                    message: "Appointment was successfully added to google.",
-                  });
+                  console.log("Successfully added appointment to Google");
+                  res.send(data);
+                  // res.send({
+                  //   message: "Appointment was successfully added to Google.",
+                  // });
                 })
                 .catch((err) => {
-                  console.log("Error adding apppointment to google: " + err);
+                  console.log("Error adding appointment to Google: " + err);
                   res.status(500).send({
-                    message: "Error adding appointment to google",
+                    message: "Error adding appointment to Google",
                   });
                 });
             }
@@ -775,93 +304,84 @@ exports.updateForGoogle = async (req, res) => {
               req.body.status === "studentCancel" ||
               req.body.status === "tutorCancel"
             ) {
-              await this.deleteFromGoogle(id)
+              await GoogleCalendar.deleteFromGoogle(req.params.id)
                 .then(() => {
-                  console.log("successfully deleted appointment from google");
-                  res.send({
-                    message:
-                      "Appointment was successfully deleted from google.",
-                  });
+                  console.log("Successfully deleted appointment from Google");
+                  res.send(data);
+                  // res.send({
+                  //   message: "Appointment was successfully deleted from Google.",
+                  // });
                 })
                 .catch((err) => {
-                  console.log(
-                    "Error deleting apppointment from google: " + err
-                  );
+                  console.log("Error deleting appointment from Google: " + err);
                   res.status(500).send({
-                    message: "Error deleting appointment from google",
+                    message: "Error deleting appointment from Google",
                   });
                 });
             }
             // otherwise, update the google event
             else {
-              await updateEvent(id)
+              await GoogleCalendar.updateEventForGoogle(req.params.id)
                 .then(() => {
-                  console.log("successfully updated appointment with google");
-                  res.send({
-                    message:
-                      "Appointment was successfully updated with google.",
-                  });
+                  console.log("Successfully updated appointment with Google");
+                  res.send(data);
+                  // res.send({
+                  //   message: "Appointment was successfully updated with Google.",
+                  // });
                 })
                 .catch((err) => {
-                  console.log("Error updating appointment with google: " + err);
+                  console.log("Error updating appointment with Google: " + err);
                   res.status(500).send({
-                    message: "Error updating appointment with google",
+                    message: "Error updating appointment with Google",
                   });
                 });
             }
           } else if (req.body.type === "Group") {
             // if a tutor cancels, delete the google event
-            if (
-              req.body.status === "cancelled" ||
-              req.body.status === "tutorCancel"
-            ) {
-              await this.deleteFromGoogle(id)
+            if (req.body.status === "tutorCancel") {
+              await GoogleCalendar.deleteFromGoogle(req.params.id)
                 .then(() => {
-                  console.log("successfully deleted appointment from google");
-                  res.send({
-                    message:
-                      "Appointment was successfully deleted from google.",
-                  });
+                  console.log("Successfully deleted appointment from Google");
+                  res.send(data);
+                  // res.send({
+                  //   message: "Appointment was successfully deleted from Google.",
+                  // });
                 })
                 .catch((err) => {
-                  console.log(
-                    "Error deleting apppointment from google: " + err
-                  );
+                  console.log("Error deleting appointment from Google: " + err);
                   res.status(500).send({
-                    message: "Error deleting appointment from google",
+                    message: "Error deleting appointment from Google",
                   });
                 });
             }
             // otherwise, update the google event
             else {
-              await updateEvent(id)
+              await GoogleCalendar.updateEventForGoogle(req.params.id)
                 .then(() => {
-                  console.log("successfully updated appointment with google");
-                  res.send({
-                    message:
-                      "Appointment was successfully updated with google.",
-                  });
+                  console.log("Successfully updated appointment with Google");
+                  res.send(data);
+                  // res.send({
+                  //   message: "Appointment was successfully updated with Google.",
+                  // });
                 })
                 .catch((err) => {
-                  console.log(
-                    "Error updating apppointment with google: " + err
-                  );
+                  console.log("Error updating appointment with Google: " + err);
                   res.status(500).send({
-                    message: "Error updating appointment with google",
+                    message: "Error updating appointment with Google",
                   });
                 });
             }
           }
         } else {
           res.send({
-            message: `Cannot update Appointment with id = ${req.params.id}. Maybe Appointment was not found or req.body is empty!`,
+            message: `Cannot update appointment for Google with id = ${req.params.id}. Maybe appointment was not found or req.body was empty!`,
           });
         }
       })
       .catch((err) => {
         res.status(500).send({
           message:
-            "Error updating Appointment with id = " +
+            "Error updating appointment for Google with id = " +
             req.params.id +
             " error: " +
             err,
@@ -870,13 +390,28 @@ exports.updateForGoogle = async (req, res) => {
   }
 };
 
-// Delete a Appointment with the specified id in the request
-exports.delete = async (req, res) => {
-  const id = req.params.id;
+exports.update = async (req, res) => {
+  await Appointment.updateAppointment(req.body, req.params.id)
+    .then((num) => {
+      if (num == 1) {
+        res.send({
+          message: "Appointment was updated successfully.",
+        });
+      } else {
+        res.send({
+          message: `Cannot update appointment with id = ${req.params.id}. Maybe appointment was not found or req.body was empty!`,
+        });
+      }
+    })
+    .catch((err) => {
+      res.status(500).send({
+        message: "Error updating appointment with id = " + req.params.id,
+      });
+    });
+};
 
-  Appointment.destroy({
-    where: { id: id },
-  })
+exports.delete = async (req, res) => {
+  await Appointment.deleteAppointment(req.params.id)
     .then((num) => {
       if (num == 1) {
         res.send({
@@ -884,498 +419,26 @@ exports.delete = async (req, res) => {
         });
       } else {
         res.send({
-          message: `Cannot delete Appointment with id = ${req.params.id}. Maybe Appointment was not found!`,
+          message: `Cannot delete appointment with id = ${req.params.id}. Maybe appointment was not found!`,
         });
       }
     })
     .catch((err) => {
       res.status(500).send({
-        message: "Could not delete Appointment with id = " + req.params.id,
+        message: "Could not delete appointment with id = " + req.params.id,
       });
     });
 };
 
-// Delete all Appointment from the database.
 exports.deleteAll = async (req, res) => {
-  Appointment.destroy({
-    where: {},
-    truncate: false,
-  })
+  await Appointment.deleteAllAppointments()
     .then((nums) => {
-      res.send({ message: `${nums} Appointment were deleted successfully!` });
+      res.send({ message: `${nums} appointments were deleted successfully!` });
     })
     .catch((err) => {
       res.status(500).send({
         message:
-          err.message || "Some error occurred while removing all Appointment.",
+          err.message || "Some error occurred while removing all appointments.",
       });
     });
 };
-
-getAllAppointmentInfo = async (appointmentId) => {
-  let appointments = [];
-  await Appointment.findAll({
-    where: { id: appointmentId },
-    include: [
-      {
-        model: Location,
-        as: "location",
-        required: true,
-      },
-      {
-        model: Topic,
-        as: "topic",
-        required: true,
-      },
-      {
-        model: Group,
-        as: "group",
-        required: true,
-      },
-      {
-        model: PersonAppointment,
-        as: "personappointment",
-        required: true,
-        include: [
-          {
-            model: Person,
-            as: "person",
-            required: true,
-            right: true,
-          },
-        ],
-      },
-    ],
-    raw: true,
-    nest: true,
-  })
-    .then((data) => {
-      if (data) {
-        console.log(data);
-        appointments = data;
-      } else {
-        console.log(`Cannot find Appointment with id = ${req.params.id}.`);
-      }
-    })
-    .catch((err) => {
-      console.log("Error retrieving Appointment with id = " + req.params.id);
-      console.log(err);
-    });
-
-  return appointments;
-};
-
-setUpEvent = async (appointmentId) => {
-  let appointments = []; // there will be multiple for each attendee
-  appointments = await getAllAppointmentInfo(appointmentId);
-  console.log(appointments);
-
-  let startTime = "";
-  let endTime = "";
-  let group = "";
-  let location = "";
-  let topic = "";
-  let attendees = [];
-  let online = false;
-  let studentName = "";
-  let summary = "";
-
-  for (let i = 0; i < appointments.length; i++) {
-    let obj = appointments[i];
-    if (obj.type === "Private" && !obj.personappointment.isTutor) {
-      studentName =
-        obj.personappointment.person.fName +
-        " " +
-        obj.personappointment.person.lName;
-      console.log("Google student name: " + studentName);
-    }
-    let tempObj = {};
-    tempObj.email = obj.personappointment.person.email;
-    if (obj.personappointment.isTutor) tempObj.responseStatus = "accepted";
-    attendees.push(tempObj);
-  }
-
-  let appointment = appointments[0];
-  eventId = appointment.googleEventId;
-
-  startTime = new Date(appointment.date).toISOString();
-  let temp = startTime.slice(11, 19);
-  startTime = startTime.replace(temp, appointment.startTime.toString());
-  startTime = startTime.slice(0, 23);
-  endTime = new Date(appointment.date).toISOString();
-  temp = endTime.slice(11, 19);
-  endTime = endTime.replace(temp, appointment.endTime.toString());
-  endTime = endTime.slice(0, 23);
-  group = appointment.group.name;
-  location = appointment.location.name;
-  topic = appointment.topic.name;
-  if (
-    appointment.location.type === "Online" ||
-    appointment.location.type === "online"
-  ) {
-    online = true;
-  }
-
-  // set up name
-  if (appointment.type === "Private") {
-    summary = studentName + " - " + topic + " Tutoring";
-  } else {
-    summary = "Group - " + topic + " Tutoring";
-  }
-
-  const event = {
-    summary: summary,
-    location: location,
-    description: appointment.preSessionInfo,
-    start: {
-      dateTime: startTime,
-      timeZone: "US/Central",
-    },
-    end: {
-      dateTime: endTime,
-      timeZone: "US/Central",
-    },
-    attendees: attendees,
-    reminders: {
-      useDefault: false,
-      overrides: [
-        { method: "email", minutes: 24 * 60 },
-        { method: "email", minutes: 120 },
-      ],
-    },
-    status: "confirmed",
-    transparency: "opaque",
-  };
-
-  if (online) {
-    event.conferenceData = {
-      createRequest: {
-        conferenceSolutionKey: {
-          type: "hangoutsMeet",
-        },
-        requestId: group + appointment.date,
-      },
-    };
-  }
-
-  return event;
-};
-
-addToGoogle = async (appointmentId) => {
-  let auth = await getAccessToken(appointmentId);
-
-  let event = {};
-  event = await setUpEvent(appointmentId);
-  console.log(event);
-
-  const calendar = google.calendar({
-    version: "v3",
-    auth: auth,
-  });
-
-  // We make a request to Google Calendar API.
-  calendar.events
-    .insert({
-      auth: auth,
-      calendarId: "primary",
-      resource: event,
-      conferenceDataVersion: 1,
-      sendUpdates: "all",
-    })
-    .then(async (event) => {
-      await updateAppointmentGoogleId(appointmentId, event.data.id);
-      console.log("Event created: %s", event.data);
-    })
-    .catch((error) => {
-      console.log("Some error occured", error);
-      // if we get back 403 or 429, try again
-      if (error.status === 403 || error.status === 429) {
-        // We make a request to Google Calendar API.
-        console.log("Google status is: " + error.status);
-        console.log("Attempting insert again.");
-        calendar.events
-          .insert({
-            auth: auth,
-            calendarId: "primary",
-            resource: event,
-            conferenceDataVersion: 1,
-            sendUpdates: "all",
-          })
-          .then(async (event) => {
-            await updateAppointmentGoogleId(appointmentId, event.data.id);
-            console.log("Event created: %s", event.data);
-          })
-          .catch((error) => {
-            console.log("Some error occured", error);
-            // console.log(error.response.data.error.errors);
-          });
-      }
-    });
-};
-
-updateEvent = async (appointmentId) => {
-  let auth = await getAccessToken(appointmentId);
-
-  let event = {};
-  event = await setUpEvent(appointmentId);
-  console.log(event);
-
-  const calendar = google.calendar({
-    version: "v3",
-    auth: auth,
-  });
-
-  // We make a request to Google Calendar API.
-  calendar.events
-    .update({
-      auth: auth,
-      calendarId: "primary",
-      eventId: eventId,
-      resource: event,
-      conferenceDataVersion: 1,
-      sendUpdates: "all",
-    })
-    .then(async (event) => {
-      console.log("Event updated: %s", event.data);
-    })
-    .catch((error) => {
-      console.log("Some error occured", error);
-      // console.log(error.response.data.error.errors);
-    });
-};
-
-updateAppointmentGoogleId = async (appointmentId, eventId) => {
-  let appointment = {};
-
-  await Appointment.findAll({ where: { id: appointmentId } })
-    .then((data) => {
-      appointment = data[0].dataValues;
-    })
-    .catch((err) => {
-      console.log("Some error occurred while retrieving Appointment.");
-    });
-
-  appointment.googleEventId = eventId;
-
-  Appointment.update(appointment, { where: { id: appointmentId } })
-    .then((num) => {
-      if (num == 1) {
-        console.log("Appointment's google event id was updated successfully.");
-      } else {
-        console.log(
-          `Cannot update Appointment's google event id. Maybe Appointment was not found or req.body is empty!`
-        );
-      }
-    })
-    .catch((err) => {
-      console.log(
-        `Cannot update Appointment's google event id. Maybe Appointment was not found or req.body is empty!`
-      );
-    });
-};
-
-exports.getFromGoogle = async (appointmentId) => {
-  let eventId = "";
-
-  console.log("in delete from google");
-
-  await Appointment.findAll({ where: { id: appointmentId } })
-    .then((data) => {
-      eventId = data[0].dataValues.googleEventId;
-    })
-    .catch((err) => {
-      console.log("Some error occurred while retrieving Appointment. " + err);
-    });
-
-  console.log(eventId);
-
-  let auth = await getAccessToken(appointmentId);
-
-  var params = {
-    auth: auth,
-    calendarId: "primary",
-    eventId: eventId,
-  };
-
-  const calendar = google.calendar({
-    version: "v3",
-    auth: auth,
-  });
-
-  calendar.events.get(params, function (err) {
-    if (err) {
-      console.log("The API returned an error: " + err);
-      if (err.includes("Not Found")) {
-        // we need to delete the appointment on our side or update it to tutorCancel
-      }
-    }
-    console.log("Event retrieved from Google calendar.");
-  });
-};
-
-exports.deleteFromGoogle = async (appointmentId) => {
-  let eventId = "";
-
-  console.log("in delete from google");
-
-  await Appointment.findAll({ where: { id: appointmentId } })
-    .then((data) => {
-      eventId = data[0].dataValues.googleEventId;
-    })
-    .catch((err) => {
-      console.log("Some error occurred while retrieving Appointment.");
-    });
-
-  console.log(eventId);
-
-  let auth = await getAccessToken(appointmentId);
-
-  var params = {
-    auth: auth,
-    calendarId: "primary",
-    eventId: eventId,
-  };
-
-  const calendar = google.calendar({
-    version: "v3",
-    auth: auth,
-  });
-
-  calendar.events.delete(params, function (err) {
-    if (err) {
-      console.log("The API returned an error: " + err);
-      return;
-    }
-    console.log("Event deleted from Google calendar.");
-  });
-};
-
-findFirstTutorForAppointment = async (id) => {
-  const appId = id;
-  console.log(id);
-  await Person.findAll({
-    include: [
-      {
-        model: PersonAppointment,
-        as: "personappointment",
-        required: true,
-        where: { isTutor: true },
-        include: [
-          {
-            model: Appointment,
-            as: "appointment",
-            required: true,
-            where: { "$personappointment->appointment.id$": appId },
-          },
-        ],
-      },
-    ],
-  })
-    .then((data) => {
-      // only need to send the first tutor in the appointment to be the organizer
-      token = data[0].refresh_token;
-    })
-    .catch((err) => {
-      console.log({ message: err.message });
-    });
-};
-
-getAccessToken = async (appointmentId) => {
-  const client_id = process.env.GOOGLE_AUDIENCE;
-  const client_secret = process.env.CLIENT_SECRET;
-
-  const oAuth2Client = new google.auth.OAuth2(
-    client_id,
-    client_secret,
-    "postmessage"
-  );
-
-  await findFirstTutorForAppointment(appointmentId);
-
-  let creds = {};
-  // gets access token from refresh token
-  // reference: https://zapier.com/engineering/how-to-use-the-google-calendar-api/
-  var fetch = require("node-fetch"); // or fetch() is native in browsers
-
-  var makeQuerystring = (params) =>
-    Object.keys(params)
-      .map((key) => {
-        return encodeURIComponent(key) + "=" + encodeURIComponent(params[key]);
-      })
-      .join("&");
-
-  await fetch("https://www.googleapis.com/oauth2/v4/token", {
-    method: "post",
-    body: makeQuerystring({
-      client_id: client_id,
-      client_secret: client_secret,
-      refresh_token: token,
-      grant_type: "refresh_token",
-    }),
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-  })
-    .then((req, res) => res.json())
-    .then((json) => (creds = json));
-
-  console.log(creds);
-
-  oAuth2Client.setCredentials(creds);
-  return oAuth2Client;
-};
-
-function subtractMinsFromTime(mins, time) {
-  // get the times hour and min value
-  var [timeHrs, timeMins] = getHoursAndMinsFromTime(time);
-
-  // time arithmetic (subtraction)
-  if (timeMins - mins <= 0) {
-    var subtractedHrs = parseInt((timeMins - mins) / 60);
-    timeMins = ((timeMins - mins) % 60) + 60;
-
-    if (timeHrs - subtractedHrs < 0) {
-      timeHrs = ((timeHrs - subtractedHrs) % 24) + 24;
-    } else {
-      timeHrs -= subtractedHrs;
-    }
-  } else {
-    timeMins -= mins;
-  }
-
-  // make sure the time slots are padded correctly
-  return (
-    String("00" + timeHrs).slice(-2) +
-    ":" +
-    String("00" + timeMins).slice(-2) +
-    ":00"
-  );
-}
-
-function getHoursAndMinsFromTime(time) {
-  return time.split(":").map(function (str) {
-    return parseInt(str);
-  });
-}
-
-function getWeekFromDate(date) {
-  var year = parseInt(date.substring(0, 4));
-  var month = parseInt(date.substring(5, 7));
-  var day = parseInt(date.substring(8, 10));
-  var curr = new Date(year, month - 1, day); // get current date
-  console.log(day + ", " + month + ", " + year); // something wonky here, month is adding one each time.
-  console.log("CURR " + curr);
-  var first = curr.getDate() - curr.getDay(); // First day is the day of the month - the day of the week
-  var last = first + 6; // last day is the first day + 6
-
-  var firstday = new Date(curr.setDate(first));
-  var lastday = new Date(curr.setDate(last));
-
-  return toSQLDate(firstday, lastday);
-}
-
-function toSQLDate(date1, date2) {
-  first = date1.toISOString().slice(0, 19).replace("T", " ");
-  last = date2.toISOString().slice(0, 19).replace("T", " ");
-  return { first, last };
-}

@@ -178,24 +178,23 @@ exports.deleteFromGoogle = async (id) => {
 
   let auth = await getAccessToken(id);
 
-  var params = {
-    auth: auth,
-    calendarId: "primary",
-    eventId: eventId,
-  };
-
   const calendar = google.calendar({
     version: "v3",
     auth: auth,
   });
 
-  calendar.events.delete(params, function (err) {
-    if (err) {
-      console.log("The API returned an error: " + err);
-      return;
-    }
-    console.log("Event deleted from Google calendar.");
-  });
+  return await calendar.events
+    .delete({
+      auth: auth,
+      calendarId: "primary",
+      eventId: eventId,
+    })
+    .then((data) => {
+      return data;
+    })
+    .catch((err) => {
+      return err;
+    });
 };
 
 setUpEvent = async (id) => {

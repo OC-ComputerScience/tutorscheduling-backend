@@ -28,13 +28,7 @@ exports.createGroup = async (groupData) => {
 };
 
 exports.findAllGroups = async () => {
-  return await Group.findAll({ order: [["name", "ASC"]] })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  return await Group.findAll({ order: [["name", "ASC"]] });
 };
 
 exports.findGroupsForPerson = async (personId) => {

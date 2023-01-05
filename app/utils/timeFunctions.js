@@ -1,3 +1,36 @@
+exports.subtractMinsFromTime = (mins, time) => {
+  // get the times hour and min value
+  var [timeHrs, timeMins] = getHoursAndMinsFromTime(time);
+
+  // time arithmetic (subtraction)
+  if (timeMins - mins <= 0) {
+    var subtractedHrs = parseInt((timeMins - mins) / 60);
+    timeMins = ((timeMins - mins) % 60) + 60;
+
+    if (timeHrs - subtractedHrs < 0) {
+      timeHrs = ((timeHrs - subtractedHrs) % 24) + 24;
+    } else {
+      timeHrs -= subtractedHrs;
+    }
+  } else {
+    timeMins -= mins;
+  }
+
+  // make sure the time slots are padded correctly
+  return (
+    String("00" + timeHrs).slice(-2) +
+    ":" +
+    String("00" + timeMins).slice(-2) +
+    ":00"
+  );
+};
+
+exports.getHoursAndMinsFromTime = (time) => {
+  return time.split(":").map(function (str) {
+    return parseInt(str);
+  });
+};
+
 exports.getWeekFromDate = (date) => {
   var year = parseInt(date.substring(0, 4));
   var month = parseInt(date.substring(5, 7));
