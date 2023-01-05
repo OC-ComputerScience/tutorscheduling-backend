@@ -65,7 +65,7 @@ exports.findApprovedTutorsForGroup = async (req, res) => {
 };
 
 exports.getAppointmentHourCount = async (req, res) => {
-  await Person.getAppointmentHourCount(req.params.groupId, req.params.currWeek)
+  await Person.getPersonAppointmentHours(req.params.groupId, req.params.currWeek)
     .then(function (data) {
       res.status(200).json(data);
     })
@@ -97,6 +97,23 @@ exports.findByEmail = async (req, res) => {
     .catch((err) => {
       res.status(500).send({
         message: "Error retrieving person with email = " + email,
+      });
+      console.log("Could not find person: " + err);
+    });
+};
+
+exports.findByPhoneNumber= async (req, res) => {
+  await Person.findOnePersonByEmail(req.params.phoneNum)
+    .then((data) => {
+      if (data) {
+        res.send(data);
+      } else {
+        res.send({ phoneNum: "not found" });
+      }
+    })
+    .catch((err) => {
+      res.status(500).send({
+        message: "Error retrieving person with phone number = " + phoneNumber,
       });
       console.log("Could not find person: " + err);
     });

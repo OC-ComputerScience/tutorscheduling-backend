@@ -46,6 +46,18 @@ exports.findAllForPerson = async (req, res) => {
     });
 };
 
+exports.findAllActiveForPerson = async (req, res) => {
+  await Group.findActiveGroupsForPerson(req.params.personId)
+    .then((data) => {
+      res.send(data);
+    })
+    .catch((err) => {
+      res.status(500).send({
+        message: err.message || "Some error occurred while retrieving active groups for person.",
+      });
+    });
+};
+
 exports.findContractsNeededForPerson = async (req, res) => {
   await Group.findGroupsWithMissingContractsForPerson(req.params.personId)
     .then((data) => {

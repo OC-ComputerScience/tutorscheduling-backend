@@ -114,6 +114,22 @@ exports.delete = async (req, res) => {
     });
 };
 
+exports.deleteAllForPersonRole = async (req, res) => {
+  await PersonRolePrivilege.deletePrivilegesForPersonRole(req.params.personRoleId)
+    .then((nums) => {
+      res.send({
+        message: `${nums} person role privileges were deleted successfully!`,
+      });
+    })
+    .catch((err) => {
+      res.status(500).send({
+        message:
+          err.message ||
+          "Some error occurred while removing all person role privileges for person role id.",
+      });
+    });
+};
+
 exports.deleteAll = async (req, res) => {
   await PersonRolePrivilege.deleteAllPrivileges()
     .then((nums) => {

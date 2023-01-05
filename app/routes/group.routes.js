@@ -19,6 +19,13 @@ module.exports = (app) => {
   // Retrieve all Groups for a person
   router.get("/person/:personId", [authenticate], group.findAllForPerson);
 
+  // Retrieve all active Groups for a person
+  router.get(
+    "/active/person/:personId",
+    [authenticate],
+    group.findAllActiveForPerson
+  );
+
   // Retrieve all incomplete Groups for a person
   router.get(
     "/personNeedContracts/:personId",

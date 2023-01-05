@@ -144,6 +144,23 @@ exports.delete = async (req, res) => {
     });
 };
 
+exports.deleteAllForPersonForGroup = async (req, res) => {
+  let disableTopics = await Topic.findTopicsForPersonForGroup(req.params.groupId, req.params.personId);
+  if (disableTopics[0] !== undefined && disableTopics !== null) {
+    for (let i = 0; i < disableTopics[0].persontopic.length; i++) {
+      let personTopic = disableTopics[0].persontopic[i];
+      await PersonTopic.deleteOnePersonTopic(personTopic.id).catch((err) => {
+        res.status(500).send({ message: err.message });
+        return;
+      });
+    }
+  } else {
+    res
+      .status(200)
+      .send({ message: "No person topics found for that person for that group!" });
+  }
+};
+
 exports.deleteAll = async (req, res) => {
   await PersonTopic.deleteAllPersonTopics()
     .then((nums) => {

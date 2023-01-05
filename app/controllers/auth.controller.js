@@ -57,6 +57,7 @@ exports.login = async (req, res) => {
           lName: lastName,
           email: email,
           phoneNum: "",
+          textOptIn: true,
         };
       }
     })
@@ -326,6 +327,13 @@ exports.authorize = async (req, res) => {
 };
 
 exports.logout = async (req, res) => {
+  if (req.body === null) {
+    res.send({
+      message: "User has already been successfully logged out!",
+    });
+    return;
+  }
+
   // invalidate session -- delete token out of session table
   let session = {};
 
