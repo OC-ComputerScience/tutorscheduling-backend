@@ -28,7 +28,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ChloeSheasby/sevtutoring-node.git"
+    "url": "git+https://github.com/ChloeSheasby/tutorscheduling-node.git"
   },
   "keywords": [
     "nodejs",
@@ -39,7 +39,7 @@
   "author": "cs",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/ChloeSheasby/sevtutoring-node/issues"
+    "url": "https://github.com/ChloeSheasby/tutorscheduling-node/issues"
   },
-  "homepage": "https://github.com/ChloeSheasby/sevtutoring-node#readme"
+  "homepage": "https://github.com/ChloeSheasby/tutorscheduling-node#readme"
 }

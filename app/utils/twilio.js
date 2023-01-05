@@ -1,4 +1,4 @@
-const Person = require("../utils/person.js");
+const Person = require("./person.js")
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken =
   process.env.TWILIO_AUTH_TOKEN1 + process.env.TWILIO_AUTH_TOKEN2;
@@ -28,9 +28,7 @@ exports.sendText = async (message, phone) => {
     });
   }
   else {
-    return res.status(200).send({
-      message: "Person has opted out of texts.",
-    });
+    return "Person has opted out of texts.";
   }
 };
 
@@ -39,17 +37,12 @@ exports.respondToStop = async (body, from) => {
   console.log(body)
   if (body === "STOP") {
     let phoneNum = from.substring(2);
+    console.log(phoneNum)
     //we need to update person to opt out of texts
-    let person = await Person.getPersonByPhoneNum(phoneNum);
+    let person = await Person.findOnePersonByPhoneNumber(phoneNum);
     person.textOptIn = false;
     console.log(person)
-    await Person.updatePerson(person.dataValues, person.id)
-    .catch((err) => {
-      console.log(err);
-      res.status(500).send({
-        message: "Error updating person's text opt in",
-      });
-    });
+    await Person.updatePerson(person.dataValues, person.id);
 
     const twiml = new MessagingResponse();
 
@@ -57,11 +50,12 @@ exports.respondToStop = async (body, from) => {
       "You have successfully unsubscribed from OC Tutor Scheduling text notifications."
     );
 
-    res.type("text/xml").send(twiml.toString());
+    return twiml.toString();
+
+    // res.type("text/xml").send(twiml.toString());
+    // return;
   }
   else {
-    return res.status(200).send({
-      message: "No need to update person's text opt in",
-    });
+    return "No need to update person's text opt in.";
   }
 };

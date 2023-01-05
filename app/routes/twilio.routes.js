@@ -1,5 +1,5 @@
 module.exports = (app) => {
-  const sms = require("../controllers/twilio.controller.js");
+  const twilio = require("../controllers/twilio.controller.js");
   const {
     authenticate,
     isAdmin,
@@ -8,10 +8,10 @@ module.exports = (app) => {
   var router = require("express").Router();
 
   // Create a new text
-  router.post("/sendMessage", [authenticate], sms.send);
+  router.post("/sendMessage", [authenticate], twilio.send);
 
   // send a response to unsubscribing
-  router.post("/respond", sms.respond);
+  router.post("/respond", twilio.respond);
 
   app.use("/twilio", router);
 };

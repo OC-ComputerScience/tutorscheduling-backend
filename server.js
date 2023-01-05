@@ -30,7 +30,7 @@ app.get("/", (req, res) => {
 });
 
 require("./app/routes/appointment.routes")(app);
-require("./app/routes/auth.routes.js")(app);
+require("./app/routes/auth.routes")(app);
 require("./app/routes/availability.routes")(app);
 require("./app/routes/group.routes")(app);
 require("./app/routes/location.routes")(app);

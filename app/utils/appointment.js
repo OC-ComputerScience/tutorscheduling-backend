@@ -7,7 +7,7 @@ const Location = db.location;
 const Topic = db.topic;
 const PersonTopic = db.persontopic;
 const Op = db.Sequelize.Op;
-const Time = require("../utils/timeFunctions.js");
+const Time = require("./timeFunctions.js")
 
 exports.createAppointment = async (appointmentData) => {
   // Create a Appointment

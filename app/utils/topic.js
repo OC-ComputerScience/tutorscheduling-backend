@@ -1,7 +1,7 @@
 const db = require("../models");
 const Topic = db.topic;
 const PersonTopic = db.persontopic;
-const Time = require("../utils/timeFunctions.js");
+const Time = require("./timeFunctions.js");
 
 exports.createTopic = async (topicData) => {
   // Create a topic
