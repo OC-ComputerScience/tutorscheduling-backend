@@ -64,6 +64,36 @@ exports.findGroupsForPerson = async (personId) => {
     });
 };
 
+exports.findActiveGroupsForPerson = async (personId) => {
+  return await Group.findAll({
+    include: [
+      {
+        model: Role,
+        include: [
+          {
+            where: {
+              "$role->personrole.personId$": id,
+              status: { [Op.ne]: "disabled" },
+            },
+            model: PersonRole,
+            as: "personrole",
+            required: true,
+          },
+        ],
+        as: "role",
+        required: true,
+      },
+    ],
+    order: [["name", "ASC"]],
+  })
+    .then((data) => {
+      return data;
+    })
+    .catch((err) => {
+      return err;
+    });
+};
+
 exports.findGroupsWithMissingContractsForPerson = async (personId) => {
   return await Group.findAll({
     include: [

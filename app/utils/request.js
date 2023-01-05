@@ -43,7 +43,7 @@ exports.findAllRequests = async () => {
 
 exports.findAllRequestsForGroup = async (groupId) => {
   return await Request.findAll({
-    where: { groupId: id },
+    where: { groupId: groupId },
     include: [
       {
         model: Person,
@@ -94,6 +94,19 @@ exports.updateRequest = async (request, id) => {
 exports.deleteRequest = async (id) => {
   return await Request.destroy({
     where: { id: id },
+  })
+    .then((data) => {
+      return data;
+    })
+    .catch((err) => {
+      return err;
+    });
+};
+
+exports.deleteRequestForPersonForGroup = async (groupId, personId) => {
+  return await Request.destroy({
+    where: { personId: personId, groupId: groupId },
+    truncate: false,
   })
     .then((data) => {
       return data;

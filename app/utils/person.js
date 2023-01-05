@@ -16,6 +16,7 @@ exports.createPerson = async (personData) => {
     lName: personData.lName,
     email: personData.email,
     phoneNum: personData.phoneNum,
+    textOptIn: req.body.textOptIn ? req.body.textOptIn : true,
     refresh_token: personData.refresh_token,
     expiration_date: personData.expiration_date,
   };
@@ -255,6 +256,20 @@ exports.findOnePersonByEmail = async (email) => {
   return await Person.findOne({
     where: {
       email: email,
+    },
+  })
+    .then((data) => {
+      return data;
+    })
+    .catch((err) => {
+      return err;
+    });
+};
+
+exports.findOnePersonByPhoneNumber = async (phoneNumber) => {
+  return await Person.findOne({
+    where: {
+      phoneNum: phoneNumber,
     },
   })
     .then((data) => {

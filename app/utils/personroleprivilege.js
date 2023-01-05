@@ -79,6 +79,19 @@ exports.deletePrivilege = async (id) => {
     });
 };
 
+exports.deletePrivilegesForPersonRole = async (personRoleId) => {
+  return await PersonRolePrivilege.destroy({
+    where: { personRoleId: personRoleId },
+    truncate: false,
+  })
+    .then((data) => {
+      return data;
+    })
+    .catch((err) => {
+      return err;
+    });
+};
+
 exports.deleteAllPrivileges = async () => {
   return await PersonRolePrivilege.destroy({
     where: {},
