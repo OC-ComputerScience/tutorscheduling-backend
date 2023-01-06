@@ -4,18 +4,17 @@ exports.send = async (req, res) => {
   await Twilio.sendText(req.body.message, req.body.phoneNum)
     .then((message) => {
       if (message.sid !== undefined) {
-        console.log("sent " + message.sid);
-        res.send({ message: "sent " + message.sid });
-      }
-      else {
-        res.send({ message: "sent " + message });
+        console.log("Sent text " + message.sid);
+        res.send({ message: "Sent Text " + message.sid });
+      } else {
+        console.log(message);
+        res.send({ message: message });
       }
     })
     .catch((err) => {
-      console.log(err);
+      console.log("Error sending text message: " + err);
       res.status(500).send({
-        message:
-          "Error sending text message."
+        message: "Error sending text message: " + err,
       });
     });
 };
@@ -23,12 +22,13 @@ exports.send = async (req, res) => {
 exports.respond = async (req, res) => {
   await Twilio.respondToStop(req.body.Body, req.body.From)
     .then((data) => {
-      console.log("finished the response")
+      console.log("finished the response");
       res.type("text/xml").send(data);
     })
     .catch((err) => {
+      console.log("Error responding to STOP message: " + err);
       res.status(500).send({
-        message: err.message || "Some error occurred while responding to a STOP message.",
+        message: "Error responding to STOP message: " + err,
       });
     });
-}
+};

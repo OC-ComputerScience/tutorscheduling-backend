@@ -5,24 +5,19 @@ const PersonAppointment = db.personappointment;
 const Person = db.person;
 const Topic = db.topic;
 const Location = db.location;
-// const sms = require("../controllers/twilio.controller.js");
+const Twilio = require("../utils/twilio.js");
 const Op = db.Sequelize.Op;
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const authToken =
-  process.env.TWILIO_AUTH_TOKEN1 + process.env.TWILIO_AUTH_TOKEN2;
-const phoneNum = process.env.TWILIO_NUMBER;
-const client = require("twilio")(accountSid, authToken);
 
 // Schedule tasks to be run on the server 12:01 am.
 // From : https://www.digitalocean.com/community/tutorials/nodejs-cron-jobs-by-examples
 
 exports.hourlyTasks = () => {
   // for prod, runs at ever hour at 55 minute past the hour.
-  cron.schedule("55 * * * *", function () {
+  cron.schedule("55 * * * *", async function () {
     // for testing, runs every minute
-    // cron.schedule("* * * * *", function () {
-    console.log("Scheduled task every day at 55 min past the hour");
-    notifyUpcomingAppointments();
+    // cron.schedule('* * * * *', async function() {
+    console.log("Every 55-Minute Tasks:");
+    await notifyUpcomingAppointments();
   });
 };
 
@@ -163,25 +158,22 @@ async function notifyUpcomingAppointments() {
         console.log("An error occurred: " + err);
       });
 
-    let text = {
-      message:
-        "You have an upcoming appointment:" +
-        "\n    Type: " +
-        appointment.type +
-        "\n    Date: " +
-        formatDate(appointment.date) +
-        "\n    Time: " +
-        calcTime(appointment.startTime) +
-        "\n    Location: " +
-        appointment.location.name +
-        "\n    Topic: " +
-        appointment.topic.name,
-      phoneNum: person.phoneNum,
-    };
+    let message =
+      "You have an upcoming appointment:" +
+      "\n    Type: " +
+      appointment.type +
+      "\n    Date: " +
+      formatDate(appointment.date) +
+      "\n    Time: " +
+      calcTime(appointment.startTime) +
+      "\n    Location: " +
+      appointment.location.name +
+      "\n    Topic: " +
+      appointment.topic.name;
 
     if (pap.isTutor) {
       if (appointment.students.length > 1) {
-        text.message += "\n    Students: ";
+        message += "\n    Students: ";
         for (let j = 0; j < appointment.students.length; j++) {
           text.message += "\n              ";
           text.message +=
@@ -190,30 +182,30 @@ async function notifyUpcomingAppointments() {
             appointment.students[j].person.lName;
         }
       } else if (appointment.students.length === 1) {
-        text.message +=
+        message +=
           "\n    Student: " +
           appointment.students[0].person.fName +
           " " +
           appointment.students[0].person.lName;
       }
     } else {
-      text.message +=
+      message +=
         "\n    Tutor: " +
         appointment.tutors[0].person.fName +
         " " +
         appointment.tutors[0].person.lName;
     }
 
-    // await sms.send(text)
-    client.messages
-      .create({
-        body: text.message,
-        from: phoneNum,
-        to: text.phoneNum,
+    await Twilio.sendText(message, person.phoneNum)
+      .then((message) => {
+        if (message.sid !== undefined) {
+          console.log("Sent text " + message.sid);
+        } else {
+          console.log(message);
+        }
       })
-      .then((message) => console.log("sent " + message.sid))
       .catch((err) => {
-        console.log("Could not send messsage" + err);
+        console.log("Error sending text message: " + err);
       });
   }
 }

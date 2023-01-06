@@ -16,7 +16,7 @@ exports.fifteenMinuteTasks = () => {
   cron.schedule("12,27,42,57 * * * *", async function () {
     // for testing, runs every minute
     // cron.schedule("* * * * *", async function () {
-    console.log("Scheduled task every 15 mins");
+    console.log("Every 15-Minute Tasks:");
     await getGroups();
     // await checkGoogleEvents();
     await deletePastAppointments();
@@ -35,7 +35,7 @@ async function checkGoogleEvents() {
       appointments = data;
     })
     .catch((err) => {
-      console.log("Could not find past Appointments: " + err);
+      console.log("Could not find past appointments: " + err);
     });
 
   for (let i = 0; i < appointments.length; i++) {
@@ -164,7 +164,7 @@ async function deletePastAppointments() {
       );
     })
     .catch((err) => {
-      console.log("Could not delete past PersonAppointments " + err);
+      console.log("Could not delete past person appointments " + err);
     });
 }
 
