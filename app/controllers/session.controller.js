@@ -1,14 +1,6 @@
 const Session = require("../utils/session.js");
 
 exports.create = async (req, res) => {
-  // Validate request
-  if (!req.body.type) {
-    res.status(400).send({
-      message: "Content can not be empty!",
-    });
-    return;
-  }
-
   await Session.createSession(req.body)
     .then((data) => {
       res.send(data);

@@ -31,11 +31,7 @@ module.exports = (app) => {
   );
 
   // Retrieve all Appointment for calendar (one month behind)
-  router.get(
-    "/allGroup/:groupId",
-    [authenticate],
-    appointment.findAppointmentsForGroup
-  );
+  router.get("/allGroup/:groupId", [authenticate], appointment.findAllForGroup);
 
   // Retrieve all upcoming Appointment
   router.get(

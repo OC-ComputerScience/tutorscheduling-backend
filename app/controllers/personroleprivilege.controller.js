@@ -1,14 +1,6 @@
 const PersonRolePrivilege = require("../utils/personroleprivilege.js");
 
 exports.create = async (req, res) => {
-  // Validate request
-  if (!req.body.privilege) {
-    res.status(400).send({
-      message: "Privilege can not be empty!",
-    });
-    return;
-  }
-
   await PersonRolePrivilege.createPrivilege(req.body)
     .then((data) => {
       res.send(data);
@@ -115,7 +107,9 @@ exports.delete = async (req, res) => {
 };
 
 exports.deleteAllForPersonRole = async (req, res) => {
-  await PersonRolePrivilege.deletePrivilegesForPersonRole(req.params.personRoleId)
+  await PersonRolePrivilege.deletePrivilegesForPersonRole(
+    req.params.personRoleId
+  )
     .then((nums) => {
       res.send({
         message: `${nums} person role privileges were deleted successfully!`,

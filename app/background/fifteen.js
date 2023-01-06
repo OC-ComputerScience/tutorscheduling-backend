@@ -51,7 +51,6 @@ async function deletePastAppointments() {
   // need to get appointments outside of the book past minutes buffer
   for (let i = 0; i < groups.length; i++) {
     let group = groups[i];
-    console.log(group);
     let delTimePlusBuffer = subtractMinsFromTime(
       group.bookPastMinutes,
       delTime
@@ -210,6 +209,8 @@ function subtractMinsFromTime(mins, time) {
   console.log(time);
   // get the times hour and min value
   var [timeHrs, timeMins] = getHoursAndMinsFromTime(time);
+
+  //TODO test when hour should be -1 but it's -0
 
   // time arithmetic (subtraction)
   if (timeMins - mins <= 0) {

@@ -1,5 +1,5 @@
 const db = require("../models");
-const Time = require("./timeFunctions.js")
+const Time = require("./timeFunctions.js");
 const Person = db.person;
 const PersonRole = db.personrole;
 const PersonTopic = db.persontopic;
@@ -9,6 +9,20 @@ const Role = db.role;
 const Topic = db.topic;
 
 exports.createPerson = async (personData) => {
+  if (!personData.fName) {
+    const error = new Error("First name cannot be empty for person!");
+    error.statusCode = 400;
+    throw error;
+  } else if (!personData.lName) {
+    const error = new Error("Last name cannot be empty for person!");
+    error.statusCode = 400;
+    throw error;
+  } else if (!personData.email) {
+    const error = new Error("Email cannot be empty for person!");
+    error.statusCode = 400;
+    throw error;
+  }
+
   // Create a person
   const person = {
     id: personData.id,
@@ -22,13 +36,7 @@ exports.createPerson = async (personData) => {
   };
 
   // Save person in the database
-  return await Person.create(person)
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  return await Person.create(person);
 };
 
 exports.findAllPeople = async () => {
@@ -37,13 +45,7 @@ exports.findAllPeople = async () => {
       ["lName", "ASC"],
       ["fName", "ASC"],
     ],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findAllPeopleByGroup = async (groupId) => {
@@ -67,13 +69,7 @@ exports.findAllPeopleByGroup = async (groupId) => {
       ["lName", "ASC"],
       ["fName", "ASC"],
     ],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findPendingTutorsForGroup = async (groupId) => {
@@ -115,13 +111,7 @@ exports.findPendingTutorsForGroup = async (groupId) => {
       ["lName", "ASC"],
       ["fName", "ASC"],
     ],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findApprovedTutorsForGroup = async (groupId) => {
@@ -149,76 +139,63 @@ exports.findApprovedTutorsForGroup = async (groupId) => {
       ["lName", "ASC"],
       ["fName", "ASC"],
     ],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.getPersonAppointmentHours = async (groupId, currWeek) => {
   var week = Time.getWeekFromDate(currWeek);
   var firstDay = week.first.slice(0, 10);
   var lastDay = week.last.slice(0, 10);
-  return (data = await db.sequelize
-    .query(
-      "SELECT DISTINCT p.fName,p.lName, " +
-        "(SELECT SUM(CASE WHEN a.groupId = " +
-        groupId +
-        " AND pa.appointmentId = a.id AND pa.personId = p.id AND a.date >= '" +
-        firstDay +
-        "' AND a.date <= '" +
-        lastDay +
-        "'" +
-        " THEN TIMESTAMPDIFF(minute, a.startTime, a.endTime) ELSE 0 END) " +
-        " FROM appointments a, personappointments pa, roles r, personroles pr WHERE pr.roleId = r.id AND pa.personId = p.id AND pr.personId = p.id AND r.groupId = " +
-        groupId +
-        " AND r.type = 'Tutor' ) AS hours, " +
-        " (SELECT COUNT(DISTINCT IF(a.groupId = " +
-        groupId +
-        " AND pa.appointmentId = a.id AND pa.personId = p.id AND a.date >= '" +
-        firstDay +
-        "' AND a.date <= '" +
-        lastDay +
-        "', a.id,  NULL)) " +
-        " FROM appointments a, personappointments pa, roles r, personroles pr WHERE pr.roleId = r.id AND pa.personId = p.id AND pr.personId = p.id AND r.groupId = " +
-        groupId +
-        " AND r.type = 'Tutor') AS apptCount , " +
-        " (SELECT SUM(CASE WHEN a.groupId = " +
-        groupId +
-        " AND pa.appointmentId = a.id AND pa.personId = p.id AND ((a.status = 'booked' AND a.type = 'Private') OR " +
-        " (a.status = 'available' AND a.type = 'Group' AND (SELECT COUNT(spa.id) FROM roles AS sr, personroles as spr, personappointments as spa WHERE a.groupId = " +
-        groupId +
-        " AND spr.roleId = sr.id AND spr.personId = spa.personId AND spa.id = a.id AND " +
-        " sr.groupId = " +
-        groupId +
-        " AND sr.type = 'Student' AND a.date >= '" +
-        firstDay +
-        "' AND a.date <= '" +
-        lastDay +
-        "') > 0) OR (a.status = 'complete')) AND a.date >= '" +
-        firstDay +
-        "' AND a.date <= '" +
-        lastDay +
-        "' THEN TIMESTAMPDIFF(minute, a.startTime, a.endTime) ELSE 0 END) " +
-        " FROM appointments a, personappointments pa, roles r, personroles pr WHERE pr.roleId = r.id AND pa.personId = p.id AND pr.personId = p.id AND r.groupId = " +
-        groupId +
-        " and r.type = 'Tutor') AS payingHours  " +
-        " FROM roles as r, people as p, personroles as pr WHERE pr.roleId = r.id AND p.id = pr.personId AND r.groupId = " +
-        groupId +
-        " AND r.type = 'Tutor' ORDER BY p.lName ASC, p.fName ASC;",
-      {
-        type: db.sequelize.QueryTypes.SELECT,
-      }
-    )
-    .then(function (data) {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    }));
+  return (data = await db.sequelize.query(
+    "SELECT DISTINCT p.fName,p.lName, " +
+      "(SELECT SUM(CASE WHEN a.groupId = " +
+      groupId +
+      " AND pa.appointmentId = a.id AND pa.personId = p.id AND a.date >= '" +
+      firstDay +
+      "' AND a.date <= '" +
+      lastDay +
+      "'" +
+      " THEN TIMESTAMPDIFF(minute, a.startTime, a.endTime) ELSE 0 END) " +
+      " FROM appointments a, personappointments pa, roles r, personroles pr WHERE pr.roleId = r.id AND pa.personId = p.id AND pr.personId = p.id AND r.groupId = " +
+      groupId +
+      " AND r.type = 'Tutor' ) AS hours, " +
+      " (SELECT COUNT(DISTINCT IF(a.groupId = " +
+      groupId +
+      " AND pa.appointmentId = a.id AND pa.personId = p.id AND a.date >= '" +
+      firstDay +
+      "' AND a.date <= '" +
+      lastDay +
+      "', a.id,  NULL)) " +
+      " FROM appointments a, personappointments pa, roles r, personroles pr WHERE pr.roleId = r.id AND pa.personId = p.id AND pr.personId = p.id AND r.groupId = " +
+      groupId +
+      " AND r.type = 'Tutor') AS apptCount , " +
+      " (SELECT SUM(CASE WHEN a.groupId = " +
+      groupId +
+      " AND pa.appointmentId = a.id AND pa.personId = p.id AND ((a.status = 'booked' AND a.type = 'Private') OR " +
+      " (a.status = 'available' AND a.type = 'Group' AND (SELECT COUNT(spa.id) FROM roles AS sr, personroles as spr, personappointments as spa WHERE a.groupId = " +
+      groupId +
+      " AND spr.roleId = sr.id AND spr.personId = spa.personId AND spa.id = a.id AND " +
+      " sr.groupId = " +
+      groupId +
+      " AND sr.type = 'Student' AND a.date >= '" +
+      firstDay +
+      "' AND a.date <= '" +
+      lastDay +
+      "') > 0) OR (a.status = 'complete')) AND a.date >= '" +
+      firstDay +
+      "' AND a.date <= '" +
+      lastDay +
+      "' THEN TIMESTAMPDIFF(minute, a.startTime, a.endTime) ELSE 0 END) " +
+      " FROM appointments a, personappointments pa, roles r, personroles pr WHERE pr.roleId = r.id AND pa.personId = p.id AND pr.personId = p.id AND r.groupId = " +
+      groupId +
+      " and r.type = 'Tutor') AS payingHours  " +
+      " FROM roles as r, people as p, personroles as pr WHERE pr.roleId = r.id AND p.id = pr.personId AND r.groupId = " +
+      groupId +
+      " AND r.type = 'Tutor' ORDER BY p.lName ASC, p.fName ASC;",
+    {
+      type: db.sequelize.QueryTypes.SELECT,
+    }
+  ));
 };
 
 exports.findFirstTutorForAppointment = async (appointmentId) => {
@@ -243,13 +220,7 @@ exports.findFirstTutorForAppointment = async (appointmentId) => {
       ["lName", "ASC"],
       ["fName", "ASC"],
     ],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findOnePersonByEmail = async (email) => {
@@ -257,13 +228,7 @@ exports.findOnePersonByEmail = async (email) => {
     where: {
       email: email,
     },
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findOnePersonByPhoneNumber = async (phoneNumber) => {
@@ -271,58 +236,28 @@ exports.findOnePersonByPhoneNumber = async (phoneNumber) => {
     where: {
       phoneNum: phoneNumber,
     },
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findOnePerson = async (id) => {
-  return await Person.findByPk(id)
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  return await Person.findByPk(id);
 };
 
 exports.updatePerson = async (person, id) => {
   return await Person.update(person, {
     where: { id: id },
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.deletePerson = async (id) => {
   return await Person.destroy({
     where: { id: id },
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.deleteAllPeople = async () => {
   return await Person.destroy({
     where: {},
     truncate: false,
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };

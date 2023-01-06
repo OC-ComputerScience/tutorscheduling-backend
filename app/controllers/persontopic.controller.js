@@ -2,14 +2,6 @@ const PersonTopic = require("../utils/persontopic.js");
 const Topic = require("../utils/topic.js");
 
 exports.create = async (req, res) => {
-  // Validate request
-  if (!req.body.skillLevel) {
-    res.status(400).send({
-      message: "Skill level can not be empty!",
-    });
-    return;
-  }
-
   await PersonTopic.createPersonTopic(req.body)
     .then((data) => {
       res.send(data);
@@ -145,7 +137,10 @@ exports.delete = async (req, res) => {
 };
 
 exports.deleteAllForPersonForGroup = async (req, res) => {
-  let disableTopics = await Topic.findTopicsForPersonForGroup(req.params.groupId, req.params.personId);
+  let disableTopics = await Topic.findTopicsForPersonForGroup(
+    req.params.groupId,
+    req.params.personId
+  );
   if (disableTopics[0] !== undefined && disableTopics !== null) {
     for (let i = 0; i < disableTopics[0].persontopic.length; i++) {
       let personTopic = disableTopics[0].persontopic[i];
@@ -157,7 +152,9 @@ exports.deleteAllForPersonForGroup = async (req, res) => {
   } else {
     res
       .status(200)
-      .send({ message: "No person topics found for that person for that group!" });
+      .send({
+        message: "No person topics found for that person for that group!",
+      });
   }
 };
 

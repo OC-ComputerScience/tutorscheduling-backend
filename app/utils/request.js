@@ -4,16 +4,22 @@ const Person = db.person;
 const Topic = db.topic;
 
 exports.createRequest = async (requestData) => {
+  if (!requestData.description) {
+    const error = new Error("Description cannot be empty for request!");
+    error.statusCode = 400;
+    throw error;
+  }
+
   // Create a request
   const request = {
     id: requestData.id,
-    personId: requestData.personId,
-    groupId: requestData.groupId,
-    topicId: requestData.topicId,
     courseNum: requestData.courseNum,
     description: requestData.description,
     status: requestData.status,
     problem: requestData.problem,
+    groupId: requestData.groupId,
+    personId: requestData.personId,
+    topicId: requestData.topicId,
   };
 
   // Save request in the database
@@ -26,13 +32,7 @@ exports.findAllRequests = async () => {
       ["status", "DESC"],
       ["createdAt", "ASC"],
     ],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findAllRequestsForGroup = async (groupId) => {
@@ -58,61 +58,31 @@ exports.findAllRequestsForGroup = async (groupId) => {
 };
 
 exports.findOneRequest = async (id) => {
-  return await Request.findByPk(id)
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  return await Request.findByPk(id);
 };
 
 exports.updateRequest = async (request, id) => {
   return await Request.update(request, {
     where: { id: id },
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.deleteRequest = async (id) => {
   return await Request.destroy({
     where: { id: id },
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.deleteRequestForPersonForGroup = async (groupId, personId) => {
   return await Request.destroy({
     where: { personId: personId, groupId: groupId },
     truncate: false,
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.deleteAllRequests = async () => {
   return await Request.destroy({
     where: {},
     truncate: false,
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };

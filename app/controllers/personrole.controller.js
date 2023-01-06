@@ -1,14 +1,6 @@
 const PersonRole = require("../utils/personrole.js");
 
 exports.create = async (req, res) => {
-  // Validate request
-  if (!req.body.status) {
-    res.status(400).send({
-      message: "Person role status can not be empty!",
-    });
-    return;
-  }
-
   await PersonRole.createPersonRole(req.body)
     .then((data) => {
       res.send(data);
@@ -29,7 +21,7 @@ exports.findAll = async (req, res) => {
     .catch((err) => {
       res.status(500).send({
         message:
-          err.message || "Some error occurred while retrieving personroles.",
+          err.message || "Some error occurred while retrieving person roles.",
       });
     });
 };
@@ -43,7 +35,7 @@ exports.findAllForPerson = async (req, res) => {
       res.status(500).send({
         message:
           err.message ||
-          "Some error occurred while retrieving personroles for person.",
+          "Some error occurred while retrieving person roles for person.",
       });
     });
 };
@@ -57,7 +49,7 @@ exports.findGroupByPersonRole = async (req, res) => {
       res.status(500).send({
         message:
           err.message ||
-          "Some error occurred while retrieving personroles for group.",
+          "Some error occurred while retrieving person roles for group.",
       });
     });
 };
@@ -74,7 +66,7 @@ exports.findOneForType = async (req, res) => {
       res.status(500).send({
         message:
           err.message ||
-          "Some error occurred while retrieving personroles for person and role.",
+          "Some error occurred while retrieving person roles for person and role.",
       });
     });
 };

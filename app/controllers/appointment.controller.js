@@ -4,14 +4,6 @@ const Group = require("../utils/group.js");
 const Time = require("../utils/timeFunctions.js");
 
 exports.create = async (req, res) => {
-  // Validate request
-  if (!req.body.date) {
-    res.status(400).send({
-      message: "Content can not be empty!",
-    });
-    return;
-  }
-
   await Appointment.create(req.body)
     .then((data) => {
       res.send(data);
@@ -240,6 +232,7 @@ exports.findOne = async (req, res) => {
       }
     })
     .catch((err) => {
+      console.log(err);
       res.status(500).send({
         message: "Error retrieving appointment with id = " + req.params.id,
       });
@@ -272,7 +265,7 @@ exports.updateForGoogle = async (req, res) => {
   }
   // all other cases should require updating
   else {
-    Appointment.updateAppointment(req.body, req.params.id)
+    await Appointment.updateAppointment(req.body, req.params.id)
       .then(async (num) => {
         if (num == 1) {
           if (req.body.type === "Private") {

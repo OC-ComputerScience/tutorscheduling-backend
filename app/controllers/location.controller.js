@@ -1,14 +1,6 @@
 const Location = require("../utils/location.js");
 
 exports.create = async (req, res) => {
-  // Validate request
-  if (!req.body.name) {
-    res.status(400).send({
-      message: "Content can not be empty!",
-    });
-    return;
-  }
-
   await Location.createLocation(req.body)
     .then((data) => {
       res.send(data);

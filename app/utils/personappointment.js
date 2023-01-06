@@ -4,44 +4,34 @@ const Person = db.person;
 const Appointment = db.appointment;
 
 exports.createPersonAppointment = async (personAppointmentData) => {
+  if (!personAppointmentData.isTutor) {
+    const error = new Error(
+      "IsTutor (true or false) cannot be empty for person appointment!"
+    );
+    error.statusCode = 400;
+    throw error;
+  }
+
   // Create a personappointment
   const personappointment = {
     id: personAppointmentData.id,
     isTutor: personAppointmentData.isTutor,
-    personId: personAppointmentData.personId,
-    appointmentId: personAppointmentData.appointmentId,
     feedbacknumber: personAppointmentData.feedbacknumber,
     feedbacktext: personAppointmentData.feedbacktext,
+    appointmentId: personAppointmentData.appointmentId,
+    personId: personAppointmentData.personId,
   };
 
   // Save personappointment in the database
-  return await PersonAppointment.create(personappointment)
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  return await PersonAppointment.create(personappointment);
 };
 
 exports.findAllPersonAppointments = async () => {
-  return await PersonAppointment.findAll()
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  return await PersonAppointment.findAll();
 };
 
 exports.findAllPersonAppointmentsForPerson = async (personId) => {
-  return await PersonAppointment.findAll({ where: { personId: personId } })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  return await PersonAppointment.findAll({ where: { personId: personId } });
 };
 
 exports.findPersonAppointmentForPersonForAppointment = async (
@@ -57,13 +47,7 @@ exports.findPersonAppointmentForPersonForAppointment = async (
         required: true,
       },
     ],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findStudentDataForTable = async (appointmentId) => {
@@ -76,13 +60,7 @@ exports.findStudentDataForTable = async (appointmentId) => {
         required: true,
       },
     ],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findTutorDataForTable = async (appointmentId) => {
@@ -95,58 +73,28 @@ exports.findTutorDataForTable = async (appointmentId) => {
         required: true,
       },
     ],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findOnePersonAppointment = async (id) => {
-  return await PersonAppointment.findByPk(id)
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  return await PersonAppointment.findByPk(id);
 };
 
 exports.updatePersonAppointment = async (personappointment, id) => {
   return await PersonAppointment.update(personappointment, {
     where: { id: id },
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.deletePersonAppointment = async (id) => {
   return await PersonAppointment.destroy({
     where: { id: id },
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.deleteAllPersonAppointments = async () => {
   return await PersonAppointment.destroy({
     where: {},
     truncate: false,
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };

@@ -5,47 +5,35 @@ const PersonRole = db.personrole;
 const PersonRolePrivilege = db.personroleprivilege;
 
 exports.createRole = async (roleData) => {
+  if (!roleData.type) {
+    const error = new Error("Type cannot be empty for role!");
+    error.statusCode = 400;
+    throw error;
+  }
+
   // Create a role
   const role = {
     id: roleData.id,
-    groupId: roleData.groupId,
     type: roleData.type,
+    groupId: roleData.groupId,
   };
 
   // Save role in the database
-  return await Role.create(role)
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  return await Role.create(role);
 };
 
 exports.findAllRoles = async () => {
   return await Role.findAll({
     include: ["group"],
     order: [["type", "ASC"]],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findAllRolesForGroup = async (groupId) => {
   return await Role.findAll({
     where: { groupId: groupId },
     order: [["type", "ASC"]],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findRolesForPersonForGroup = async (groupId, personId) => {
@@ -64,13 +52,7 @@ exports.findRolesForPersonForGroup = async (groupId, personId) => {
         ],
       },
     ],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findRolesForTypeForGroup = async (groupId, type) => {
@@ -94,13 +76,7 @@ exports.findRolesForTypeForGroup = async (groupId, type) => {
         ],
       },
     ],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findRolesForPerson = async (personId) => {
@@ -113,13 +89,7 @@ exports.findRolesForPerson = async (personId) => {
         right: true,
       },
     ],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findIncompleteRolesForPerson = async (personId) => {
@@ -132,58 +102,28 @@ exports.findIncompleteRolesForPerson = async (personId) => {
         right: true,
       },
     ],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findOneRole = async (id) => {
-  return await Role.findByPk(id)
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  return await Role.findByPk(id);
 };
 
 exports.updateRole = async (role, id) => {
   return await Role.update(role, {
     where: { id: id },
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.deleteRole = async (id) => {
   return await Role.destroy({
     where: { id: id },
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.deleteAllRoles = async () => {
   return await Role.destroy({
     where: {},
     truncate: false,
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };

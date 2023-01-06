@@ -5,23 +5,31 @@ const PersonAppointment = db.personappointment;
 const Op = db.Sequelize.Op;
 
 exports.createAvailability = async (availabilityData) => {
+  if (!availabilityData.date) {
+    const error = new Error("Date cannot be empty for availability!");
+    error.statusCode = 400;
+    throw error;
+  } else if (!availabilityData.startTime) {
+    const error = new Error("Start time cannot be empty for availability!");
+    error.statusCode = 400;
+    throw error;
+  } else if (!availabilityData.endTime) {
+    const error = new Error("End time cannot be empty for availability!");
+    error.statusCode = 400;
+    throw error;
+  }
+
   // Create an availability
   const availability = {
     id: availabilityData.id,
-    personId: availabilityData.personId,
     date: availabilityData.date,
     startTime: availabilityData.startTime,
     endTime: availabilityData.endTime,
+    personId: availabilityData.personId,
   };
 
   // Save availability in the database
-  return await Availability.create(availability)
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  return await Availability.create(availability);
 };
 
 exports.findAllAvailabilities = async () => {
@@ -30,13 +38,7 @@ exports.findAllAvailabilities = async () => {
       ["date", "ASC"],
       ["startTime", "ASC"],
     ],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findAllAvailabilitiesForPerson = async (personId) => {
@@ -46,13 +48,7 @@ exports.findAllAvailabilitiesForPerson = async (personId) => {
       ["date", "ASC"],
       ["startTime", "ASC"],
     ],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findAllUpcomingForPerson = async (personId) => {
@@ -87,126 +83,92 @@ exports.findAllUpcomingForPerson = async (personId) => {
       ["date", "ASC"],
       ["startTime", "ASC"],
     ],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findOneAvailability = async (id) => {
-  return await Availability.findByPk(id)
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  return await Availability.findByPk(id);
 };
 
 exports.updateAvailability = async (availability, id) => {
   return await Availability.update(availability, {
     where: { id: id },
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.deleteAvailability = async (id) => {
-  return await Availability.findByPk(id)
-    .then(async (data) => {
-      if (data) {
-        let availability = data.dataValues;
-        await Availability.destroy({
-          where: { id: id },
-        })
-          .then(async (num) => {
-            if (num == 1) {
-              let tutorId = availability.personId;
-              let date = availability.date;
-              date.setHours(date.getHours() + date.getTimezoneOffset() / 60);
-              let startTime = availability.startTime;
-              console.log(tutorId);
-              let endTime = availability.endTime;
-              console.log(date);
-              await Appointment.destroy({
-                where: {
-                  id: {
-                    [Op.in]: db.sequelize.literal(
-                      "(SELECT appointmentId FROM personappointments where personID=" +
-                        tutorId +
-                        " AND isTutor='1')"
-                    ),
-                  },
-                  status: "available",
-                  date: { [Op.eq]: date },
-                  startTime: { [Op.gte]: startTime },
-                  endTime: { [Op.lte]: endTime },
+  return await Availability.findByPk(id).then(async (data) => {
+    if (data) {
+      let availability = data.dataValues;
+      await Availability.destroy({
+        where: { id: id },
+      })
+        .then(async (num) => {
+          if (num == 1) {
+            let tutorId = availability.personId;
+            let date = availability.date;
+            date.setHours(date.getHours() + date.getTimezoneOffset() / 60);
+            let startTime = availability.startTime;
+            console.log(tutorId);
+            let endTime = availability.endTime;
+            console.log(date);
+            await Appointment.destroy({
+              where: {
+                id: {
+                  [Op.in]: db.sequelize.literal(
+                    "(SELECT appointmentId FROM personappointments where personID=" +
+                      tutorId +
+                      " AND isTutor='1')"
+                  ),
                 },
-              })
-                .then(async () => {
-                  await PersonAppointment.destroy({
-                    where: {
-                      appointmentId: null,
-                    },
-                  }).catch((err) => {
-                    console.log(
-                      "Could not delete past PersonAppointments" + err
-                    );
-                  });
-                  res.send({
-                    message:
-                      "Availability/Appointments were deleted successfully!",
-                  });
-                })
-                .catch((err) => {
-                  res.status(500).send({
-                    message:
-                      "Error deleteing Appointments for Availability with id=" +
-                      id,
-                  });
+                status: "available",
+                date: { [Op.eq]: date },
+                startTime: { [Op.gte]: startTime },
+                endTime: { [Op.lte]: endTime },
+              },
+            })
+              .then(async () => {
+                await PersonAppointment.destroy({
+                  where: {
+                    appointmentId: null,
+                  },
+                }).catch((err) => {
+                  console.log("Could not delete past PersonAppointments" + err);
                 });
-            } else {
-              res.send({
-                message: `Cannot delete Availability with id=${id}. Maybe Availability was not found!`,
+                res.send({
+                  message:
+                    "Availability/Appointments were deleted successfully!",
+                });
+              })
+              .catch((err) => {
+                res.status(500).send({
+                  message:
+                    "Error deleteing Appointments for Availability with id=" +
+                    id,
+                });
               });
-            }
-          })
-          .catch((err) => {
-            res.status(500).send({
-              message:
-                "Could not delete Availability with id=" + id + " :" + err,
+          } else {
+            res.send({
+              message: `Cannot delete Availability with id=${id}. Maybe Availability was not found!`,
             });
+          }
+        })
+        .catch((err) => {
+          res.status(500).send({
+            message: "Could not delete Availability with id=" + id + " :" + err,
           });
-      } else {
-        res.status(404).send({
-          message: `Cannot find Availability with id=${id}.`,
         });
-      }
-    })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+    } else {
+      res.status(404).send({
+        message: `Cannot find Availability with id=${id}.`,
+      });
+    }
+  });
 };
 
 exports.deleteAllAvailabilities = async () => {
   return await Availability.destroy({
     where: {},
     truncate: false,
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };

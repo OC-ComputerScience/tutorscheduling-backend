@@ -1,14 +1,6 @@
 const Topic = require("../utils/topic.js");
 
 exports.create = async (req, res) => {
-  // Validate request
-  if (!req.body.name) {
-    res.status(400).send({
-      message: "Topic name can not be empty!",
-    });
-    return;
-  }
-
   await Topic.createTopic(req.body)
     .then((data) => {
       res.send(data);

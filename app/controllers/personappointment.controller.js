@@ -2,14 +2,6 @@ const PersonAppointment = require("../utils/personappointment.js");
 
 // Create and Save a new PersonAppointment
 exports.create = async (req, res) => {
-  // Validate request
-  if (!req.body.personId) {
-    res.status(400).send({
-      message: "Content can not be empty!",
-    });
-    return;
-  }
-
   await PersonAppointment.createPersonAppointment(req.body)
     .then((data) => {
       res.send(data);

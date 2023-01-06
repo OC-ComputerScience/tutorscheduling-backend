@@ -1,14 +1,6 @@
 const Group = require("../utils/group.js");
 
 exports.create = async (req, res) => {
-  // Validate request
-  if (!req.body.name) {
-    res.status(400).send({
-      message: "Content can not be empty!",
-    });
-    return;
-  }
-
   await Group.createGroup(req.body)
     .then((data) => {
       res.send(data);
@@ -53,7 +45,9 @@ exports.findAllActiveForPerson = async (req, res) => {
     })
     .catch((err) => {
       res.status(500).send({
-        message: err.message || "Some error occurred while retrieving active groups for person.",
+        message:
+          err.message ||
+          "Some error occurred while retrieving active groups for person.",
       });
     });
 };

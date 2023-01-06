@@ -6,15 +6,23 @@ const Topic = db.topic;
 const PersonTopic = db.persontopic;
 
 exports.createGroup = async (groupData) => {
+  if (!groupData.name) {
+    const error = new Error("Name cannot be empty for group!");
+    error.statusCode = 400;
+    throw error;
+  }
+
   // Create a Group
   const group = {
     id: groupData.id,
     name: groupData.name,
     description: groupData.description,
-    timeInterval: groupData.timeInterval,
-    minApptTime: groupData.minApptTime,
-    bookPastMinutes: groupData.bookPastMinutes,
-    allowSplittingAppointments: groupData.allowSplittingAppointments,
+    timeInterval: groupData.timeInterval ? groupData.timeInterval : 30,
+    minApptTime: groupData.minApptTime ? groupData.minApptTime : 30,
+    bookPastMinutes: groupData.bookPastMinutes ? groupData.bookPastMinutes : 0,
+    allowSplittingAppointments: groupData.allowSplittingAppointments
+      ? groupData.allowSplittingAppointments
+      : true,
   };
 
   // Save Group in the database
@@ -49,13 +57,7 @@ exports.findGroupsForPerson = async (personId) => {
       },
     ],
     order: [["name", "ASC"]],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findActiveGroupsForPerson = async (personId) => {

@@ -10,13 +10,31 @@ const Op = db.Sequelize.Op;
 const Time = require("./timeFunctions.js");
 
 exports.createAppointment = async (appointmentData) => {
+  if (!appointmentData.date) {
+    const error = new Error("Date cannot be empty for appointment!");
+    error.statusCode = 400;
+    throw error;
+  } else if (!appointmentData.startTime) {
+    const error = new Error("Start time cannot be empty for appointment!");
+    error.statusCode = 400;
+    throw error;
+  } else if (!appointmentData.endTime) {
+    const error = new Error("End time cannot be empty for appointment!");
+    error.statusCode = 400;
+    throw error;
+  } else if (!appointmentData.type) {
+    const error = new Error("Type cannot be empty for appointment!");
+    error.statusCode = 400;
+    throw error;
+  } else if (!appointmentData.status) {
+    const error = new Error("Status cannot be empty for appointment!");
+    error.statusCode = 400;
+    throw error;
+  }
+
   // Create a Appointment
   const appointment = {
     id: appointmentData.id,
-    googleEventId: appointmentData.googleEventId,
-    groupId: appointmentData.groupId,
-    topicId: appointmentData.topicId,
-    locationId: appointmentData.locationId,
     date: appointmentData.date,
     startTime: appointmentData.startTime,
     endTime: appointmentData.endTime,
@@ -26,6 +44,10 @@ exports.createAppointment = async (appointmentData) => {
     tutorEnd: appointmentData.tutorEnd,
     URL: appointmentData.URL,
     preSessionInfo: appointmentData.preSessionInfo,
+    googleEventId: appointmentData.googleEventId,
+    groupId: appointmentData.groupId,
+    locationId: appointmentData.locationId,
+    topicId: appointmentData.topicId,
   };
 
   // Save Appointment in the database
@@ -91,8 +113,6 @@ exports.findAllAppointmentsForGroup = async (groupId) => {
     ],
   });
 };
-
-// TODO test if we need then and catch
 
 exports.findAllUpcomingForGroup = async (groupId) => {
   const date = new Date();
@@ -576,67 +596,36 @@ exports.findRawAppointmentInfo = async (id) => {
     ],
     raw: true,
     nest: true,
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findOneAppointment = async (id) => {
-  return await Appointment.findByPk(id)
-    .then((data) => {
-      if (data) {
-        res.send(data);
-      } else {
-        res.status(404).send({
-          message: `Cannot find Appointment with id=${id}.`,
-        });
-      }
-    })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  return await Appointment.findByPk(id).then((data) => {
+    if (data) {
+      res.send(data);
+    } else {
+      res.status(404).send({
+        message: `Cannot find Appointment with id=${id}.`,
+      });
+    }
+  });
 };
 
 exports.updateAppointment = async (appointment, id) => {
   return await Appointment.update(appointment, {
     where: { id: id },
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.deleteAppointment = async (id) => {
   return await Appointment.destroy({
     where: { id: id },
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.deleteAllAppointments = async () => {
   return await Appointment.destroy({
     where: {},
     truncate: false,
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };

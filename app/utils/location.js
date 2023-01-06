@@ -2,6 +2,20 @@ const db = require("../models");
 const Location = db.location;
 
 exports.createLocation = async (locationData) => {
+  if (!locationData.name) {
+    const error = new Error("Name cannot be empty for location!");
+    error.statusCode = 400;
+    throw error;
+  } else if (!locationData.type) {
+    const error = new Error("Type cannot be empty for location!");
+    error.statusCode = 400;
+    throw error;
+  } else if (!locationData.building) {
+    const error = new Error("Building cannot be empty for location!");
+    error.statusCode = 400;
+    throw error;
+  }
+
   // Create a Location
   const location = {
     id: locationData.id,
@@ -14,13 +28,7 @@ exports.createLocation = async (locationData) => {
   };
 
   // Save Location in the database
-  return await Location.create(location)
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  return await Location.create(location);
 };
 
 exports.findAllLocations = async () => {
@@ -29,13 +37,7 @@ exports.findAllLocations = async () => {
       ["status", "ASC"],
       ["name", "ASC"],
     ],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findAllLocationsForGroup = async (groupId) => {
@@ -45,71 +47,35 @@ exports.findAllLocationsForGroup = async (groupId) => {
       ["status", "ASC"],
       ["name", "ASC"],
     ],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findActiveLocationsForGroup = async (groupId) => {
   return await Location.findAll({
     where: { groupId: groupId, status: "active" },
     order: [["name", "ASC"]],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findOneLocation = async (id) => {
-  return await Location.findByPk(id)
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  return await Location.findByPk(id);
 };
 
 exports.updateLocation = async (location, id) => {
   return await Location.update(location, {
     where: { id: id },
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.deleteLocation = async (id) => {
   return await Location.destroy({
     where: { id: id },
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.deleteAllLocations = async () => {
   return await Location.destroy({
     where: {},
     truncate: false,
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };

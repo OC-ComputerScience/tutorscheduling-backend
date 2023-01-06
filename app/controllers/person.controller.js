@@ -1,14 +1,6 @@
 const Person = require("../utils/person.js");
 
 exports.create = async (req, res) => {
-  // Validate request
-  if (!req.body.fName) {
-    res.status(400).send({
-      message: "Content can not be empty!",
-    });
-    return;
-  }
-
   await Person.createPerson(req.body)
     .then((data) => {
       res.send(data);
@@ -65,7 +57,10 @@ exports.findApprovedTutorsForGroup = async (req, res) => {
 };
 
 exports.getAppointmentHourCount = async (req, res) => {
-  await Person.getPersonAppointmentHours(req.params.groupId, req.params.currWeek)
+  await Person.getPersonAppointmentHours(
+    req.params.groupId,
+    req.params.currWeek
+  )
     .then(function (data) {
       res.status(200).json(data);
     })
@@ -102,7 +97,7 @@ exports.findByEmail = async (req, res) => {
     });
 };
 
-exports.findByPhoneNumber= async (req, res) => {
+exports.findByPhoneNumber = async (req, res) => {
   await Person.findOnePersonByEmail(req.params.phoneNum)
     .then((data) => {
       if (data) {

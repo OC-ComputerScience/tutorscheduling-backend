@@ -1,14 +1,6 @@
 const Availability = require("../utils/availability.js");
 
 exports.create = async (req, res) => {
-  // Validate request
-  if (!req.body.date) {
-    res.status(400).send({
-      message: "Content can not be empty!",
-    });
-    return;
-  }
-
   await Availability.createAvailability(req.body)
     .then((data) => {
       res.send(data);

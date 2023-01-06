@@ -2,105 +2,65 @@ const db = require("../models");
 const PersonRolePrivilege = db.personroleprivilege;
 
 exports.createPrivilege = async (personRolePrivilegeData) => {
+  if (!personRolePrivilegeData.privilege) {
+    const error = new Error(
+      "Privilege cannot be empty for person role privilege!"
+    );
+    error.statusCode = 400;
+    throw error;
+  }
+
   // Create a personroleprivilege
   const personroleprivilege = {
     id: personRolePrivilegeData.id,
-    personroleId: personRolePrivilegeData.personroleId,
     privilege: personRolePrivilegeData.privilege,
+    personroleId: personRolePrivilegeData.personroleId,
   };
 
   // Save personroleprivilege in the database
-  return await PersonRolePrivilege.create(personroleprivilege)
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  return await PersonRolePrivilege.create(personroleprivilege);
 };
 
 exports.findAllPrivileges = async () => {
   return await PersonRolePrivilege.findAll({
     include: ["person"],
     order: [["privilege", "ASC"]],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findPrivilegeByPersonRole = async (personRoleId) => {
   return await PersonRolePrivilege.findAll({
     where: { personroleId: personRoleId },
     order: [["privilege", "ASC"]],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findOnePrivilege = async (id) => {
-  return await PersonRolePrivilege.findByPk(id)
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  return await PersonRolePrivilege.findByPk(id);
 };
 
 exports.updatePrivilege = async (privilege, id) => {
   return await PersonRolePrivilege.update(privilege, {
     where: { id: id },
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.deletePrivilege = async (id) => {
   return await PersonRolePrivilege.destroy({
     where: { id: id },
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.deletePrivilegesForPersonRole = async (personRoleId) => {
   return await PersonRolePrivilege.destroy({
     where: { personRoleId: personRoleId },
     truncate: false,
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.deleteAllPrivileges = async () => {
   return await PersonRolePrivilege.destroy({
     where: {},
     truncate: false,
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };

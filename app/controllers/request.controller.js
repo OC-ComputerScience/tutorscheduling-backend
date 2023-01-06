@@ -1,14 +1,6 @@
 const Request = require("../utils/request.js");
 
 exports.create = async (req, res) => {
-  // Validate request
-  if (!req.body.description) {
-    res.status(400).send({
-      message: "Content can not be empty!",
-    });
-    return;
-  }
-
   await Request.createRequest(req.body)
     .then((data) => {
       res.send(data);
