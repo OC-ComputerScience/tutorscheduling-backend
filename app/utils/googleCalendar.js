@@ -3,7 +3,6 @@ const Person = require("../utils/person.js");
 
 const { google } = require("googleapis");
 
-let token = "";
 let eventId = "";
 
 exports.addAppointmentToGoogle = async (id) => {
@@ -11,7 +10,6 @@ exports.addAppointmentToGoogle = async (id) => {
 
   let event = {};
   event = await setUpEvent(id);
-  console.log(event);
 
   const calendar = google.calendar({
     version: "v3",
@@ -28,11 +26,11 @@ exports.addAppointmentToGoogle = async (id) => {
       sendUpdates: "all",
     })
     .then(async (event) => {
-      await this.updateAppointmentGoogleId(id, event.data.id);
+      await this.updateGoogleEventIdForAppointment(id, event.data.id);
       return event;
     })
     .catch(async (error) => {
-      console.log("Some error occured", error);
+      console.log("Some error occured: " + error);
       // if we get back 403 or 429, try again
       if (error.status === 403 || error.status === 429) {
         // We make a request to Google Calendar API.
@@ -47,7 +45,7 @@ exports.addAppointmentToGoogle = async (id) => {
             sendUpdates: "all",
           })
           .then(async (event) => {
-            await this.updateAppointmentGoogleId(id, event.data.id);
+            await this.updateGoogleEventIdForAppointment(id, event.data.id);
             return event;
           })
           .catch((error) => {
@@ -58,12 +56,12 @@ exports.addAppointmentToGoogle = async (id) => {
 };
 
 exports.getAppointmentFromGoogle = async (id) => {
-  let eventId = "";
   let error;
+  let appointment = [];
 
   await Appointment.findOneAppointment(id)
     .then((data) => {
-      eventId = data[0].dataValues.googleEventId;
+      appointment = data;
     })
     .catch((err) => {
       error = err;
@@ -73,30 +71,32 @@ exports.getAppointmentFromGoogle = async (id) => {
     return error;
   }
 
-  console.log(eventId);
-
   let auth = await getAccessToken(id);
-
-  var params = {
-    auth: auth,
-    calendarId: "primary",
-    eventId: eventId,
-  };
 
   const calendar = google.calendar({
     version: "v3",
     auth: auth,
   });
 
-  calendar.events.get(params, function (err) {
-    if (err) {
-      console.log("The API returned an error: " + err);
-      if (err.includes("Not Found")) {
-        // we need to delete the appointment on our side or update it to tutorCancel
+  return await calendar.events
+    .get({
+      auth: auth,
+      calendarId: "primary",
+      eventId: appointment.googleEventId,
+    })
+    .then((event) => {
+      console.log("Event retrieved from Google calendar");
+      return event;
+    })
+    .catch(async (err) => {
+      if (err.message.includes("Not Found")) {
+        appointment.data.status = "notfound";
+        return appointment;
+      } else {
+        console.log("Google returned an error: " + err);
+        return err;
       }
-    }
-    console.log("Event retrieved from Google calendar.");
-  });
+    });
 };
 
 exports.updateEventForGoogle = async (id) => {
@@ -104,7 +104,6 @@ exports.updateEventForGoogle = async (id) => {
 
   let event = {};
   event = await setUpEvent(id);
-  console.log(event);
 
   const calendar = google.calendar({
     version: "v3",
@@ -135,14 +134,14 @@ exports.updateGoogleEventIdForAppointment = async (id, eventId) => {
 
   await Appointment.findOneAppointment(id)
     .then((data) => {
-      appointment = data[0].dataValues;
+      appointment = data.dataValues;
     })
     .catch((err) => {
       error = err;
     });
 
   if (error !== undefined) {
-    return error;
+    throw error;
   }
 
   appointment.googleEventId = eventId;
@@ -157,10 +156,7 @@ exports.updateGoogleEventIdForAppointment = async (id, eventId) => {
 };
 
 exports.deleteFromGoogle = async (id) => {
-  let eventId = "";
   let error;
-
-  console.log("in delete from google");
 
   await Appointment.findAll({ where: { id: id } })
     .then((data) => {
@@ -173,8 +169,6 @@ exports.deleteFromGoogle = async (id) => {
   if (error !== undefined) {
     return error;
   }
-
-  console.log(eventId);
 
   let auth = await getAccessToken(id);
 
@@ -200,7 +194,6 @@ exports.deleteFromGoogle = async (id) => {
 setUpEvent = async (id) => {
   let appointments = []; // there will be multiple for each attendee
   appointments = await Appointment.findRawAppointmentInfo(id);
-  console.log(appointments);
 
   let startTime = "";
   let endTime = "";
@@ -219,7 +212,6 @@ setUpEvent = async (id) => {
         obj.personappointment.person.fName +
         " " +
         obj.personappointment.person.lName;
-      console.log("Google student name: " + studentName);
     }
     let tempObj = {};
     tempObj.email = obj.personappointment.person.email;
@@ -303,7 +295,7 @@ getAccessToken = async (id) => {
     "postmessage"
   );
 
-  await Person.findFirstTutorForAppointment(id);
+  let person = await Person.findFirstTutorForAppointment(id);
 
   let creds = {};
   // gets access token from refresh token
@@ -322,7 +314,7 @@ getAccessToken = async (id) => {
     body: makeQuerystring({
       client_id: client_id,
       client_secret: client_secret,
-      refresh_token: token,
+      refresh_token: person[0].dataValues.refresh_token,
       grant_type: "refresh_token",
     }),
     headers: {
@@ -331,8 +323,6 @@ getAccessToken = async (id) => {
   })
     .then((res) => res.json())
     .then((json) => (creds = json));
-
-  console.log(creds);
 
   oAuth2Client.setCredentials(creds);
   return oAuth2Client;

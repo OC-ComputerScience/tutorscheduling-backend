@@ -1,52 +1,89 @@
 const cron = require("node-cron");
 const db = require("../models");
-const Appointment = db.appointment;
-const appointmentController = require("../controllers/appointment.controller.js");
-const PersonAppointment = db.personappointment;
+const Appointment = require("../utils/appointment.js");
+const GoogleCalendar = require("../utils/googleCalendar");
+const Group = require("../utils/group.js");
+const PersonAppointment = require("../utils/personAppointment.js");
+const Time = require("../utils/timeFunctions.js");
 const Op = db.Sequelize.Op;
-const Group = db.group;
-let appointments = [];
-let groups = [];
 
 // Schedule tasks to be run on the server 12:01 am.
 // From : https://www.digitalocean.com/community/tutorials/nodejs-cron-jobs-by-examples
 
 exports.fifteenMinuteTasks = () => {
   // for prod, runs at 3 minutes before every 15 minutes every hour
-  cron.schedule("12,27,42,57 * * * *", async function () {
-    // for testing, runs every minute
-    // cron.schedule("* * * * *", async function () {
-    console.log("Every 15-Minute Tasks:");
-    await getGroups();
-    // await checkGoogleEvents();
-    await deletePastAppointments();
+  // cron.schedule("12,27,42,57 * * * *", async function () {
+  // for testing, runs every minute
+  cron.schedule("* * * * *", async function () {
+    console.log(
+      "15-Minute Tasks for " + new Date().toLocaleTimeString("it-IT") + ":"
+    );
+    await checkGoogleEvents();
+    // await deletePastAppointments();
   });
 };
 
 async function checkGoogleEvents() {
-  await Appointment.findAll({
-    where: {
-      googleEventId: {
-        [Op.ne]: null,
-      },
-    },
-  })
+  console.log("Checking Google Events:");
+  let appointmentsNeedingGoogle = [];
+  await Appointment.findAllNeedingGoogleId()
     .then(async (data) => {
-      appointments = data;
+      appointmentsNeedingGoogle = data;
     })
     .catch((err) => {
-      console.log("Could not find past appointments: " + err);
+      console.log("Could not find appointments needing Google ids: " + err);
     });
 
-  for (let i = 0; i < appointments.length; i++) {
-    let appointment = appointments[i];
-    await appointmentController.getFromGoogle(appointment.id);
+  // all of these appointments need to be added to Google calendar
+  for (let i = 0; i < appointmentsNeedingGoogle.length; i++) {
+    let appointment = appointmentsNeedingGoogle[i];
+    await GoogleCalendar.addAppointmentToGoogle(appointment.id).catch((err) => {
+      console.log(err);
+    });
+  }
+
+  let appointmentsWithGoogle = [];
+  await Appointment.findAllWithGoogleId()
+    .then(async (data) => {
+      appointmentsWithGoogle = data;
+    })
+    .catch((err) => {
+      console.log("Could not find appointments with Google ids: " + err);
+    });
+
+  for (let i = 0; i < appointmentsWithGoogle.length; i++) {
+    let appointment = appointmentsWithGoogle[i];
+    await GoogleCalendar.getAppointmentFromGoogle(appointment.id)
+      .then((event) => {
+        if (event.data !== undefined) {
+          // console.log(event);
+          // look at response of attendees too
+          // we should be checking Private Booked
+          if (event.data.status === "confirmed") {
+            // check if any information was changed from google calendar
+            // don't allow any information to be changed except attendees
+            // if students are not in the appointment anymore, update person appointments
+            // if private, set to student cancel
+            console.log(event.data);
+          } else if (event.data.status === "cancelled") {
+            console.log(event.data);
+          } else if (event.data.status === "notfound") {
+            // check if there are any other tutors for this appointment
+            // if not, set to tutor cancel
+          }
+        }
+      })
+      .catch((err) => {
+        console.log("Error getting appointment from Google: " + err);
+      });
   }
 }
 
 async function deletePastAppointments() {
   let delDate = new Date().setHours(0, 0, 0);
   let delTime = new Date().toLocaleTimeString("it-IT");
+  let appointments = [];
+  let groups = await Group.findAllGroups();
 
   // need to get appointments outside of the book past minutes buffer
   for (let i = 0; i < groups.length; i++) {
@@ -164,18 +201,6 @@ async function deletePastAppointments() {
     })
     .catch((err) => {
       console.log("Could not delete past person appointments " + err);
-    });
-}
-
-async function getGroups() {
-  await Group.findAll({ order: [["name", "ASC"]] })
-    .then((data) => {
-      for (let i = 0; i < data.length; i++) {
-        groups.push(data[i].dataValues);
-      }
-    })
-    .catch((err) => {
-      console.log("Could not get groups " + err);
     });
 }
 

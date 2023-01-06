@@ -63,6 +63,50 @@ exports.findAllAppointments = async () => {
   });
 };
 
+exports.findAllNeedingGoogleId = async () => {
+  return await Appointment.findAll({
+    where: {
+      googleEventId: null,
+      [Op.or]: [{ status: "booked" }, { type: "Group" }],
+    },
+  });
+};
+
+exports.findAllWithGoogleId = async () => {
+  return await Appointment.findAll({
+    where: {
+      googleEventId: {
+        [Op.ne]: null,
+      },
+    },
+    include: [
+      {
+        model: Location,
+        as: "location",
+        required: true,
+      },
+      {
+        model: Topic,
+        as: "topic",
+        required: true,
+      },
+      {
+        model: PersonAppointment,
+        as: "personappointment",
+        required: true,
+        include: [
+          {
+            model: Person,
+            as: "person",
+            required: true,
+            right: true,
+          },
+        ],
+      },
+    ],
+  });
+};
+
 exports.findAllAppointmentsForGroup = async (groupId) => {
   return await Appointment.findAll({
     where: { groupId: groupId },
@@ -600,15 +644,7 @@ exports.findRawAppointmentInfo = async (id) => {
 };
 
 exports.findOneAppointment = async (id) => {
-  return await Appointment.findByPk(id).then((data) => {
-    if (data) {
-      res.send(data);
-    } else {
-      res.status(404).send({
-        message: `Cannot find Appointment with id=${id}.`,
-      });
-    }
-  });
+  return await Appointment.findByPk(id);
 };
 
 exports.updateAppointment = async (appointment, id) => {
