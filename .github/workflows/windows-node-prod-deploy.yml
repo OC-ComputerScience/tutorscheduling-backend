@@ -42,10 +42,10 @@ jobs:
           echo twilio_number="$TWILIO_NUMBER" >> .env
           echo vue_app_client_id="$VUE_APP_CLIENT_ID" >> .env
           echo vue_app_api_url ="$VUE_APP_API_URL" >> .env
-          echo vue_app_client_url = "tutorscheduling.oc.edu" >> .env
+          echo vue_app_client_url = "https://tutorscheduling.oc.edu" >> .env
           echo google_audience ="$GOOGLE_AUDIENCE" >> .env
           echo client_secret = "$CLIENT_SECRET" >> .env
-          echo url = "tutorscheduling.oc.edu" >> .env
+          echo url = "https://tutorscheduling.oc.edu" >> .env
 
       - run: npm run bundle
 
