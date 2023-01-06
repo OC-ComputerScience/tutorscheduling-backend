@@ -4,25 +4,19 @@ const Appointment = db.appointment;
 const PersonAppointment = db.personappointment;
 const Person = db.person;
 const Location = db.location;
-const sms = require("../controllers/twilio.controller.js");
+const Twilio = require("../utils/twilio.js");
 const Op = db.Sequelize.Op;
-const Group = db.group;
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const authToken =
-  process.env.TWILIO_AUTH_TOKEN1 + process.env.TWILIO_AUTH_TOKEN2;
-const phoneNum = process.env.TWILIO_NUMBER;
-const client = require("twilio")(accountSid, authToken);
 
 // Schedule tasks to be run on the server 12:01 am.
 // From : https://www.digitalocean.com/community/tutorials/nodejs-cron-jobs-by-examples
 
 exports.hourlyTasks = () => {
   // for prod, runs at ever hour at 55 minute past the hour.
-  cron.schedule("55 * * * *", function () {
+  cron.schedule("55 * * * *", async function () {
     // for testing, runs every minute
-    // cron.schedule('* * * * *', function() {
-    console.log("Scheduled task every day at 55 min past the hour");
-    notifyUpcomingAppointments();
+    // cron.schedule('* * * * *', async function() {
+    console.log("Every 55-Minute Tasks:");
+    await notifyUpcomingAppointments();
   });
 };
 
@@ -100,29 +94,30 @@ async function notifyUpcomingAppointments() {
             Person.findByPk(personAppoint.personId).then((person) => {
               Appointment.findByPk(personAppoint.appointmentId).then(
                 (appoint) => {
-                  Location.findByPk(appoint.locationId).then((location) => {
-                    let time = calcTime(appoint.startTime);
-                    let message = {
-                      message:
-                        "You have an upcoming tutoring appointment:\n    Type: " +
+                  Location.findByPk(appoint.locationId).then(
+                    async (location) => {
+                      let time = calcTime(appoint.startTime);
+                      let message =
+                        "You have an upcoming tutoring appointment:" +
+                        "\n    Type: " +
                         appoint.type +
                         "\n    Time: " +
                         time +
                         "\n    Location: " +
-                        location.name,
-                      phoneNum: person.phoneNum,
-                    };
-                    client.messages
-                      .create({
-                        body: message.message,
-                        from: phoneNum,
-                        to: message.phoneNum,
-                      })
-                      .then((message) => console.log("sent" + message.sid))
-                      .catch((err) => {
-                        console.log("Could not send messsage" + err);
-                      });
-                  });
+                        location.name;
+                      await Twilio.sendText(message, person.phoneNum)
+                        .then((message) => {
+                          if (message.sid !== undefined) {
+                            console.log("Sent text " + message.sid);
+                          } else {
+                            console.log(message);
+                          }
+                        })
+                        .catch((err) => {
+                          console.log("Error sending text message: " + err);
+                        });
+                    }
+                  );
                 }
               );
             });

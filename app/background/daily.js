@@ -4,30 +4,26 @@ const Appointment = db.appointment;
 const PersonAppointment = db.personappointment;
 const Person = db.person;
 const Op = db.Sequelize.Op;
-//twilio stuff
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const authToken =
-  process.env.TWILIO_AUTH_TOKEN1 + process.env.TWILIO_AUTH_TOKEN2;
-const phoneNum = process.env.TWILIO_NUMBER;
-const client = require("twilio")(accountSid, authToken);
-const url = process.env.url;
+const Twilio = require("../utils/twilio.js");
+const url = process.env.URL;
 
 // Schedule tasks to be run on the server 12:01 am.
 // From : https://www.digitalocean.com/community/tutorials/nodejs-cron-jobs-by-examples
 
 exports.dailyTasks = () => {
-  // for prod, runs at every day at 9am.
-  cron.schedule("00 09 * * *", function () {
+  // for prod, runs at every day at 9AM.
+  cron.schedule("00 09 * * *", async function () {
     // for testing, runs every minute
-    //  cron.schedule('* * * * *', function() {
-    console.log("Start running a task every day at 9:00 am");
-    notifyForFeedback();
+    // cron.schedule("* * * * *", async function () {
+    console.log("Daily 9AM Tasks:");
+    await notifyForFeedback();
   });
 };
 
 async function notifyForFeedback() {
-  console.log("check for feedback");
+  console.log("Finding appointments needing feedback");
   let date = new Date();
+  let endTime = date.toLocaleTimeString("it-IT");
   date.setHours(date.getHours() - date.getTimezoneOffset() / 60);
   date.setHours(0, 0, 0);
   let tutors = [];
@@ -47,11 +43,25 @@ async function notifyForFeedback() {
             model: Appointment,
             as: "appointment",
             where: {
-              [Op.or]: [
-                { status: "booked" },
-                { [Op.and]: [{ type: "Group" }, { status: "available" }] },
+              [Op.and]: [
+                {
+                  [Op.or]: [
+                    { date: { [Op.lt]: date } },
+                    {
+                      [Op.and]: [
+                        { date: { [Op.eq]: date } },
+                        { endTime: { [Op.lt]: endTime } },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  [Op.or]: [
+                    { status: "booked" },
+                    { [Op.and]: [{ type: "Group" }, { status: "available" }] },
+                  ],
+                },
               ],
-              date: { [Op.lt]: date },
             },
             required: true,
           },
@@ -61,11 +71,11 @@ async function notifyForFeedback() {
   })
     .then((response) => {
       tutors = response;
-      console.log(tutors[0].dataValues);
     })
     .catch((err) => {
       console.log("Failed to get tutor appointments: " + err);
     });
+
   await Person.findAll({
     include: [
       {
@@ -81,7 +91,15 @@ async function notifyForFeedback() {
             as: "appointment",
             where: {
               status: "complete",
-              date: { [Op.lt]: date },
+              [Op.or]: [
+                { date: { [Op.lt]: date } },
+                {
+                  [Op.and]: [
+                    { date: { [Op.eq]: date } },
+                    { endTime: { [Op.lt]: endTime } },
+                  ],
+                },
+              ],
             },
             required: true,
           },
@@ -91,51 +109,51 @@ async function notifyForFeedback() {
   })
     .then((response) => {
       students = response;
-      console.log(students[0].dataValues);
     })
     .catch((err) => {
       console.log("Failed to get student appointments: " + err);
     });
 
-  tutors.forEach((tutor) => {
-    let message = {
-      message:
-        "Please leave feedback for " +
-        tutor.personappointment.length +
-        " appointment(s). " +
-        url,
-      phoneNum: tutor.phoneNum,
-    };
-    client.messages
-      .create({
-        body: message.message,
-        from: phoneNum,
-        to: message.phoneNum,
-      })
-      .then((message) => console.log("sent" + message.sid))
-      .catch((err) => {
-        console.log("Could not send messsage" + err);
-      });
-  });
+  console.log(tutors);
+  console.log(students);
 
-  students.forEach((student) => {
-    let message = {
-      message:
-        "Please leave feedback for " +
-        student.personappointment.length +
-        " appointment(s). " +
-        url,
-      phoneNum: student.phoneNum,
-    };
-    client.messages
-      .create({
-        body: message.message,
-        from: phoneNum,
-        to: message.phoneNum,
+  for (let i = 0; i < tutors.length; i++) {
+    let tutor = tutors[i];
+    let message =
+      "Please leave feedback for " +
+      tutor.personappointment.length +
+      " appointment(s) that you tutored.\n" +
+      url;
+    await Twilio.sendText(message, tutor.phoneNum)
+      .then((message) => {
+        if (message.sid !== undefined) {
+          console.log("Sent text " + message.sid);
+        } else {
+          console.log(message);
+        }
       })
-      .then((message) => console.log("sent" + message.sid))
       .catch((err) => {
-        console.log("Could not send messsage" + err);
+        console.log("Error sending text message: " + err);
       });
-  });
+  }
+
+  for (let i = 0; i < students.length; i++) {
+    let student = students[i];
+    let message =
+      "Please leave feedback for " +
+      student.personappointment.length +
+      " appointment(s) that you attended.\n" +
+      url;
+    await Twilio.sendText(message, student.phoneNum)
+      .then((message) => {
+        if (message.sid !== undefined) {
+          console.log("Sent text " + message.sid);
+        } else {
+          console.log(message);
+        }
+      })
+      .catch((err) => {
+        console.log("Error sending text message: " + err);
+      });
+  }
 }
