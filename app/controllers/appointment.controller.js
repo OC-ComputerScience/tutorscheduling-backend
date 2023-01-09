@@ -293,7 +293,6 @@ exports.updateForGoogle = async (req, res) => {
             }
             // if appointment is private and cancelled, delete the google event
             else if (
-              req.body.status === "cancelled" ||
               req.body.status === "studentCancel" ||
               req.body.status === "tutorCancel"
             ) {

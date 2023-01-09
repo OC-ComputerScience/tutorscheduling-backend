@@ -52,30 +52,19 @@ async function checkGoogleEvents() {
     });
 
   for (let i = 0; i < appointmentsWithGoogle.length; i++) {
-    let appointment = appointmentsWithGoogle[i];
-    await GoogleCalendar.getAppointmentFromGoogle(appointment.id)
-      .then((event) => {
-        if (event.data !== undefined) {
-          // console.log(event);
-          // look at response of attendees too
-          // we should be checking Private Booked
-          if (event.data.status === "confirmed") {
-            // check if any information was changed from google calendar
-            // don't allow any information to be changed except attendees
-            // if students are not in the appointment anymore, update person appointments
-            // if private, set to student cancel
-            console.log(event.data);
-          } else if (event.data.status === "cancelled") {
-            console.log(event.data);
-          } else if (event.data.status === "notfound") {
-            // check if there are any other tutors for this appointment
-            // if not, set to tutor cancel
-          }
-        }
-      })
-      .catch((err) => {
-        console.log("Error getting appointment from Google: " + err);
-      });
+    let appointment = appointmentsWithGoogle[i].dataValues;
+    let event = await GoogleCalendar.getAppointmentFromGoogle(
+      appointment.id
+    ).catch((err) => {
+      console.log("Error getting appointment from Google: " + err);
+    });
+
+    console.log(event.data);
+    console.log(appointment);
+
+    if (event.data !== undefined) {
+      await GoogleCalendar.cancelAppointmentFromGoogle(appointment, event);
+    }
   }
 }
 

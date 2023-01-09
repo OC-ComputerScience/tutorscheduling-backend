@@ -223,6 +223,31 @@ exports.findFirstTutorForAppointment = async (appointmentId) => {
   });
 };
 
+exports.findFirstStudentForAppointment = async (appointmentId) => {
+  return await Person.findAll({
+    include: [
+      {
+        model: PersonAppointment,
+        as: "personappointment",
+        required: true,
+        where: { isTutor: false },
+        include: [
+          {
+            model: Appointment,
+            as: "appointment",
+            required: true,
+            where: { "$personappointment->appointment.id$": appointmentId },
+          },
+        ],
+      },
+    ],
+    order: [
+      ["lName", "ASC"],
+      ["fName", "ASC"],
+    ],
+  });
+};
+
 exports.findOnePersonByEmail = async (email) => {
   return await Person.findOne({
     where: {

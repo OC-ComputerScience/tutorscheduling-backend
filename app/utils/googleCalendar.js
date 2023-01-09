@@ -1,5 +1,6 @@
 const Appointment = require("../utils/appointment.js");
 const Person = require("../utils/person.js");
+const Time = require("../utils/timeFunctions.js");
 
 const { google } = require("googleapis");
 
@@ -189,6 +190,112 @@ exports.deleteFromGoogle = async (id) => {
     .catch((err) => {
       return err;
     });
+};
+
+exports.cancelAppointmentFromGoogle = async (appointment, event) => {
+  let updateAppt = {
+    id: appointment.id,
+    date: appointment.originalDate,
+    startTime: appointment.originalStart,
+    endTime: appointment.originalEnd,
+    type: appointment.type,
+    status: appointment.status,
+    preSessionInfo: appointment.preSessionInfo,
+    googleEventId: appointment.googleEventId,
+    groupId: appointment.groupId,
+    locationId: appointment.locationId,
+    topicId: appointment.topicId,
+  };
+
+  if (appointment.type === "Private") {
+    let student = await Person.findFirstStudentForAppointment(appointment.id);
+    let tutor = await Person.findFirstTutorForAppointment(appointment.id);
+    if (event.data.status === "confirmed") {
+      for (let i = 0; i < event.data.attendees.length; i++) {
+        let attendee = event.data.attendee[i];
+        if (attendee.responseStatus === "declined") {
+          if (attendee.email === event.creator.email) {
+            // the tutor declined but didn't delete the event
+            updateAppt.status = "tutorCancel";
+          } else {
+            // if it's not the creator's email, then it's a student cancel
+            // need to make a new appointment for the same time
+            let temp = {
+              date: appointment.date,
+              startTime: appointment.startTime,
+              endTime: appointment.endTime,
+              type: appointment.type,
+              status: "available",
+              preSessionInfo: "",
+              groupId: appointment.groupId,
+            };
+            await AppointmentServices.addAppointment(temp).then(
+              async (response) => {
+                // private will only have one tutor
+                let pap = {
+                  isTutor: true,
+                  appointmentId: response.data.id,
+                  personId: tutor.id,
+                };
+                await PersonAppointmentServices.addPersonAppointment(pap);
+              }
+            );
+            updateAppt.status = "studentCancel";
+          }
+
+          updateAppt.googleEventId = null;
+          await Appointment.updateAppointment(updateAppt, updateAppt.id);
+          await this.deleteFromGoogle(updateAppt.id);
+
+          // need to send canceled message
+          // let message =
+          //   "Your " +
+          //   appointment.type +
+          //   " appointment for " +
+          //   appointment.topic.dataValues.name +
+          //   " on " +
+          //   Time.formatDate(appointment.date) +
+          //   " at " +
+          //   Time.calcTime(appointment.startTime) +
+          //   " has been canceled by " +
+          //   student.fName +
+          //   " " +
+          //   student.lName +
+          //   ".\nThis appointment is now open again for booking.";
+          // await Twilio.sendText(message, tutor.phoneNum)
+          //   .then((message) => {
+          //     if (message.sid !== undefined) {
+          //       console.log("Sent text " + message.sid);
+          //     } else {
+          //       console.log(message);
+          //     }
+          //   })
+          //   .catch((err) => {
+          //     console.log("Error sending text message: " + err);
+          //   });
+        }
+      }
+    } else if (event.data.status === "cancelled") {
+      // this means that the tutor deleted the event
+      updateAppt.googleEventId = null;
+      updateAppt.status = "tutorCancel";
+      await Appointment.updateAppointment(updateAppt, updateAppt.id);
+      await this.deleteFromGoogle(updateAppt.id);
+    }
+  } else if (appointment.type === "Group") {
+    if (event.data.status === "confirmed") {
+      // check if any information was changed from google calendar
+      // don't allow any information to be changed except attendees
+      // if students are not in the appointment anymore, update person appointments
+      // if private, set to student cancel
+      console.log(event.data);
+    } else if (event.data.status === "cancelled") {
+      console.log(event.data);
+    } else if (event.data.status === "notfound") {
+      // check if there are any other tutors for this appointment
+      // if not, set to tutor cancel
+    }
+  }
 };
 
 setUpEvent = async (id) => {
