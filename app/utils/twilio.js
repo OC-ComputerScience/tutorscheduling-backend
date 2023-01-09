@@ -9,8 +9,9 @@ const MessagingResponse = require("twilio/lib/twiml/MessagingResponse");
 
 exports.sendText = async (message, phone) => {
   let prefix = "OC Tutor Scheduling:\n";
-  let postfix = "\nReply STOP to unsubscribe.";
-  let finalMessage = prefix + message + postfix;
+  // let postfix = "\nReply STOP to unsubscribe.";
+  let finalMessage = prefix + message;
+  // + postfix;
 
   let person = await Person.findOne({
     where: {
