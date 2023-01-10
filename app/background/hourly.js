@@ -1,15 +1,17 @@
 const cron = require("node-cron");
 const db = require("../models");
 const Appointment = db.appointment;
+const GoogleCalendar = require("../utils/googleCalendar");
 const PersonAppointment = db.personappointment;
 const Person = db.person;
+const Time = require("../utils/timeFunctions.js");
+const Twilio = require("../utils/twilio.js");
 const Topic = db.topic;
 const Location = db.location;
-const Twilio = require("../utils/twilio.js");
 const Op = db.Sequelize.Op;
 
 // Schedule tasks to be run on the server 12:01 am.
-// From : https://www.digitalocean.com/community/tutorials/nodejs-cron-jobs-by-examples
+// From: https://www.digitalocean.com/community/tutorials/nodejs-cron-jobs-by-examples
 
 exports.hourlyTasks = () => {
   // for prod, runs at ever hour at 55 minute past the hour.
@@ -17,9 +19,55 @@ exports.hourlyTasks = () => {
     // for testing, runs every minute
     // cron.schedule('* * * * *', async function() {
     console.log("Every 55-Minute Tasks:");
+    await checkGoogleEvents();
     await notifyUpcomingAppointments();
   });
 };
+
+async function checkGoogleEvents() {
+  console.log("Checking Google Events:");
+  let appointmentsNeedingGoogle = [];
+  await Appointment.findAllNeedingGoogleId()
+    .then(async (data) => {
+      appointmentsNeedingGoogle = data;
+    })
+    .catch((err) => {
+      console.log("Could not find appointments needing Google ids: " + err);
+    });
+
+  // all of these appointments need to be added to Google calendar
+  for (let i = 0; i < appointmentsNeedingGoogle.length; i++) {
+    let appointment = appointmentsNeedingGoogle[i];
+    await GoogleCalendar.addAppointmentToGoogle(appointment.id).catch((err) => {
+      console.log(err);
+    });
+  }
+
+  let appointmentsWithGoogle = [];
+  await Appointment.findAllWithGoogleId()
+    .then(async (data) => {
+      appointmentsWithGoogle = data;
+    })
+    .catch((err) => {
+      console.log("Could not find appointments with Google ids: " + err);
+    });
+
+  for (let i = 0; i < appointmentsWithGoogle.length; i++) {
+    let appointment = appointmentsWithGoogle[i].dataValues;
+    let event = await GoogleCalendar.getAppointmentFromGoogle(
+      appointment.id
+    ).catch((err) => {
+      console.log("Error getting appointment from Google: " + err);
+    });
+
+    console.log(event.data);
+    console.log(appointment);
+
+    if (event.data !== undefined) {
+      await GoogleCalendar.cancelAppointmentFromGoogle(appointment, event);
+    }
+  }
+}
 
 // this gets appointments around 2 hours from now
 async function notifyUpcomingAppointments() {

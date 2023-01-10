@@ -1,14 +1,12 @@
 const cron = require("node-cron");
-const db = require("../models");
 const Appointment = require("../utils/appointment.js");
 const GoogleCalendar = require("../utils/googleCalendar");
 const Group = require("../utils/group.js");
 const PersonAppointment = require("../utils/personAppointment.js");
 const Time = require("../utils/timeFunctions.js");
-const Op = db.Sequelize.Op;
 
 // Schedule tasks to be run on the server 12:01 am.
-// From : https://www.digitalocean.com/community/tutorials/nodejs-cron-jobs-by-examples
+// From: https://www.digitalocean.com/community/tutorials/nodejs-cron-jobs-by-examples
 
 exports.fifteenMinuteTasks = () => {
   // for prod, runs at 3 minutes before every 15 minutes every hour
@@ -18,122 +16,44 @@ exports.fifteenMinuteTasks = () => {
     console.log(
       "15-Minute Tasks for " + new Date().toLocaleTimeString("it-IT") + ":"
     );
-    await checkGoogleEvents();
-    // await deletePastAppointments();
+    await deletePastAppointments();
   });
 };
 
-async function checkGoogleEvents() {
-  console.log("Checking Google Events:");
-  let appointmentsNeedingGoogle = [];
-  await Appointment.findAllNeedingGoogleId()
-    .then(async (data) => {
-      appointmentsNeedingGoogle = data;
-    })
-    .catch((err) => {
-      console.log("Could not find appointments needing Google ids: " + err);
-    });
-
-  // all of these appointments need to be added to Google calendar
-  for (let i = 0; i < appointmentsNeedingGoogle.length; i++) {
-    let appointment = appointmentsNeedingGoogle[i];
-    await GoogleCalendar.addAppointmentToGoogle(appointment.id).catch((err) => {
-      console.log(err);
-    });
-  }
-
-  let appointmentsWithGoogle = [];
-  await Appointment.findAllWithGoogleId()
-    .then(async (data) => {
-      appointmentsWithGoogle = data;
-    })
-    .catch((err) => {
-      console.log("Could not find appointments with Google ids: " + err);
-    });
-
-  for (let i = 0; i < appointmentsWithGoogle.length; i++) {
-    let appointment = appointmentsWithGoogle[i].dataValues;
-    let event = await GoogleCalendar.getAppointmentFromGoogle(
-      appointment.id
-    ).catch((err) => {
-      console.log("Error getting appointment from Google: " + err);
-    });
-
-    console.log(event.data);
-    console.log(appointment);
-
-    if (event.data !== undefined) {
-      await GoogleCalendar.cancelAppointmentFromGoogle(appointment, event);
-    }
-  }
-}
-
 async function deletePastAppointments() {
-  let delDate = new Date().setHours(0, 0, 0);
-  let delTime = new Date().toLocaleTimeString("it-IT");
   let appointments = [];
   let groups = await Group.findAllGroups();
 
   // need to get appointments outside of the book past minutes buffer
   for (let i = 0; i < groups.length; i++) {
-    let group = groups[i];
-    let delTimePlusBuffer = subtractMinsFromTime(
-      group.bookPastMinutes,
-      delTime
-    );
-    console.log(delTimePlusBuffer);
-    //get all of the appointments for today that start before now
-    await Appointment.findAll({
-      where: {
-        [Op.or]: [
-          { type: "Private" },
-          {
-            [Op.and]: [
-              { type: "Group" },
-              {
-                id: {
-                  [Op.in]: db.sequelize.literal(
-                    "(SELECT COUNT(spa.id) FROM roles AS sr, personroles as spr, personappointments as spa, appointments a WHERE spr.roleId = sr.id AND spr.personId = spa.personId AND spa.id = a.id AND sr.type = 'Student') = 0"
-                  ),
-                },
-              },
-            ],
-          },
-        ],
-        status: "available",
-        date: { [Op.eq]: delDate },
-        startTime: { [Op.lt]: delTimePlusBuffer },
-        groupId: group.id,
-      },
-      include: [
-        {
-          model: Group,
-          as: "group",
-          required: true,
-          where: { id: group.id },
-        },
-      ],
-    })
+    let group = groups[i].dataValues;
+    console.log(group.id);
+    await Appointment.findAllToDeleteForGroup(group)
       .then((data) => {
         appointments = data;
       })
       .catch((err) => {
-        console.log("Could not find past Appointments: " + err);
+        console.log(
+          "Could not find past appointments to delete for group: " + err
+        );
       });
+
     console.log(
       delTime +
         ": Checking " +
         appointments.length +
         " appointments for deletion or revision"
     );
+
     if (appointments.length > 0) {
       // for each appointment check to see if they need to have start time update or be deleted
       for (let j = 0; j < appointments.length; j++) {
         let appointment = appointments[j];
-        let startTime = addMinsToTime(
+        let startTime = Time.addMinsToTime(
           appointment.group.timeInterval,
           appointment.startTime
         );
+        console.log(startTime);
         // should not try to change time of group appointment, should just delete those
         if (appointment.type === "Private") {
           if (
@@ -145,29 +65,25 @@ async function deletePastAppointments() {
             appointment.startTime = startTime;
             let newAppointment = appointment.dataValues;
             let appointmentId = newAppointment.id;
-            await Appointment.update(newAppointment, {
-              where: { id: appointmentId },
-            }).catch((err) => {
-              console.log("Could not update Appointment" + err);
+            await Appointment.updateAppointment(
+              newAppointment,
+              appointmentId
+            ).catch((err) => {
+              console.log("Could not update appointment: " + err);
             });
           } else {
-            await Appointment.destroy({
-              where: { id: appointment.id },
-            }).catch((err) => {
-              console.log("Could not delete Appointment" + err);
+            await Appointment.deleteAppointment(appointment.id).catch((err) => {
+              console.log("Could not delete appointment: " + err);
             });
           }
         } else if (appointment.type === "Group") {
           // need to delete from Google first and then delete the actual appointment
-          await appointmentController
-            .deleteFromGoogle(appointment.id)
-            .catch((err) => {
-              console.log("Could not delete Appointment from Google " + err);
-            });
-          await Appointment.destroy({
-            where: { id: appointment.id },
-          }).catch((err) => {
-            console.log("Could not delete Appointment" + err);
+          await GoogleCalendar.deleteFromGoogle(appointment.id).catch((err) => {
+            console.log("Could not delete appointment from Google " + err);
+          });
+
+          await Appointment.deleteAppointment(appointment.id).catch((err) => {
+            console.log("Could not delete appointment: " + err);
           });
         }
       }
@@ -182,7 +98,7 @@ async function deletePastAppointments() {
       console.log(
         num +
           " past person appointments before " +
-          formatDate(new Date(delDate)) +
+          Time.Date(new Date(delDate)) +
           " at " +
           delTime +
           " were deleted successfully!"
@@ -191,76 +107,4 @@ async function deletePastAppointments() {
     .catch((err) => {
       console.log("Could not delete past person appointments " + err);
     });
-}
-
-function addMinsToTime(mins, time) {
-  // get the times hour and min value
-  var [timeHrs, timeMins] = getHoursAndMinsFromTime(time);
-
-  // time arithmetic (addition)
-  if (timeMins + mins >= 60) {
-    var addedHrs = parseInt((timeMins + mins) / 60);
-    timeMins = (timeMins + mins) % 60;
-    if (timeHrs + addedHrs > 23) {
-      timeHrs = (timeHrs + addedHrs) % 24;
-    } else {
-      timeHrs += addedHrs;
-    }
-  } else {
-    timeMins += mins;
-  }
-
-  // make sure the time slots are padded correctly
-  return (
-    String("00" + timeHrs).slice(-2) +
-    ":" +
-    String("00" + timeMins).slice(-2) +
-    ":00"
-  );
-}
-
-function subtractMinsFromTime(mins, time) {
-  console.log(time);
-  // get the times hour and min value
-  var [timeHrs, timeMins] = getHoursAndMinsFromTime(time);
-
-  //TODO test when hour should be -1 but it's -0
-
-  // time arithmetic (subtraction)
-  if (timeMins - mins <= 0) {
-    var subtractedHrs = parseInt((timeMins - mins) / 60);
-    console.log(subtractedHrs);
-    timeMins = ((timeMins - mins) % 60) + 60;
-    console.log(timeMins);
-
-    if (timeHrs - subtractedHrs < 0) {
-      timeHrs = ((timeHrs - subtractedHrs) % 24) + 24;
-    } else {
-      timeHrs -= subtractedHrs;
-    }
-  } else {
-    timeMins -= mins;
-  }
-
-  // make sure the time slots are padded correctly
-  return (
-    String("00" + timeHrs).slice(-2) +
-    ":" +
-    String("00" + timeMins).slice(-2) +
-    ":00"
-  );
-}
-
-function getHoursAndMinsFromTime(time) {
-  return time.split(":").map(function (str) {
-    return parseInt(str);
-  });
-}
-
-function formatDate(date) {
-  let formattedDate =
-    date.toISOString().substring(5, 10) +
-    "-" +
-    date.toISOString().substring(0, 4);
-  return formattedDate;
 }

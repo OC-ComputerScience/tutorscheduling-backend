@@ -63,6 +63,50 @@ exports.findAllAppointments = async () => {
   });
 };
 
+exports.findAllToDeleteForGroup = async (group) => {
+  let delDate = new Date().setHours(0, 0, 0);
+  let delTime = new Date().toLocaleTimeString("it-IT");
+  let delTimePlusBuffer = Time.subtractMinsFromTime(
+    group.bookPastMinutes,
+    delTime
+  );
+  console.log(delTimePlusBuffer);
+
+  // here we are finding private available and group available with no students
+
+  return await Appointment.findAll({
+    where: {
+      [Op.or]: [
+        { type: "Private" },
+        {
+          [Op.and]: [
+            { type: "Group" },
+            {
+              id: {
+                [Op.in]: db.sequelize.literal(
+                  "(SELECT COUNT(spa.id) FROM roles AS sr, personroles as spr, personappointments as spa, appointments a WHERE spr.roleId = sr.id AND spr.personId = spa.personId AND spa.id = a.id AND sr.type = 'Student') = 0"
+                ),
+              },
+            },
+          ],
+        },
+      ],
+      status: "available",
+      date: { [Op.eq]: delDate },
+      startTime: { [Op.lt]: delTimePlusBuffer },
+      groupId: group.id,
+    },
+    include: [
+      {
+        model: Group,
+        as: "group",
+        required: true,
+        where: { id: group.id },
+      },
+    ],
+  });
+};
+
 exports.findAllNeedingGoogleId = async () => {
   return await Appointment.findAll({
     where: {
