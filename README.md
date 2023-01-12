@@ -49,13 +49,3 @@ npm install
 ```
 npm run start
 ```
-
-8. (Optional) Compile the project for production.
-```
-npm run build
-```
-
-9. (Optional) Lint and fix the project files.
-```
-npm run lint
-```
