@@ -4,17 +4,18 @@ const Appointment = db.appointment;
 const PersonAppointment = db.personappointment;
 const Op = db.Sequelize.Op;
 const Group = db.group;
+let appointments = [];
 
 // Schedule tasks to be run on the server 12:01 am.
 // From : https://www.digitalocean.com/community/tutorials/nodejs-cron-jobs-by-examples
 
 exports.fifteenMinuteTasks = () => {
   // for prod, runs at 3 minutes before every 15 minutes every hour
-  cron.schedule("12,27,42,57 * * * *", function () {
+  cron.schedule("12,27,42,57 * * * *", async function () {
     // for testing, runs every minute
-    //   cron.schedule('* * * * *', function() {
-    console.log("Scheduled task every 15 mins");
-    deletePastAppointments();
+    // cron.schedule("* * * * *", async function () {
+    console.log("Every 15-Minute Tasks:");
+    await deletePastAppointments();
   });
 };
 
@@ -52,58 +53,51 @@ async function deletePastAppointments() {
       },
     ],
   })
-    .then((appointments) => {
-      console.log(
-        delTime +
-          ":Checking " +
-          appointments.length +
-          " appointments for deletion or revision"
-      );
-      if (appointments.length > 0) {
-        // for each appointment check to see if the need to have start time update or be deleted
-        appointments.forEach((appointment) => {
-          // let startTime = .split(":");
-          let startTime = addMinsToTime(
-            appointment.group.timeInterval,
-            appointment.startTime
-          );
-          console.log(startTime);
-          // let hour = parseInt(startTime[0])+1 % 24;
-          // if(hour < 10) {
-          // hour = "0" + hour
-          // }
-          // let newStartTime = hour+":"+startTime[1]+":"+startTime[2];
-          // should not try to change time of group appointment, should just delete those
-          if (
-            startTime < appointment.endTime &&
-            appointment.endTime > delTime &&
-            appointment.type === "Private" &&
-            appointment.group.allowSplittingAppointments
-          ) {
-            appointment.startTime = startTime;
-            let newAppointment = appointment.dataValues;
-            let appointmentId = newAppointment.id;
-            Appointment.update(newAppointment, {
-              where: { id: appointmentId },
-            }).catch((err) => {
-              console.log("Could not update Appointment" + err);
-            });
-          } else {
-            let id = appointment.id;
-            Appointment.destroy({
-              where: { id: id },
-            }).catch((err) => {
-              console.log("Could not delete Appointment" + err);
-            });
-          }
-        });
-      }
+    .then((data) => {
+      appointments = data;
     })
     .catch((err) => {
-      console.log("Could not find past Appointments: " + err);
+      console.log("Could not find past appointments: " + err);
     });
 
-  PersonAppointment.destroy({
+  console.log(
+    delTime +
+      ": Checking " +
+      appointments.length +
+      " appointments for deletion or revision"
+  );
+  if (appointments.length > 0) {
+    // for each appointment check to see if the need to have start time update or be deleted
+    for (let i = 0; i < appointments.length; i++) {
+      let appointment = appointments[i];
+      let startTime = addMinsToTime(
+        appointment.group.timeInterval,
+        appointment.startTime
+      );
+      if (
+        startTime < appointment.endTime &&
+        appointment.endTime > delTime &&
+        appointment.type === "Private" &&
+        appointment.group.allowSplittingAppointments
+      ) {
+        appointment.startTime = startTime;
+        let newAppointment = appointment.dataValues;
+        await Appointment.update(newAppointment, {
+          where: { id: appointment.id },
+        }).catch((err) => {
+          console.log("Could not update appointment " + err);
+        });
+      } else {
+        await Appointment.destroy({
+          where: { id: appointment.id },
+        }).catch((err) => {
+          console.log("Could not delete appointment " + err);
+        });
+      }
+    }
+  }
+
+  await PersonAppointment.destroy({
     where: {
       appointmentId: null,
     },
@@ -111,13 +105,13 @@ async function deletePastAppointments() {
     .then((num) => {
       console.log(
         num +
-          " Past person appointments before " +
-          delDate.toString() +
+          " past person appointments before " +
+          delDate +
           " were deleted successfully!"
       );
     })
     .catch((err) => {
-      console.log("Could not delete past PersonAppointments" + err);
+      console.log("Could not delete past person appointments" + err);
     });
 }
 

@@ -1,91 +1,34 @@
-const MessagingResponse = require("twilio/lib/twiml/MessagingResponse");
-const db = require("../models");
-const Op = db.Sequelize.Op;
-const Person = db.person;
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const authToken =
-  process.env.TWILIO_AUTH_TOKEN1 + process.env.TWILIO_AUTH_TOKEN2;
-const phoneNum = process.env.TWILIO_NUMBER;
-const client = require("twilio")(accountSid, authToken);
-
-let person = {};
-
-getPersonByPhoneNum = async (phoneNumber) => {
-  await Person.findOne({
-    where: {
-      phoneNum: { [Op.like]: `%${phoneNumber}%` },
-    },
-  })
-    .then((data) => {
-      person = data;
-    })
-    .catch((err) => {
-      console.log(err);
-      res.status(500).send({
-        message:
-          "Error retrieving Person with phone number =" + req.body.phoneNum,
-      });
-    });
-};
+const Twilio = require("../utils/twilio.js");
 
 exports.send = async (req, res) => {
-  let prefix = "OC Tutor Scheduling: ";
-  let postfix = "\nReply STOP to unsubscribe.";
-  let message = prefix + req.body.message + postfix;
-  let person = {};
-
-  await getPersonByPhoneNum(req.body.phoneNum);
-
-  if (person.textOptIn) {
-    client.messages
-      .create({
-        body: message,
-        from: phoneNum,
-        to: req.body.phoneNum,
-      })
-      .then((message) => {
-        console.log("sent " + message.sid);
-        res.send({ message: "sent " + message.sid });
-      })
-      .catch((err) => {
-        console.log("Could not send message" + err);
-        res.status(500).send({
-          message: err.message || "Could not send message: " + err,
-        });
+  await Twilio.sendText(req.body.message, req.body.phoneNum)
+    .then((message) => {
+      if (message.sid !== undefined) {
+        console.log("Sent text " + message.sid);
+        res.send({ message: "Sent Text " + message.sid });
+      } else {
+        console.log(message);
+        res.send({ message: message });
+      }
+    })
+    .catch((err) => {
+      console.log("Error sending text message: " + err);
+      res.status(500).send({
+        message: "Error sending text message: " + err,
       });
-  }
+    });
 };
 
 exports.respond = async (req, res) => {
-  console.log("twilio request")
-  console.log(req.body)
-  if (req.body.Body === "STOP") {
-    let phoneNum = req.body.From.substring(2);
-    //we need to update person to opt out of texts
-    await getPersonByPhoneNum(phoneNum);
-    person.textOptIn = false;
-    console.log(person)
-    await Person.update(person.dataValues, {
-      where: { id: person.id },
-    }).catch((err) => {
-      console.log(err);
+  await Twilio.respondToStop(req.body.Body, req.body.From)
+    .then((data) => {
+      console.log("finished the response");
+      res.type("text/xml").send(data);
+    })
+    .catch((err) => {
+      console.log("Error responding to STOP message: " + err);
       res.status(500).send({
-        message: "Error updating person's text opt in",
+        message: "Error responding to STOP message: " + err,
       });
     });
-
-    const twiml = new MessagingResponse();
-
-    twiml.message(
-      "You have successfully unsubscribed from OC Tutor Scheduling text notifications."
-    );
-
-    res.type("text/xml").send(twiml.toString());
-    
-  }
-  else {
-    res.status(200).send({
-      message: "No need to update person's text opt in",
-    });
-  }
-}
+};
