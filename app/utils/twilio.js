@@ -37,7 +37,7 @@ exports.sendText = async (message, phone) => {
       })
       .catch(async (err) => {
         // if we get an error that the recipient is unsubscribed, we need to update their textOptIn to false
-        if (err.includes("unsubscribed recipient")) {
+        if (err.message.includes("unsubscribed recipient")) {
           person.textOptIn = false;
           console.log(person);
           await Person.updatePerson(person.dataValues, person.id)
