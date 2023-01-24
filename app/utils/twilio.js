@@ -40,7 +40,9 @@ exports.sendText = async (message, phone) => {
         if (err.message.includes("unsubscribed recipient")) {
           person.textOptIn = false;
           console.log(person);
-          await Person.updatePerson(person.dataValues, person.id)
+          await Person.update(person.dataValues, {
+            where: { id: person.id },
+          })
             .then((data) => {
               console.log("Made unsubscribed recipient's textOptIn = false.");
               return data;
