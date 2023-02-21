@@ -10,9 +10,9 @@ const Time = require("../utils/timeFunctions.js");
 
 exports.fifteenMinuteTasks = () => {
   // for prod, runs at 3 minutes before every 15 minutes every hour
-  // cron.schedule("12,27,42,57 * * * *", async function () {
-  // for testing, runs every minute
-  cron.schedule("* * * * *", async function () {
+  cron.schedule("12,27,42,57 * * * *", async function () {
+    // for testing, runs every minute
+    // cron.schedule("* * * * *", async function () {
     console.log(
       "15-Minute Tasks for " + new Date().toLocaleTimeString("it-IT") + ":"
     );
