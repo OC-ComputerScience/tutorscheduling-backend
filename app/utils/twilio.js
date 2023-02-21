@@ -1,3 +1,4 @@
+const Appointment = require("./appointment.js");
 const Person = require("./person.js");
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken =
@@ -5,7 +6,6 @@ const authToken =
 const phoneNum = process.env.TWILIO_NUMBER;
 const client = require("twilio")(accountSid, authToken);
 const MessagingResponse = require("twilio/lib/twiml/MessagingResponse");
-const Appointment = require("./appointment.js");
 
 exports.sendText = async (message, phone) => {
   let prefix = "OC Tutor Scheduling:\n";
@@ -36,16 +36,7 @@ exports.sendText = async (message, phone) => {
         if (err.message.includes("unsubscribed recipient")) {
           person.textOptIn = false;
           console.log(person);
-          await Person.update(person.dataValues, {
-            where: { id: person.id },
-          })
-            .then((data) => {
-              console.log("Made unsubscribed recipient's textOptIn = false.");
-              return data;
-            })
-            .catch((err) => {
-              return err;
-            });
+          await Person.updatePerson(person.dataValues, person.id);
         } else {
           return err;
         }
@@ -62,38 +53,17 @@ exports.respondToStop = async (body, from) => {
     let phoneNum = from.substring(2);
     console.log(phoneNum);
     //we need to update person to opt out of texts
-    let person = await Person.Person.findOnePersonByPhoneNumber(phone).catch(
-      (err) => {
-        console.log(
-          "Error retrieving person by phone number " + phone + ": " + err
-        );
-      }
-    );
+    let person = await Person.findOnePersonByPhoneNumber(phone).catch((err) => {
+      console.log(
+        "Error retrieving person by phone number " + phone + ": " + err
+      );
+    });
     if (person === undefined) {
       return "Could not find person by phone number";
     } else {
       person.textOptIn = false;
       console.log(person);
-      await Person.update(person.dataValues, {
-        where: { id: person.id },
-      })
-        .then((num) => {
-          if (num == 1) {
-            res.send({
-              message: "Person was updated successfully.",
-            });
-          } else {
-            res.send({
-              message: `Cannot update Person with id=${id}. Maybe Person was not found or req.body is empty!`,
-            });
-          }
-        })
-        .catch((err) => {
-          console.log(err);
-          res.status(500).send({
-            message: "Error updating Person with id=" + id,
-          });
-        });
+      await Person.updatePerson(person.dataValues, person.id);
 
       const twiml = new MessagingResponse();
 
