@@ -8,8 +8,9 @@ const MessagingResponse = require("twilio/lib/twiml/MessagingResponse");
 
 exports.sendText = async (message, phone) => {
   let prefix = "OC Tutor Scheduling:\n";
-  let postfix = "\nReply STOP to unsubscribe.";
-  let finalMessage = prefix + message + postfix;
+  // let postfix = "\nReply STOP to unsubscribe.";
+  let finalMessage = prefix + message;
+  // + postfix;
 
   let person = await Person.findOnePersonByPhoneNumber(phone).catch((err) => {
     console.log(
@@ -31,10 +32,12 @@ exports.sendText = async (message, phone) => {
       })
       .catch(async (err) => {
         // if we get an error that the recipient is unsubscribed, we need to update their textOptIn to false
-        if (err.includes("unsubscribed recipient")) {
+        if (err.message.includes("unsubscribed recipient")) {
           person.textOptIn = false;
           console.log(person);
-          await Person.updatePerson(person.dataValues, person.id)
+          await Person.update(person.dataValues, {
+            where: { id: person.id },
+          })
             .then((data) => {
               console.log("Made unsubscribed recipient's textOptIn = false.");
               return data;
@@ -70,7 +73,26 @@ exports.respondToStop = async (body, from) => {
     } else {
       person.textOptIn = false;
       console.log(person);
-      await Person.updatePerson(person.dataValues, person.id);
+      await Person.update(person.dataValues, {
+        where: { id: person.id },
+      })
+        .then((num) => {
+          if (num == 1) {
+            res.send({
+              message: "Person was updated successfully.",
+            });
+          } else {
+            res.send({
+              message: `Cannot update Person with id=${id}. Maybe Person was not found or req.body is empty!`,
+            });
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+          res.status(500).send({
+            message: "Error updating Person with id=" + id,
+          });
+        });
 
       const twiml = new MessagingResponse();
 
