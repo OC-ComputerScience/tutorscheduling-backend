@@ -1,6 +1,6 @@
 const Appointment = require("../utils/appointment.js");
 const Person = require("../utils/person.js");
-const Time = require("../utils/timeFunctions.js");
+const Twilio = require("../utils/twilio.js");
 
 const { google } = require("googleapis");
 
@@ -210,6 +210,7 @@ exports.cancelAppointmentFromGoogle = async (appointment, event) => {
   if (appointment.type === "Private") {
     let student = await Person.findFirstStudentForAppointment(appointment.id);
     let tutor = await Person.findFirstTutorForAppointment(appointment.id);
+    let fromUser = {};
     if (event.data.status === "confirmed") {
       for (let i = 0; i < event.data.attendees.length; i++) {
         let attendee = event.data.attendee[i];
@@ -217,6 +218,14 @@ exports.cancelAppointmentFromGoogle = async (appointment, event) => {
           if (attendee.email === event.creator.email) {
             // the tutor declined but didn't delete the event
             updateAppt.status = "tutorCancel";
+            fromUser = {
+              fName: tutor.fName,
+              lName: tutor.lName,
+              userID: tutor.id,
+              selectedRole: {
+                type: "Tutor",
+              },
+            };
           } else {
             // if it's not the creator's email, then it's a student cancel
             // need to make a new appointment for the same time
@@ -241,38 +250,19 @@ exports.cancelAppointmentFromGoogle = async (appointment, event) => {
               }
             );
             updateAppt.status = "studentCancel";
+            fromUser = {
+              fName: student.fName,
+              lName: student.lName,
+              userID: student.id,
+              selectedRole: {
+                type: "Student",
+              },
+            };
           }
 
           updateAppt.googleEventId = null;
           await Appointment.updateAppointment(updateAppt, updateAppt.id);
           await this.deleteFromGoogle(updateAppt.id);
-
-          // need to send canceled message
-          // let message =
-          //   "Your " +
-          //   appointment.type +
-          //   " appointment for " +
-          //   appointment.topic.dataValues.name +
-          //   " on " +
-          //   Time.formatDate(appointment.date) +
-          //   " at " +
-          //   Time.calcTime(appointment.startTime) +
-          //   " has been canceled by " +
-          //   student.fName +
-          //   " " +
-          //   student.lName +
-          //   ".\nThis appointment is now open again for booking.";
-          // await Twilio.sendText(message, tutor.phoneNum)
-          //   .then((message) => {
-          //     if (message.sid !== undefined) {
-          //       console.log("Sent text " + message.sid);
-          //     } else {
-          //       console.log(message);
-          //     }
-          //   })
-          //   .catch((err) => {
-          //     console.log("Error sending text message: " + err);
-          //   });
         }
       }
     } else if (event.data.status === "cancelled") {
@@ -296,6 +286,7 @@ exports.cancelAppointmentFromGoogle = async (appointment, event) => {
       // if not, set to tutor cancel
     }
   }
+  await Twilio.sendCanceledMessage(fromUser, appointment.id);
 };
 
 setUpEvent = async (id) => {

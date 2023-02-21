@@ -19,7 +19,7 @@ exports.hourlyTasks = () => {
     // for testing, runs every minute
     // cron.schedule('* * * * *', async function() {
     console.log("Every 55-Minute Tasks:");
-    await checkGoogleEvents();
+    // await checkGoogleEvents();
     await notifyUpcomingAppointments();
   });
 };

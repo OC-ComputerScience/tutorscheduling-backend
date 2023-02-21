@@ -5,6 +5,7 @@ const authToken =
 const phoneNum = process.env.TWILIO_NUMBER;
 const client = require("twilio")(accountSid, authToken);
 const MessagingResponse = require("twilio/lib/twiml/MessagingResponse");
+const Appointment = require("./appointment.js");
 
 exports.sendText = async (message, phone) => {
   let prefix = "OC Tutor Scheduling:\n";
@@ -104,5 +105,106 @@ exports.respondToStop = async (body, from) => {
     }
   } else {
     return "No need to update person's text opt in.";
+  }
+};
+
+exports.sendCanceledMessage = async (fromUser, appointId) => {
+  let appointment = {};
+  await Appointment.findOneAppointmentInfo(appointId)
+    .then(async (response) => {
+      appointment = response.data[0];
+      if (
+        appointment.personappointment !== null &&
+        appointment.personappointment !== undefined
+      ) {
+        appointment.students = appointment.personappointment.filter(
+          (pa) => pa.isTutor === false
+        );
+        appointment.tutors = appointment.personappointment.filter(
+          (pa) => pa.isTutor === true
+        );
+      }
+    })
+    .catch((error) => {
+      console.log("There was an error:", error);
+    });
+
+  let text = {
+    phoneNum: "",
+    message: "",
+  };
+  let ending = "";
+  if (fromUser.selectedRole.type === "Student") {
+    if (appointment.type === "Private") {
+      ending = "\nThis appointment is now open again for booking.";
+    }
+  } else if (fromUser.selectedRole.type === "Tutor") {
+    ending = "\nWe apologize for the inconvenience.";
+  }
+
+  if (
+    appointment.type === "Private" ||
+    (appointment.type === "Group" && fromUser.selectedRole.type === "Tutor")
+  ) {
+    text.message =
+      "Your " +
+      appointment.type +
+      " appointment for " +
+      appointment.topic.name +
+      " on " +
+      Time.formatDate(appointment.date) +
+      " at " +
+      Time.calcTime(appointment.startTime) +
+      " has been canceled by " +
+      fromUser.fName +
+      " " +
+      fromUser.lName +
+      "." +
+      ending;
+  } else if (
+    appointment.type === "Group" &&
+    fromUser.selectedRole.type === "Student"
+  ) {
+    text.message =
+      "A student has left your group appointment." +
+      "\n    Date: " +
+      Time.formatDate(appointment.date) +
+      "\n    Time: " +
+      Time.calcTime(appointment.startTime) +
+      "\n    Location: " +
+      appointment.location.name +
+      "\n    Topic: " +
+      appointment.topic.name +
+      "\n    Student: " +
+      fromUser.fName +
+      " " +
+      fromUser.lName +
+      ending;
+  }
+
+  // notify all tutors involved besides themselves
+  for (let i = 0; i < appointment.tutors.length; i++) {
+    if (appointment.tutors[i].personId !== fromUser.userID) {
+      text.phoneNum = appointment.tutors[i].person.phoneNum;
+      if (text.phoneNum !== "") {
+        await this.sendText(text.message, text.phoneNum).catch((error) => {
+          console.log("There was an error:", error.response);
+        });
+      }
+    }
+  }
+
+  // only notify all students involved besides themselves if tutor canceled
+  if (fromUser.selectedRole.type === "Tutor") {
+    for (let i = 0; i < appointment.students.length; i++) {
+      if (appointment.students[i].personId !== fromUser.userID) {
+        text.phoneNum = appointment.students[i].person.phoneNum;
+        if (text.phoneNum !== "") {
+          await this.sendText(text.message, text.phoneNum).catch((error) => {
+            console.log("There was an error:", error.response);
+          });
+        }
+      }
+    }
   }
 };
