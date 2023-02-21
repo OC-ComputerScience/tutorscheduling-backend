@@ -151,7 +151,7 @@ exports.login = async (req, res) => {
   await Session.findSessionByEmail(email)
     .then(async (data) => {
       if (data !== null) {
-        session = data.dataValues;
+        session = data[0].dataValues;
       }
     })
     .catch((err) => {
