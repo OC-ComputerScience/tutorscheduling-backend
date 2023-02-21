@@ -1,14 +1,17 @@
 const cron = require("node-cron");
 const db = require("../models");
 const Appointment = db.appointment;
+const GoogleCalendar = require("../utils/googleCalendar");
 const PersonAppointment = db.personappointment;
 const Person = db.person;
-const Location = db.location;
+const Time = require("../utils/timeFunctions.js");
 const Twilio = require("../utils/twilio.js");
+const Topic = db.topic;
+const Location = db.location;
 const Op = db.Sequelize.Op;
 
 // Schedule tasks to be run on the server 12:01 am.
-// From : https://www.digitalocean.com/community/tutorials/nodejs-cron-jobs-by-examples
+// From: https://www.digitalocean.com/community/tutorials/nodejs-cron-jobs-by-examples
 
 exports.hourlyTasks = () => {
   // for prod, runs at ever hour at 55 minute past the hour.
@@ -16,10 +19,57 @@ exports.hourlyTasks = () => {
     // for testing, runs every minute
     // cron.schedule('* * * * *', async function() {
     console.log("Every 55-Minute Tasks:");
+    // await checkGoogleEvents();
     await notifyUpcomingAppointments();
   });
 };
 
+async function checkGoogleEvents() {
+  console.log("Checking Google Events:");
+  let appointmentsNeedingGoogle = [];
+  await Appointment.findAllNeedingGoogleId()
+    .then(async (data) => {
+      appointmentsNeedingGoogle = data;
+    })
+    .catch((err) => {
+      console.log("Could not find appointments needing Google ids: " + err);
+    });
+
+  // all of these appointments need to be added to Google calendar
+  for (let i = 0; i < appointmentsNeedingGoogle.length; i++) {
+    let appointment = appointmentsNeedingGoogle[i];
+    await GoogleCalendar.addAppointmentToGoogle(appointment.id).catch((err) => {
+      console.log(err);
+    });
+  }
+
+  let appointmentsWithGoogle = [];
+  await Appointment.findAllWithGoogleId()
+    .then(async (data) => {
+      appointmentsWithGoogle = data;
+    })
+    .catch((err) => {
+      console.log("Could not find appointments with Google ids: " + err);
+    });
+
+  for (let i = 0; i < appointmentsWithGoogle.length; i++) {
+    let appointment = appointmentsWithGoogle[i].dataValues;
+    let event = await GoogleCalendar.getAppointmentFromGoogle(
+      appointment.id
+    ).catch((err) => {
+      console.log("Error getting appointment from Google: " + err);
+    });
+
+    console.log(event.data);
+    console.log(appointment);
+
+    if (event.data !== undefined) {
+      await GoogleCalendar.cancelAppointmentFromGoogle(appointment, event);
+    }
+  }
+}
+
+// this gets appointments around 2 hours from now
 async function notifyUpcomingAppointments() {
   let date = new Date().setHours(0, 0, 0);
   let startDate = new Date();
@@ -29,7 +79,7 @@ async function notifyUpcomingAppointments() {
   endDate.setHours(endDate.getHours() + 2);
   let endTime = endDate.toLocaleTimeString("it-IT");
   let personAppointments = [];
-  //get all of the appointments for today that start before now
+  //get all of the appointments for today that start after now
   await PersonAppointment.findAll({
     include: [
       {
@@ -49,90 +99,163 @@ async function notifyUpcomingAppointments() {
     .then((pap) => {
       console.log(pap.length + " people found with booked appointments");
       if (pap.length > 0) {
-        pap.forEach((pa) => {
-          personAppointments.push(pa);
-        });
+        for (let i = 0; i < pap.length; i++) {
+          personAppointments.push(pap[i]);
+        }
       }
-      PersonAppointment.findAll({
-        as: "personAppointment",
+    })
+    .catch((err) => {
+      console.log("Could not work 1: " + err);
+    });
+  await PersonAppointment.findAll({
+    as: "personAppointment",
+    where: {
+      [Op.or]: [
+        { isTutor: false },
+        {
+          appointmentId: {
+            [Op.in]: db.sequelize.literal(
+              "(SELECT appointmentId FROM personappointments where appointmentId=personAppointment.appointmentId AND isTutor='0')"
+            ),
+          },
+        },
+      ],
+    },
+    include: [
+      {
+        model: Appointment,
+        as: "appointment",
         where: {
-          [Op.or]: [
-            { isTutor: false },
+          status: "available",
+          type: "Group",
+          date: { [Op.eq]: date },
+          startTime: {
+            [Op.and]: [{ [Op.gt]: startTime }, { [Op.lt]: endTime }],
+          },
+        },
+        required: true,
+      },
+    ],
+  })
+    .then((morePap) => {
+      console.log(morePap.length + " people found with group appointments");
+      if (morePap.length > 0) {
+        for (let i = 0; i < morePap.length; i++) {
+          personAppointments.push(morePap[i]);
+        }
+      }
+    })
+    .catch((err) => {
+      console.log("Could not work 2: " + err);
+    });
+
+  for (let i = 0; i < personAppointments.length; i++) {
+    let pap = personAppointments[i];
+    let person = {};
+    let appointment = {};
+    await Person.findByPk(pap.personId)
+      .then((data) => {
+        person = data;
+      })
+      .catch((err) => {
+        console.log("Could not work person: " + err);
+      });
+
+    await Appointment.findAll({
+      where: { id: pap.appointmentId },
+      include: [
+        {
+          model: Location,
+          as: "location",
+          required: true,
+        },
+        {
+          model: Topic,
+          as: "topic",
+          required: true,
+        },
+        {
+          model: PersonAppointment,
+          as: "personappointment",
+          required: true,
+          include: [
             {
-              appointmentId: {
-                [Op.in]: db.sequelize.literal(
-                  "(SELECT appointmentId FROM personappointments where appointmentId=personAppointment.appointmentId AND isTutor='0')"
-                ),
-              },
+              model: Person,
+              as: "person",
+              required: true,
+              right: true,
             },
           ],
         },
-        include: [
-          {
-            model: Appointment,
-            as: "appointment",
-            where: {
-              status: "available",
-              type: "Group",
-              date: { [Op.eq]: date },
-              startTime: {
-                [Op.and]: [{ [Op.gt]: startTime }, { [Op.lt]: endTime }],
-              },
-            },
-            required: true,
-          },
-        ],
+      ],
+      order: [
+        ["date", "ASC"],
+        ["startTime", "ASC"],
+      ],
+    })
+      .then((data) => {
+        appointment = data[0];
+        appointment.students = appointment.personappointment.filter(
+          (pa) => pa.isTutor === false
+        );
+        appointment.tutors = appointment.personappointment.filter(
+          (pa) => pa.isTutor === true
+        );
       })
-        .then((morePap) => {
-          console.log(morePap.length + " people found with group appointments");
-          if (morePap.length > 0) {
-            morePap.forEach((pa) => {
-              personAppointments.push(pa);
-            });
-          }
-          personAppointments.forEach((personAppoint) => {
-            Person.findByPk(personAppoint.personId).then((person) => {
-              Appointment.findByPk(personAppoint.appointmentId).then(
-                (appoint) => {
-                  Location.findByPk(appoint.locationId).then(
-                    async (location) => {
-                      let time = calcTime(appoint.startTime);
-                      let message =
-                        "You have an upcoming tutoring appointment:" +
-                        "\n    Type: " +
-                        appoint.type +
-                        "\n    Time: " +
-                        time +
-                        "\n    Location: " +
-                        location.name;
-                      await Twilio.sendText(message, person.phoneNum)
-                        .then((message) => {
-                          if (message.sid !== undefined) {
-                            console.log("Sent text " + message.sid);
-                          } else {
-                            console.log(message);
-                          }
-                        })
-                        .catch((err) => {
-                          console.log("Error sending text message: " + err);
-                        });
-                    }
-                  );
-                }
-              );
-            });
-          });
-        })
-        .catch((err) => {
-          console.log("Could not work" + err);
-        });
-    })
-    .catch((err) => {
-      console.log("Could not work 2" + err);
-    })
-    .catch((err) => {
-      console.log("Could not work 3" + err);
-    });
+      .catch((err) => {
+        console.log("An error occurred: " + err);
+      });
+
+    let message =
+      "You have an upcoming appointment:" +
+      "\n    Type: " +
+      appointment.type +
+      "\n    Date: " +
+      formatDate(appointment.date) +
+      "\n    Time: " +
+      calcTime(appointment.startTime) +
+      "\n    Location: " +
+      appointment.location.name +
+      "\n    Topic: " +
+      appointment.topic.name;
+
+    if (pap.isTutor) {
+      if (appointment.students.length > 1) {
+        message += "\n    Students: ";
+        for (let j = 0; j < appointment.students.length; j++) {
+          text.message += "\n              ";
+          text.message +=
+            appointment.students[j].person.fName +
+            " " +
+            appointment.students[j].person.lName;
+        }
+      } else if (appointment.students.length === 1) {
+        message +=
+          "\n    Student: " +
+          appointment.students[0].person.fName +
+          " " +
+          appointment.students[0].person.lName;
+      }
+    } else {
+      message +=
+        "\n    Tutor: " +
+        appointment.tutors[0].person.fName +
+        " " +
+        appointment.tutors[0].person.lName;
+    }
+
+    await Twilio.sendText(message, person.phoneNum)
+      .then((message) => {
+        if (message.sid !== undefined) {
+          console.log("Sent text " + message.sid);
+        } else {
+          console.log(message);
+        }
+      })
+      .catch((err) => {
+        console.log("Error sending text message: " + err);
+      });
+  }
 }
 function calcTime(time) {
   if (time == null) {
@@ -147,4 +270,12 @@ function calcTime(time) {
   }
   let dayTime = ~~(milHours / 12) > 0 ? "PM" : "AM";
   return "" + hours + ":" + minutes + " " + dayTime;
+}
+
+function formatDate(date) {
+  let formattedDate =
+    date.toISOString().substring(5, 10) +
+    "-" +
+    date.toISOString().substring(0, 4);
+  return formattedDate;
 }

@@ -1,26 +1,7 @@
-const db = require("../models");
-const Session = db.session;
-const Op = db.Sequelize.Op;
+const Session = require("../utils/session.js");
 
-// Create and Save a new session
-exports.create = (req, res) => {
-  // Validate request
-  if (!req.body.type) {
-    res.status(400).send({
-      message: "Content can not be empty!",
-    });
-    return;
-  }
-
-  // Create a session
-  const session = {
-    id: req.body.id,
-    groupId: req.body.groupId,
-    type: req.body.type,
-  };
-
-  // Save session in the database
-  Session.create(session)
+exports.create = async (req, res) => {
+  await Session.createSession(req.body)
     .then((data) => {
       res.send(data);
     })
@@ -32,12 +13,8 @@ exports.create = (req, res) => {
     });
 };
 
-// Retrieve all sessions from the database.
-exports.findAll = (req, res) => {
-  const id = req.query.id;
-  var condition = id ? { id: { [Op.like]: `%${id}%` } } : null;
-
-  Session.findAll({ where: condition })
+exports.findAll = async (req, res) => {
+  await Session.findAllSessions()
     .then((data) => {
       res.send(data);
     })
@@ -49,34 +26,27 @@ exports.findAll = (req, res) => {
     });
 };
 
-// Find a single session with an id
-exports.findOne = (req, res) => {
-  const id = req.params.id;
-
-  Session.findByPk(id)
+exports.findOne = async (req, res) => {
+  await Session.findOneSession(req.params.id)
     .then((data) => {
       if (data) {
         res.send(data);
       } else {
         res.status(404).send({
-          message: `Cannot find session with id=${id}.`,
+          message: `Cannot find session with id = ${req.params.id}.`,
         });
       }
     })
     .catch((err) => {
       res.status(500).send({
-        message: "Error retrieving session with id=" + id,
+        message: "Error retrieving session with id = " + req.params.id,
       });
+      console.log("Could not find session: " + err);
     });
 };
 
-// Update a session by the id in the request
-exports.update = (req, res) => {
-  const id = req.params.id;
-
-  Session.update(req.body, {
-    where: { id: id },
-  })
+exports.update = async (req, res) => {
+  await Session.updateSession(req.body, req.params.id)
     .then((num) => {
       if (num == 1) {
         res.send({
@@ -84,48 +54,41 @@ exports.update = (req, res) => {
         });
       } else {
         res.send({
-          message: `Cannot update session with id=${id}. Maybe Person was not found or req.body is empty!`,
+          message: `Cannot update session with id = ${req.params.id}. Maybe session was not found or req.body was empty!`,
         });
       }
     })
     .catch((err) => {
       res.status(500).send({
-        message: "Error updating session with id=" + id,
+        message: "Error updating session with id = " + req.params.id,
       });
+      console.log("Could not update session: " + err);
     });
 };
 
-// Delete a session with the specified id in the request
-exports.delete = (req, res) => {
-  const token = req.body.token;
-
-  Session.destroy({
-    where: { token: token },
-  })
+exports.delete = async (req, res) => {
+  await Session.deleteSession(req.params.id)
     .then((num) => {
       if (num == 1) {
         res.send({
-          message: "session was deleted successfully!",
+          message: "Session was deleted successfully!",
         });
       } else {
         res.send({
-          message: `Cannot delete session with id=${token}. Maybe session was not found!`,
+          message: `Cannot delete session with token = ${req.params.token}. Maybe session was not found!`,
         });
       }
     })
     .catch((err) => {
       res.status(500).send({
-        message: "Could not delete session with id=" + token,
+        message: "Could not delete session with token = " + req.params.token,
       });
+      console.log("Could not delete session: " + err);
     });
 };
 
-// Delete all sessions from the database.
-exports.deleteAll = (req, res) => {
-  Session.destroy({
-    where: {},
-    truncate: false,
-  })
+exports.deleteAll = async (req, res) => {
+  await Session.deleteAllSessions()
     .then((nums) => {
       res.send({ message: `${nums} sessions were deleted successfully!` });
     })

@@ -1,49 +1,19 @@
-const db = require("../models");
-const Role = db.role;
-const Person = db.person;
-const PersonRole = db.personrole;
-const PersonRolePrivilege = db.personroleprivilege;
-const Op = db.Sequelize.Op;
+const Role = require("../utils/role.js");
 
-// Create and Save a new Role
-exports.create = (req, res) => {
-  // Validate request
-  if (!req.body.type) {
-    res.status(400).send({
-      message: "Content can not be empty!",
-    });
-    return;
-  }
-
-  // Create a Role
-  const role = {
-    id: req.body.id,
-    groupId: req.body.groupId,
-    type: req.body.type,
-  };
-
-  // Save Role in the database
-  Role.create(role)
+exports.create = async (req, res) => {
+  await Role.createRole(req.body)
     .then((data) => {
       res.send(data);
     })
     .catch((err) => {
       res.status(500).send({
-        message: err.message || "Some error occurred while creating the Role.",
+        message: err.message || "Some error occurred while creating the role.",
       });
     });
 };
 
-// Retrieve all Roles from the database.
-exports.findAll = (req, res) => {
-  const id = req.query.id;
-  var condition = id ? { id: { [Op.like]: `%${id}%` } } : null;
-
-  Role.findAll({
-    where: condition,
-    include: ["group"],
-    order: [["type", "ASC"]],
-  })
+exports.findAll = async (req, res) => {
+  await Role.findAllRoles()
     .then((data) => {
       res.send(data);
     })
@@ -54,11 +24,8 @@ exports.findAll = (req, res) => {
     });
 };
 
-// Retrieve all Roles for a group from the database.
-exports.findAllForGroup = (req, res) => {
-  const id = req.params.groupId;
-
-  Role.findAll({ where: { groupId: id }, order: [["type", "ASC"]] })
+exports.findAllForGroup = async (req, res) => {
+  await Role.findAllRolesForGroup(req.params.groupId)
     .then((data) => {
       res.send(data);
     })
@@ -71,27 +38,8 @@ exports.findAllForGroup = (req, res) => {
     });
 };
 
-// Retrieve roles per group for personroles for a specific person
-exports.findRoleByGroupForPerson = (req, res) => {
-  const personId = req.params.personId;
-  const groupId = req.params.groupId;
-
-  Role.findAll({
-    where: { "$personrole.personId$": personId, groupId: groupId },
-    include: [
-      {
-        model: PersonRole,
-        as: "personrole",
-        right: true,
-        include: [
-          {
-            model: PersonRolePrivilege,
-            as: "personroleprivilege",
-          },
-        ],
-      },
-    ],
-  })
+exports.findRoleByGroupForPerson = async (req, res) => {
+  await Role.findRolesForPersonForGroup(req.params.groupId, req.params.personId)
     .then((data) => {
       res.send(data);
     })
@@ -100,32 +48,8 @@ exports.findRoleByGroupForPerson = (req, res) => {
     });
 };
 
-// Retrieve roles per group for personroles for a specific type
-exports.findRoleByGroupForType = (req, res) => {
-  const type = req.params.type;
-  const groupId = req.params.groupId;
-
-  Role.findAll({
-    where: { type: type, groupId: groupId },
-    include: [
-      {
-        model: PersonRole,
-        as: "personrole",
-        right: true,
-        include: [
-          {
-            model: PersonRolePrivilege,
-            as: "personroleprivilege",
-          },
-          {
-            model: Person,
-            as: "person",
-            right: true,
-          },
-        ],
-      },
-    ],
-  })
+exports.findRoleByGroupForType = async (req, res) => {
+  await Role.findRolesForTypeForGroup(req.params.groupId, req.params.type)
     .then((data) => {
       res.send(data);
     })
@@ -134,20 +58,8 @@ exports.findRoleByGroupForType = (req, res) => {
     });
 };
 
-// Retrieve a role for a personrole for a specific person
-exports.findRoleForPerson = (req, res) => {
-  const id = req.params.personId;
-
-  Role.findAll({
-    where: { "$personrole.personId$": id },
-    include: [
-      {
-        model: PersonRole,
-        as: "personrole",
-        right: true,
-      },
-    ],
-  })
+exports.findRoleForPerson = async (req, res) => {
+  await Role.findRolesForPerson(req.params.personId)
     .then((data) => {
       res.send(data);
     })
@@ -156,20 +68,8 @@ exports.findRoleForPerson = (req, res) => {
     });
 };
 
-// Retrieve a role for a personrole for a specific person
-exports.findIncompleteRoleForPerson = (req, res) => {
-  const id = req.params.personId;
-
-  Role.findAll({
-    where: { "$personrole.personId$": id, "$personrole.agree$": false },
-    include: [
-      {
-        model: PersonRole,
-        as: "personrole",
-        right: true,
-      },
-    ],
-  })
+exports.findIncompleteRoleForPerson = async (req, res) => {
+  await Role.findIncompleteRolesForPerson(req.params.personId)
     .then((data) => {
       res.send(data);
     })
@@ -178,34 +78,27 @@ exports.findIncompleteRoleForPerson = (req, res) => {
     });
 };
 
-// Find a single Role with an id
-exports.findOne = (req, res) => {
-  const id = req.params.id;
-
-  Role.findByPk(id)
+exports.findOne = async (req, res) => {
+  await Role.findOneRole(req.params.id)
     .then((data) => {
       if (data) {
         res.send(data);
       } else {
         res.status(404).send({
-          message: `Cannot find Role with id=${id}.`,
+          message: `Cannot find role with id = ${req.params.id}.`,
         });
       }
     })
     .catch((err) => {
       res.status(500).send({
-        message: "Error retrieving Role with id=" + id,
+        message: "Error retrieving role with id = " + req.params.id,
       });
+      console.log("Could not find role: " + err);
     });
 };
 
-// Update a Role by the id in the request
-exports.update = (req, res) => {
-  const id = req.params.id;
-
-  Role.update(req.body, {
-    where: { id: id },
-  })
+exports.update = async (req, res) => {
+  await Role.updateRole(req.body, req.params.id)
     .then((num) => {
       if (num == 1) {
         res.send({
@@ -213,24 +106,20 @@ exports.update = (req, res) => {
         });
       } else {
         res.send({
-          message: `Cannot update Role with id=${id}. Maybe Person was not found or req.body is empty!`,
+          message: `Cannot update role with id = ${req.params.id}. Maybe role was not found or req.body was empty!`,
         });
       }
     })
     .catch((err) => {
       res.status(500).send({
-        message: "Error updating Role with id=" + id,
+        message: "Error updating role with id = " + req.params.id,
       });
+      console.log("Could not update role: " + err);
     });
 };
 
-// Delete a Role with the specified id in the request
-exports.delete = (req, res) => {
-  const id = req.params.id;
-
-  Role.destroy({
-    where: { id: id },
-  })
+exports.delete = async (req, res) => {
+  await Role.deleteRole(req.params.id)
     .then((num) => {
       if (num == 1) {
         res.send({
@@ -238,29 +127,27 @@ exports.delete = (req, res) => {
         });
       } else {
         res.send({
-          message: `Cannot delete Role with id=${id}. Maybe Role was not found!`,
+          message: `Cannot delete role with id = ${req.params.id}. Maybe role was not found!`,
         });
       }
     })
     .catch((err) => {
       res.status(500).send({
-        message: "Could not delete Role with id=" + id,
+        message: "Could not delete role with id = " + req.params.id,
       });
+      console.log("Could not delete role: " + err);
     });
 };
 
-// Delete all Roles from the database.
-exports.deleteAll = (req, res) => {
-  Role.destroy({
-    where: {},
-    truncate: false,
-  })
+exports.deleteAll = async (req, res) => {
+  await Role.deleteAllRoles()
     .then((nums) => {
-      res.send({ message: `${nums} Roles were deleted successfully!` });
+      res.send({ message: `${nums} roles were deleted successfully!` });
     })
     .catch((err) => {
       res.status(500).send({
         message: err.message || "Some error occurred while removing all roles.",
       });
+      console.log("Could not delete roles: " + err);
     });
 };

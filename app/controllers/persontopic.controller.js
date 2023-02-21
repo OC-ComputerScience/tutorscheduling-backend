@@ -1,62 +1,34 @@
-const { persontopic } = require("../models");
-const db = require("../models");
-const PersonTopic = db.persontopic;
-const Topic = db.topic;
-const Op = db.Sequelize.Op;
+const PersonTopic = require("../utils/persontopic.js");
+const Topic = require("../utils/topic.js");
 
-// Create and Save a new PersonTopic
-exports.create = (req, res) => {
-  // Validate request
-  if (!req.body.skillLevel) {
-    res.status(400).send({
-      message: "Content can not be empty!",
-    });
-    return;
-  }
-
-  // Create a PersonTopic
-  const persontopic = {
-    id: req.body.id,
-    personId: req.body.personId,
-    topicId: req.body.topicId,
-    skillLevel: req.body.skillLevel,
-  };
-
-  // Save PersonTopic in the database
-  PersonTopic.create(persontopic)
+exports.create = async (req, res) => {
+  await PersonTopic.createPersonTopic(req.body)
     .then((data) => {
       res.send(data);
     })
     .catch((err) => {
       res.status(500).send({
         message:
-          err.message || "Some error occurred while creating the PersonTopic.",
+          err.message || "Some error occurred while creating the person topic.",
       });
     });
 };
 
-// Retrieve all PersonTopic from the database.
-exports.findAll = (req, res) => {
-  const id = req.query.id;
-  var condition = id ? { id: { [Op.like]: `%${id}%` } } : null;
-
-  PersonTopic.findAll({ where: condition })
+exports.findAll = async (req, res) => {
+  await PersonTopic.findAllPersonTopics()
     .then((data) => {
       res.send(data);
     })
     .catch((err) => {
       res.status(500).send({
         message:
-          err.message || "Some error occurred while retrieving PersonTopic.",
+          err.message || "Some error occurred while retrieving person topics.",
       });
     });
 };
 
-// Retrieve all Person Topics for a person from the database.
-exports.findAllForPerson = (req, res) => {
-  const id = req.params.personId;
-
-  PersonTopic.findAll({ where: { personId: id } })
+exports.findAllForPerson = async (req, res) => {
+  await PersonTopic.findAllPersonTopicsForPerson(req.params.personId)
     .then((data) => {
       res.send(data);
     })
@@ -64,38 +36,16 @@ exports.findAllForPerson = (req, res) => {
       res.status(500).send({
         message:
           err.message ||
-          "Some error occurred while retrieving persontopics for person.",
+          "Some error occurred while retrieving person topics for person.",
       });
     });
 };
 
-// Retrieve all Person Topics for a person from the database.
-exports.getTopicForPersonGroup = (req, res) => {
-  const personId = req.params.personId;
-  const groupId = req.params.groupId;
-
-  Topic.findAll({
-    include: [
-      {
-        model: persontopic,
-        as: "persontopic",
-        required: true,
-        where: { personId: personId },
-        include: [
-          {
-            model: Topic,
-            as: "topic",
-            required: true,
-            where: { groupId: groupId },
-          },
-        ],
-      },
-    ],
-    order: [
-      ["status", "ASC"],
-      ["name", "ASC"],
-    ],
-  })
+exports.getTopicForPersonGroup = async (req, res) => {
+  await Topic.findTopicsForPersonForGroup(
+    req.params.groupId,
+    req.params.personId
+  )
     .then((data) => {
       res.send(data);
     })
@@ -103,191 +53,121 @@ exports.getTopicForPersonGroup = (req, res) => {
       res.status(500).send({
         message:
           err.message ||
-          "Some error occurred while retrieving topics for person.",
+          "Some error occurred while retrieving topics for person for group.",
       });
     });
 };
 
-// Find a single PersonTopic with an id
-exports.findOne = (req, res) => {
-  const id = req.params.id;
-
-  PersonTopic.findByPk(id)
+exports.findOne = async (req, res) => {
+  await PersonTopic.findOnePersonTopic(req.params.id)
     .then((data) => {
       if (data) {
         res.send(data);
       } else {
         res.status(404).send({
-          message: `Cannot find PersonTopic with id=${id}.`,
+          message: `Cannot find person topic with id = ${req.params.id}.`,
         });
       }
     })
     .catch((err) => {
+      console.log(err);
       res.status(500).send({
-        message: "Error retrieving PersonTopic with id=" + id,
+        message: "Error retrieving person topic with id = " + req.params.id,
       });
     });
 };
 
-// Update a PersonTopic by the id in the request
-exports.update = (req, res) => {
-  const id = req.params.id;
-
-  PersonTopic.update(req.body, {
-    where: { id: id },
-  })
+exports.update = async (req, res) => {
+  await PersonTopic.updatePersonTopic(req.body, req.params.id)
     .then((num) => {
       if (num == 1) {
         res.send({
-          message: "PersonTopic was updated successfully.",
+          message: "Person topic was updated successfully.",
         });
       } else {
         res.send({
-          message: `Cannot update PersonTopic with id=${id}. Maybe PersonTopic was not found or req.body is empty!`,
+          message: `Cannot update person topic with id = ${req.params.id}. Maybe person topic was not found or req.body was empty!`,
         });
       }
     })
     .catch((err) => {
+      console.log(err);
       res.status(500).send({
-        message: "Error updating PersonTopic with id=" + id,
+        message: "Error updating person topic with id = " + req.params.id,
       });
     });
 };
 
-// Delete a PersonTopic with the specified id in the request
-exports.delete = (req, res) => {
-  const id = req.params.id;
+exports.deleteWithTopicId = async (req, res) => {
+  let disableTopics = await Topic.findAllDisabledTopics(req.params.id);
+  if (disableTopics[0] !== undefined && disableTopics !== null) {
+    for (let i = 0; i < disableTopics[0].persontopic.length; i++) {
+      let personTopic = disableTopics[0].persontopic[i];
+      await PersonTopic.deleteOnePersonTopic(personTopic.id).catch((err) => {
+        res.status(500).send({ message: err.message });
+        return;
+      });
+    }
+  } else {
+    res
+      .status(200)
+      .send({ message: "No person topics found for that disabled topic!" });
+  }
+};
 
-  PersonTopic.destroy({
-    where: { id: id },
-  })
+exports.delete = async (req, res) => {
+  await PersonTopic.deleteOnePersonTopic(req.params.id)
     .then((num) => {
       if (num == 1) {
         res.send({
-          message: "PersonTopic was deleted successfully!",
+          message: "Person topic was deleted successfully!",
         });
       } else {
         res.send({
-          message: `Cannot delete PersonTopic with id=${id}. Maybe PersonTopic was not found!`,
+          message: `Cannot delete person topic with id = ${req.params.id}. Maybe person topic was not found!`,
         });
       }
     })
     .catch((err) => {
+      console.log(err);
       res.status(500).send({
-        message: "Could not delete PersonTopic with id=" + id,
+        message: "Could not delete person topic with id = " + req.params.id,
       });
     });
 };
 
-// Delete a PersonTopic with the specified id in the request
-exports.deleteWithTopicId = (req, res) => {
-  const id = req.params.id;
-
-  Topic.findAll({
-    where: { "$persontopic.topicId$": id, status: "disabled" },
-    include: [
-      {
-        model: PersonTopic,
-        as: "persontopic",
-        // right: true,
-      },
-    ],
-  })
-    .then(async (data) => {
-      if (data[0] !== undefined) {
-        for (let i = 0; i < data[0].dataValues.persontopic.length; i++) {
-          let personTopic = data[0].dataValues.persontopic[i];
-          await PersonTopic.destroy({
-            where: { id: personTopic.id },
-          })
-            .then((num) => {
-              if (num == 1) {
-                console.log("PersonTopic was deleted successfully!");
-              } else {
-                res.send({
-                  message: `Cannot delete PersonTopic with id=${id}. Maybe PersonTopic was not found!`,
-                });
-              }
-            })
-            .catch((err) => {
-              res.status(500).send({
-                message: "Could not delete PersonTopic with id=" + id,
-              });
-            });
-        }
-      }
-      res.send({
-        message: `PersonTopics were deleted successfully!`,
+exports.deleteAllForPersonForGroup = async (req, res) => {
+  let disableTopics = await Topic.findTopicsForPersonForGroup(
+    req.params.groupId,
+    req.params.personId
+  );
+  if (disableTopics[0] !== undefined && disableTopics !== null) {
+    for (let i = 0; i < disableTopics[0].persontopic.length; i++) {
+      let personTopic = disableTopics[0].persontopic[i];
+      await PersonTopic.deleteOnePersonTopic(personTopic.id).catch((err) => {
+        res.status(500).send({ message: err.message });
+        return;
       });
-    })
-    .catch((err) => {
-      res.status(500).send({ message: err.message });
-    });
+    }
+  } else {
+    res
+      .status(200)
+      .send({
+        message: "No person topics found for that person for that group!",
+      });
+  }
 };
 
-// Delete all PersonTopic for person from the database.
-exports.deleteAllForPersonForGroup = (req, res) => {
-  const personId = req.params.personId;
-  const groupId = req.params.groupId;
-
-  Topic.findAll({
-    where: { groupId: groupId },
-    include: [
-      {
-        model: PersonTopic,
-        as: "persontopic",
-        where: { personId: personId },
-        right: true,
-      },
-    ],
-  })
-    .then(async (data) => {
-      if (data[0] !== undefined) {
-        for (let j = 0; j < data.length; j++) {
-          for (let i = 0; i < data[j].dataValues.persontopic.length; i++) {
-            let personTopic = data[j].dataValues.persontopic[i];
-            await PersonTopic.destroy({
-              where: { id: personTopic.id },
-            })
-              .then((num) => {
-                if (num == 1) {
-                  console.log("PersonTopic was deleted successfully!");
-                } else {
-                  res.send({
-                    message: `Cannot delete PersonTopic with id=${id}. Maybe PersonTopic was not found!`,
-                  });
-                }
-              })
-              .catch((err) => {
-                res.status(500).send({
-                  message: "Could not delete PersonTopic with id=" + id,
-                });
-              });
-          }
-        }
-      }
-      res.send({
-        message: `PersonTopics were deleted successfully!`,
-      });
-    })
-    .catch((err) => {
-      res.status(500).send({ message: err.message });
-    });
-};
-
-// Delete all PersonTopic from the database.
-exports.deleteAll = (req, res) => {
-  PersonTopic.destroy({
-    where: {},
-    truncate: false,
-  })
+exports.deleteAll = async (req, res) => {
+  await PersonTopic.deleteAllPersonTopics()
     .then((nums) => {
-      res.send({ message: `${nums} PersonTopic were deleted successfully!` });
+      res.send({ message: `${nums} person topics were deleted successfully!` });
     })
     .catch((err) => {
       res.status(500).send({
         message:
-          err.message || "Some error occurred while removing all PersonTopic.",
+          err.message ||
+          "Some error occurred while removing all person topics.",
       });
     });
 };

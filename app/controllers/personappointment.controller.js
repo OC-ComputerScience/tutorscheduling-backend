@@ -1,31 +1,8 @@
-const db = require("../models");
-const PersonAppointment = db.personappointment;
-const Person = db.person;
-const Appointment = db.appointment;
-const Op = db.Sequelize.Op;
+const PersonAppointment = require("../utils/personappointment.js");
 
 // Create and Save a new PersonAppointment
-exports.create = (req, res) => {
-  // Validate request
-  if (!req.body.personId) {
-    res.status(400).send({
-      message: "Content can not be empty!",
-    });
-    return;
-  }
-
-  // Create a PersonAppointment
-  const personappointment = {
-    id: req.body.id,
-    isTutor: req.body.isTutor,
-    personId: req.body.personId,
-    appointmentId: req.body.appointmentId,
-    feedbacknumber: req.body.feedbacknumber,
-    feedbacktext: req.body.feedbacktext,
-  };
-
-  // Save PersonAppointment in the database
-  PersonAppointment.create(personappointment)
+exports.create = async (req, res) => {
+  await PersonAppointment.createPersonAppointment(req.body)
     .then((data) => {
       res.send(data);
     })
@@ -33,17 +10,13 @@ exports.create = (req, res) => {
       res.status(500).send({
         message:
           err.message ||
-          "Some error occurred while creating the PersonAppointment.",
+          "Some error occurred while creating the person appointment.",
       });
     });
 };
 
-// Retrieve all PersonAppointment from the database.
-exports.findAll = (req, res) => {
-  const id = req.query.id;
-  var condition = id ? { id: { [Op.like]: `%${id}%` } } : null;
-
-  PersonAppointment.findAll({ where: condition })
+exports.findAll = async (req, res) => {
+  await PersonAppointment.findAllPersonAppointments()
     .then((data) => {
       res.send(data);
     })
@@ -51,16 +24,15 @@ exports.findAll = (req, res) => {
       res.status(500).send({
         message:
           err.message ||
-          "Some error occurred while retrieving PersonAppointment.",
+          "Some error occurred while retrieving person appointments.",
       });
     });
 };
 
-// Retrieve all Person Roles and their corresponding roles for a person from the database.
-exports.findAllForPerson = (req, res) => {
-  const id = req.params.personId;
-
-  PersonAppointment.findAll({ where: { personId: id } })
+exports.findAllForPerson = async (req, res) => {
+  await PersonAppointment.findAllPersonAppointmentsForPerson(
+    req.params.personId
+  )
     .then((data) => {
       res.send(data);
     })
@@ -68,36 +40,16 @@ exports.findAllForPerson = (req, res) => {
       res.status(500).send({
         message:
           err.message ||
-          "Some error occurred while retrieving personroles for person.",
+          "Some error occurred while retrieving person appointments for person.",
       });
     });
 };
 
-// Find a single PersonAppointment with an id
-exports.findOne = (req, res) => {
-  const id = req.params.id;
-
-  PersonAppointment.findByPk(id)
-    .then((data) => {
-      if (data) {
-        res.send(data);
-      } else {
-        res.status(404).send({
-          message: `Cannot find PersonAppointment with id=${id}.`,
-        });
-      }
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message: "Error retrieving PersonAppointment with id=" + id,
-      });
-    });
-};
-
-exports.findAllForPerson = (req, res) => {
-  const id = req.params.personId;
-
-  PersonAppointment.findAll({ where: { personId: id } })
+exports.findPersonAppointmentByPersonAndAppointment = async (req, res) => {
+  await PersonAppointment.findPersonAppointmentForPersonForAppointment(
+    req.params.appointmentId,
+    req.params.personId
+  )
     .then((data) => {
       res.send(data);
     })
@@ -105,52 +57,13 @@ exports.findAllForPerson = (req, res) => {
       res.status(500).send({
         message:
           err.message ||
-          "Some error occurred while retrieving personroles for person.",
+          "Some error occurred while retrieving person appointments for person for appointment.",
       });
     });
 };
 
-// Find a single PersonAppointment with a personId and a appointment
-exports.findPersonAppointmentByPersonAndAppointment = (req, res) => {
-  const personId = req.params.personId;
-  const appointmentId = req.params.appointmentId;
-
-  PersonAppointment.findOne({
-    where: { personId: personId, appointmentId: appointmentId },
-    include: [
-      {
-        model: Appointment,
-        as: "appointment",
-        required: true,
-      },
-    ],
-  })
-    .then((data) => {
-      res.send(data);
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message ||
-          "Some error occurred while retrieving personroles for person and role.",
-      });
-    });
-};
-
-// Retrieve all upcoming appointments for a person for a group from the database.
-exports.findStudentDataForTable = (req, res) => {
-  const appointmentId = req.params.appointmentId;
-
-  PersonAppointment.findAll({
-    where: { appointmentId: appointmentId, isTutor: false },
-    include: [
-      {
-        model: Person,
-        as: "person",
-        required: true,
-      },
-    ],
-  })
+exports.findStudentDataForTable = async (req, res) => {
+  await PersonAppointment.findStudentDataForTable(req.params.appointmentId)
     .then((data) => {
       res.send(data);
     })
@@ -159,25 +72,13 @@ exports.findStudentDataForTable = (req, res) => {
       res.status(500).send({
         message:
           err.message ||
-          "Some error occurred while retrieving appointments for person for group.",
+          "Some error occurred while retrieving student data based on an appointment id.",
       });
     });
 };
 
-// Retrieve all upcoming appointments for a person for a group from the database.
-exports.findTutorDataForTable = (req, res) => {
-  const appointmentId = req.params.appointmentId;
-
-  PersonAppointment.findAll({
-    where: { appointmentId: appointmentId, isTutor: true },
-    include: [
-      {
-        model: Person,
-        as: "person",
-        required: true,
-      },
-    ],
-  })
+exports.findTutorDataForTable = async (req, res) => {
+  await PersonAppointment.findTutorDataForTable(req.params.appointmentId)
     .then((data) => {
       res.send(data);
     })
@@ -185,77 +86,85 @@ exports.findTutorDataForTable = (req, res) => {
       res.status(500).send({
         message:
           err.message ||
-          "Some error occurred while retrieving appointments for person for group.",
+          "Some error occurred while retrieving tutor data based on an appointment id.",
       });
     });
 };
 
-// Update a PersonAppointment by the id in the request
-exports.update = (req, res) => {
-  const id = req.params.id;
-
-  PersonAppointment.update(req.body, {
-    where: { id: id },
-  })
-    .then((num) => {
-      if (num == 1) {
-        res.send({
-          message: "PersonAppointment was updated successfully.",
-        });
+exports.findOne = async (req, res) => {
+  await PersonAppointment.findOnePersonAppointment(req.params.id)
+    .then((data) => {
+      if (data) {
+        res.send(data);
       } else {
-        res.send({
-          message: `Cannot update PersonAppointment with id=${id}. Maybe PersonAppointment was not found or req.body is empty!`,
+        res.status(404).send({
+          message: `Cannot find person appointment with id = ${req.params.id}.`,
         });
       }
     })
     .catch((err) => {
+      console.log(err);
       res.status(500).send({
-        message: "Error updating PersonAppointment with id=" + id,
+        message:
+          "Error retrieving person appointment with id = " + req.params.id,
       });
     });
 };
 
-// Delete a PersonAppointment with the specified id in the request
-exports.delete = (req, res) => {
-  const id = req.params.id;
-
-  PersonAppointment.destroy({
-    where: { id: id },
-  })
+exports.update = async (req, res) => {
+  await PersonAppointment.updatePersonAppointment(req.body, req.params.id)
     .then((num) => {
       if (num == 1) {
         res.send({
-          message: "PersonAppointment was deleted successfully!",
+          message: "Person appointment was updated successfully.",
         });
       } else {
         res.send({
-          message: `Cannot delete PersonAppointment with id=${id}. Maybe PersonAppointment was not found!`,
+          message: `Cannot update person appointment with id = ${req.params.id}. Maybe person appointment was not found or req.body was empty!`,
         });
       }
     })
     .catch((err) => {
+      console.log(err);
       res.status(500).send({
-        message: "Could not delete PersonAppointment with id=" + id,
+        message: "Error updating person appointment with id = " + req.params.id,
       });
     });
 };
 
-// Delete all PersonAppointment from the database.
-exports.deleteAll = (req, res) => {
-  PersonAppointment.destroy({
-    where: {},
-    truncate: false,
-  })
+exports.delete = async (req, res) => {
+  await PersonAppointment.deletePersonAppointment(req.params.id)
+    .then((num) => {
+      if (num == 1) {
+        res.send({
+          message: "Person appointment was deleted successfully!",
+        });
+      } else {
+        res.send({
+          message: `Cannot delete person appointment with id = ${req.params.id}. Maybe person appointment was not found!`,
+        });
+      }
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).send({
+        message: "Could not delete person appointment with id = " + id,
+      });
+    });
+};
+
+exports.deleteAll = async (req, res) => {
+  await PersonAppointment.deleteAllPersonAppointments()
     .then((nums) => {
       res.send({
-        message: `${nums} PersonAppointment were deleted successfully!`,
+        message: `${nums} person appointments were deleted successfully!`,
       });
     })
     .catch((err) => {
       res.status(500).send({
         message:
           err.message ||
-          "Some error occurred while removing all PersonAppointment.",
+          "Some error occurred while removing all person appointments.",
       });
     });
 };
