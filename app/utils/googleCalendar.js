@@ -31,7 +31,7 @@ exports.addAppointmentToGoogle = async (id) => {
       return event;
     })
     .catch(async (error) => {
-      console.log("Some error occured: " + error);
+      console.log("Some error occurred: " + error);
       // if we get back 403 or 429, try again
       if (error.status === 403 || error.status === 429) {
         // We make a request to Google Calendar API.
