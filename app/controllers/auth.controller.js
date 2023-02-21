@@ -150,7 +150,8 @@ exports.login = async (req, res) => {
   // try to find session first
   await Session.findSessionByEmail(email)
     .then(async (data) => {
-      if (data !== null) {
+      console.log(data);
+      if (data.length > 0) {
         session = data[0].dataValues;
       }
     })

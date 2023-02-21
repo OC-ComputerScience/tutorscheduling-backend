@@ -22,8 +22,8 @@ exports.createSession = async (sessionData) => {
     id: sessionData.id,
     token: sessionData.token,
     email: sessionData.email,
-    expirationDate: sessionData.tempExpirationDate,
-    personId: sessionData.person.id,
+    expirationDate: sessionData.expirationDate,
+    personId: sessionData.personId,
   };
 
   // Save session in the database
