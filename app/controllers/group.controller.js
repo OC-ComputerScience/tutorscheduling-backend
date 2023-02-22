@@ -94,7 +94,7 @@ exports.findOneByName = async (req, res) => {
 };
 
 exports.findOne = async (req, res) => {
-  await Group.findOneGroup(req.paramms.id)
+  await Group.findOneGroup(req.params.id)
     .then((data) => {
       if (data) {
         res.send(data);

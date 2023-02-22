@@ -4,7 +4,7 @@ const Group = require("../utils/group.js");
 const Time = require("../utils/timeFunctions.js");
 
 exports.create = async (req, res) => {
-  await Appointment.create(req.body)
+  await Appointment.createAppointment(req.body)
     .then((data) => {
       res.send(data);
     })

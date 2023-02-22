@@ -4,6 +4,7 @@ const Role = db.role;
 const PersonRole = db.personrole;
 const Topic = db.topic;
 const PersonTopic = db.persontopic;
+const Op = db.Sequelize.Op;
 
 exports.createGroup = async (groupData) => {
   if (!groupData.name) {
@@ -68,7 +69,7 @@ exports.findActiveGroupsForPerson = async (personId) => {
         include: [
           {
             where: {
-              "$role->personrole.personId$": id,
+              "$role->personrole.personId$": personId,
               status: { [Op.ne]: "disabled" },
             },
             model: PersonRole,
