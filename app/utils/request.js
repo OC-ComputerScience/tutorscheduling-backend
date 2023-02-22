@@ -51,6 +51,7 @@ exports.findAllRequestsForGroup = async (groupId) => {
       },
     ],
     order: [
+      [db.sequelize.literal("FIELD('received','in-progress','completed')")],
       ["status", "DESC"],
       ["createdAt", "ASC"],
     ],
