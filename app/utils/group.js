@@ -68,7 +68,7 @@ exports.findActiveGroupsForPerson = async (personId) => {
         include: [
           {
             where: {
-              "$role->personrole.personId$": id,
+              "$role->personrole.personId$": personId,
               status: { [Op.ne]: "disabled" },
             },
             model: PersonRole,
