@@ -395,6 +395,7 @@ exports.findAllUpcomingForPersonForGroup = async (
 };
 
 exports.findAllPassedForTutorForGroup = async (groupId, personId) => {
+  const date = new Date();
   let endTime = date.toLocaleTimeString("it-IT");
   date.setHours(date.getHours() - date.getTimezoneOffset() / 60);
   date.setHours(0, 0, 0);
