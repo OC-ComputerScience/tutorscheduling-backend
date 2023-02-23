@@ -1,3 +1,4 @@
+const { group } = require("../models");
 const db = require("../models");
 const Topic = db.topic;
 const PersonTopic = db.persontopic;
@@ -8,19 +9,32 @@ exports.createTopic = async (topicData) => {
     const error = new Error("Name cannot be empty for topic!");
     error.statusCode = 400;
     throw error;
+  } else if (!topicData.groupId) {
+    const error = new Error("Group ID cannot be empty for topic!");
+    error.statusCode = 400;
+    throw error;
   }
 
-  // Create a topic
-  const topic = {
-    id: topicData.id,
-    name: topicData.name,
-    abbr: topicData.abbr,
-    status: topicData.status ? topicData.status : "active",
-    groupId: topicData.groupId,
-  };
+  // make sure we don't create a duplicate value
+  let existingTopic = (
+    await this.findRoleByGroupByType(topicData.name, topicData.groupId)
+  )[0].dataValues;
 
-  // Save topic in the database
-  return await Topic.create(topic);
+  if (existingTopic.id !== undefined) {
+    return existingTopic;
+  } else {
+    // Create a topic
+    const topic = {
+      id: topicData.id,
+      name: topicData.name,
+      abbr: topicData.abbr,
+      status: topicData.status ? topicData.status : "active",
+      groupId: topicData.groupId,
+    };
+
+    // Save topic in the database
+    return await Topic.create(topic);
+  }
 };
 
 exports.findAllTopics = async () => {
@@ -93,6 +107,12 @@ exports.findTopicsForPerson = async (personId) => {
       },
     ],
     order: [["name", "ASC"]],
+  });
+};
+
+exports.findTopicsByGroupByName = async (name, groupId) => {
+  return await Topic.findAll({
+    where: { name: name, groupId: groupId },
   });
 };
 

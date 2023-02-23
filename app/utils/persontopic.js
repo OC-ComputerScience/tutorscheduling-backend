@@ -6,18 +6,38 @@ exports.createPersonTopic = async (personTopicData) => {
     const error = new Error("Skill level cannot be empty for person topic!");
     error.statusCode = 400;
     throw error;
+  } else if (!personTopicData.personId) {
+    const error = new Error("Person ID cannot be empty for person topic!");
+    error.statusCode = 400;
+    throw error;
+  } else if (!personTopicData.topicId) {
+    const error = new Error("Topic ID cannot be empty for person topic!");
+    error.statusCode = 400;
+    throw error;
   }
 
-  // Create a persontopic
-  const persontopic = {
-    id: personTopicData.id,
-    skillLevel: personTopicData.skillLevel,
-    personId: personTopicData.personId,
-    topicId: personTopicData.topicId,
-  };
+  // make sure we don't create a duplicate value
+  let existingPersonTopic = (
+    await this.findPersonTopicsForPersonForTopic(
+      personTopicData.personId,
+      personTopicData.topicId
+    )
+  )[0].dataValues;
 
-  // Save persontopic in the database
-  return await PersonTopic.create(persontopic);
+  if (existingPersonTopic.id !== undefined) {
+    return existingPersonTopic;
+  } else {
+    // Create a persontopic
+    const persontopic = {
+      id: personTopicData.id,
+      skillLevel: personTopicData.skillLevel,
+      personId: personTopicData.personId,
+      topicId: personTopicData.topicId,
+    };
+
+    // Save persontopic in the database
+    return await PersonTopic.create(persontopic);
+  }
 };
 
 exports.findAllPersonTopics = async () => {
@@ -26,6 +46,12 @@ exports.findAllPersonTopics = async () => {
 
 exports.findAllPersonTopicsForPerson = async (personId) => {
   return await PersonTopic.findAll({ where: { personId: personId } });
+};
+
+exports.findPersonTopicsForPersonForTopic = async (personId, topicId) => {
+  return await PersonTopic.findAll({
+    where: { personId: personId, topicId: topicId },
+  });
 };
 
 exports.findOnePersonTopic = async (id) => {

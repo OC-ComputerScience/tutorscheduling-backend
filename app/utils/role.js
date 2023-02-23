@@ -9,17 +9,30 @@ exports.createRole = async (roleData) => {
     const error = new Error("Type cannot be empty for role!");
     error.statusCode = 400;
     throw error;
+  } else if (!roleData.groupId) {
+    const error = new Error("Group ID cannot be empty for role!");
+    error.statusCode = 400;
+    throw error;
   }
 
-  // Create a role
-  const role = {
-    id: roleData.id,
-    type: roleData.type,
-    groupId: roleData.groupId,
-  };
+  // make sure we don't create a duplicate value
+  let existingRole = (
+    await this.findRoleByGroupByType(roleData.type, roleData.groupId)
+  )[0].dataValues;
 
-  // Save role in the database
-  return await Role.create(role);
+  if (existingRole.id !== undefined) {
+    return existingRole;
+  } else {
+    // Create a role
+    const role = {
+      id: roleData.id,
+      type: roleData.type,
+      groupId: roleData.groupId,
+    };
+
+    // Save role in the database
+    return await Role.create(role);
+  }
 };
 
 exports.findAllRoles = async () => {
@@ -102,6 +115,12 @@ exports.findIncompleteRolesForPerson = async (personId) => {
         right: true,
       },
     ],
+  });
+};
+
+exports.findRoleByGroupByType = async (type, groupId) => {
+  return await Role.findAll({
+    where: { type: type, groupId: groupId },
   });
 };
 

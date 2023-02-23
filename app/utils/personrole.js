@@ -4,18 +4,40 @@ const Role = db.role;
 const Group = db.group;
 
 exports.createPersonRole = async (personRoleData) => {
-  // Create a personrole
-  const personrole = {
-    id: personRoleData.id,
-    status: personRoleData.status ? personRoleData.status : "applied",
-    agree: personRoleData.agree ? personRoleData.agree : false,
-    dateSigned: personRoleData.dakmteSigned,
-    personId: personRoleData.personId,
-    roleId: personRoleData.roleId,
-  };
+  if (!personRoleData.personId) {
+    const error = new Error("Person ID cannot be empty for person role!");
+    error.statusCode = 400;
+    throw error;
+  } else if (!personRoleData.roleId) {
+    const error = new Error("Role ID cannot be empty for person role!");
+    error.statusCode = 400;
+    throw error;
+  }
 
-  // Save personrole in the database
-  return await PersonRole.create(personrole);
+  // make sure we don't create a duplicate value
+  let existingPersonRole = (
+    await this.findOneForPersonForRole(
+      personRoleData.personId,
+      personRoleData.roleId
+    )
+  )[0].dataValues;
+
+  if (existingPersonRole.id !== undefined) {
+    return existingPersonRole;
+  } else {
+    // Create a personrole
+    const personrole = {
+      id: personRoleData.id,
+      status: personRoleData.status ? personRoleData.status : "applied",
+      agree: personRoleData.agree ? personRoleData.agree : false,
+      dateSigned: personRoleData.dateSigned,
+      personId: personRoleData.personId,
+      roleId: personRoleData.roleId,
+    };
+
+    // Save personrole in the database
+    return await PersonRole.create(personrole);
+  }
 };
 
 exports.findAllPersonRoles = async () => {

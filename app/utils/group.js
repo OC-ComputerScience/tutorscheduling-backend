@@ -13,21 +13,30 @@ exports.createGroup = async (groupData) => {
     throw error;
   }
 
-  // Create a Group
-  const group = {
-    id: groupData.id,
-    name: groupData.name,
-    description: groupData.description,
-    timeInterval: groupData.timeInterval ? groupData.timeInterval : 30,
-    minApptTime: groupData.minApptTime ? groupData.minApptTime : 30,
-    bookPastMinutes: groupData.bookPastMinutes ? groupData.bookPastMinutes : 0,
-    allowSplittingAppointments: groupData.allowSplittingAppointments
-      ? groupData.allowSplittingAppointments
-      : true,
-  };
+  // make sure we don't create a duplicate value
+  let existingGroup = (await this.findGroupByName(groupData.name))[0]
+    .dataValues;
 
-  // Save Group in the database
-  return await Group.create(group);
+  if (existingGroup.id !== undefined) {
+    return existingGroup;
+  } else {
+    // Create a Group
+    const group = {
+      id: groupData.id,
+      name: groupData.name,
+      description: groupData.description,
+      timeInterval: groupData.timeInterval ? groupData.timeInterval : 30,
+      minApptTime: groupData.minApptTime ? groupData.minApptTime : 30,
+      bookPastMinutes: groupData.bookPastMinutes
+        ? groupData.bookPastMinutes
+        : 0,
+      allowSplittingAppointments: groupData.allowSplittingAppointments
+        ? groupData.allowSplittingAppointments
+        : true,
+    };
+    // Save Group in the database
+    return await Group.create(group);
+  }
 };
 
 exports.findAllGroups = async () => {
