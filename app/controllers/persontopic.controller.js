@@ -99,7 +99,7 @@ exports.update = async (req, res) => {
 };
 
 exports.deleteWithTopicId = async (req, res) => {
-  let disableTopics = await Topic.findAllDisabledTopics(req.params.id);
+  let disableTopics = await Topic.findAllDisabledTopics(req.params.topicId);
   if (disableTopics[0] !== undefined && disableTopics !== null) {
     for (let i = 0; i < disableTopics[0].persontopic.length; i++) {
       let personTopic = disableTopics[0].persontopic[i];
@@ -150,11 +150,9 @@ exports.deleteAllForPersonForGroup = async (req, res) => {
       });
     }
   } else {
-    res
-      .status(200)
-      .send({
-        message: "No person topics found for that person for that group!",
-      });
+    res.status(200).send({
+      message: "No person topics found for that person for that group!",
+    });
   }
 };
 

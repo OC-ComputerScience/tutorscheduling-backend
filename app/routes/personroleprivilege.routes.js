@@ -29,7 +29,7 @@ module.exports = (app) => {
   // Delete a personrole privilege with id
   router.delete("/:id", [authenticate], personroleprivilege.delete);
 
-  // Delete all personrole privilege for person
+  // Delete all personrole privileges for person
   router.delete(
     "/personRole/:personRoleId",
     [authenticate],

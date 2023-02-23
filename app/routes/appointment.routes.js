@@ -13,22 +13,8 @@ module.exports = (app) => {
   // Retrieve all Appointment
   router.get("/", [authenticate], appointment.findAll);
 
-  // Retrieve all Appointment
-  router.get("/person/:personId", [authenticate], appointment.findAllForPerson);
-
   // Retrieve all Appointment for reporting (literally all)
   router.get("/group/:groupId", [authenticate], appointment.findAllForGroup);
-
-  // Retrieve all Appointment for reporting (literally all)
-  router.get("/text/:id", [authenticate], appointment.findOneForText);
-
-  // -------------------------------------------- FOR GROUP ---------------------------------------
-  // Retrieve all appointment hour count
-  router.get(
-    "/group/:groupId/hours/week/:currWeek",
-    [authenticate],
-    appointment.getAppointmentHourCount
-  );
 
   // Retrieve all Appointment for calendar (one month behind)
   router.get("/allGroup/:groupId", [authenticate], appointment.findAllForGroup);
@@ -41,11 +27,7 @@ module.exports = (app) => {
   );
 
   // Retrieve all Appointment
-  router.get(
-    "/group/:groupId/person/:personId",
-    [authenticate],
-    appointment.findAllForPersonForGroup
-  );
+  router.get("/person/:personId", [authenticate], appointment.findAllForPerson);
 
   // Retrieve all upcoming Appointments for a person
   router.get(
@@ -75,12 +57,29 @@ module.exports = (app) => {
     appointment.findAllPassedForPersonForGroupStudent
   );
 
+  // Retrieve all Appointment
+  router.get(
+    "/group/:groupId/person/:personId",
+    [authenticate],
+    appointment.findAllForPersonForGroup
+  );
+
   // Retrieve appointment for feedback
   router.get(
     "/feedback/:appointmentId",
     [authenticate],
     appointment.findFeedbackApptForPerson
   );
+
+  // Retrieve all appointment hour count
+  router.get(
+    "/group/:groupId/hours/week/:currWeek",
+    [authenticate],
+    appointment.getAppointmentHourCount
+  );
+
+  // Retrieve all Appointment for reporting (literally all)
+  router.get("/text/:id", [authenticate], appointment.findOneForText);
 
   // Retrieve a single Appointment with id
   router.get("/:id", [authenticate], appointment.findOne);

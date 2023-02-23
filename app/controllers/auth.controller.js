@@ -95,7 +95,6 @@ exports.login = async (req, res) => {
       for (let i = 0; i < data.length; i++) {
         let element = data[i].dataValues;
         let roles = [];
-        let sortedRoles = [];
 
         for (let j = 0; j < element.role.length; j++) {
           let item = element.role[j];
@@ -106,34 +105,9 @@ exports.login = async (req, res) => {
           roles.push(role);
         }
 
-        // sets the order of the roles
-        if (roles.find((role) => role.type === "Admin") !== undefined)
-          sortedRoles[0] = roles.find((role) => role.type === "Admin");
-        else if (roles.find((role) => role.type === "Tutor") !== undefined)
-          sortedRoles[0] = roles.find((role) => role.type === "Tutor");
-        else if (roles.find((role) => role.type === "Student") !== undefined)
-          sortedRoles[0] = roles.find((role) => role.type === "Student");
-
-        if (
-          roles.find((role) => role.type === "Tutor") !== undefined &&
-          sortedRoles.find((role) => role.type === "Tutor") === undefined
-        )
-          sortedRoles[1] = roles.find((role) => role.type === "Tutor");
-        else if (
-          roles.find((role) => role.type === "Student") !== undefined &&
-          sortedRoles.find((role) => role.type === "Student") === undefined
-        )
-          sortedRoles[1] = roles.find((role) => role.type === "Student");
-
-        if (
-          roles.find((role) => role.type === "Student") !== undefined &&
-          sortedRoles.find((role) => role.type === "Student") == undefined
-        )
-          sortedRoles[2] = roles.find((role) => role.type === "Student");
-
         let group = {
           name: element.name,
-          roles: sortedRoles,
+          roles: roles,
         };
         access.push(group);
       }

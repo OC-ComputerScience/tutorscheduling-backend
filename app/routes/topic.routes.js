@@ -16,8 +16,12 @@ module.exports = (app) => {
   // Retrieve topics for a specific group
   router.get("/group/:groupId", [authenticate], topic.findAllForGroup);
 
-  // Retrieve topics for a specific person including persontopics
-  router.get("/person/:personId", [authenticate], topic.findTopicForPerson);
+  // Retrieve active topics for a specific group
+  router.get(
+    "/active/group/:groupId",
+    [authenticate],
+    topic.findActiveForGroup
+  );
 
   // Retrieve topics by group for a specific person including persontopics
   router.get(
@@ -26,12 +30,8 @@ module.exports = (app) => {
     topic.findTopicByGroupForPerson
   );
 
-  // Retrieve active topics for a specific group
-  router.get(
-    "/active/group/:groupId",
-    [authenticate],
-    topic.findActiveForGroup
-  );
+  // Retrieve topics for a specific person including persontopics
+  router.get("/person/:personId", [authenticate], topic.findTopicForPerson);
 
   // Retrieve all appointment hour count
   router.get(

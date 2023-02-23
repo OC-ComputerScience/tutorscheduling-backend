@@ -27,13 +27,7 @@ exports.createGroup = async (groupData) => {
   };
 
   // Save Group in the database
-  return await Group.create(group)
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  return await Group.create(group);
 };
 
 exports.findAllGroups = async () => {
@@ -57,7 +51,10 @@ exports.findGroupsForPerson = async (personId) => {
         required: true,
       },
     ],
-    order: [["name", "ASC"]],
+    order: [
+      ["name", "ASC"],
+      [db.sequelize.literal("FIELD(role.type,'Admin','Tutor','Student')")],
+    ],
   });
 };
 
@@ -82,13 +79,7 @@ exports.findActiveGroupsForPerson = async (personId) => {
       },
     ],
     order: [["name", "ASC"]],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findGroupsWithMissingContractsForPerson = async (personId) => {
@@ -112,13 +103,7 @@ exports.findGroupsWithMissingContractsForPerson = async (personId) => {
       },
     ],
     order: [["name", "ASC"]],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findGroupsWithMissingTopicsForTutor = async (personId) => {
@@ -153,71 +138,35 @@ exports.findGroupsWithMissingTopicsForTutor = async (personId) => {
       },
     ],
     order: [["name", "ASC"]],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findGroupByName = async (name) => {
   return await Group.findAll({
     where: { name: name },
     order: [["name", "ASC"]],
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.findOneGroup = async (id) => {
-  return await Group.findByPk(id)
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  return await Group.findByPk(id);
 };
 
 exports.updateGroup = async (group, id) => {
   return await Group.update(group, {
     where: { id: id },
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.deleteGroup = async (id) => {
   return await Group.destroy({
     where: { id: id },
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
 
 exports.deleteAllGroups = async () => {
   return await Group.destroy({
     where: {},
     truncate: false,
-  })
-    .then((data) => {
-      return data;
-    })
-    .catch((err) => {
-      return err;
-    });
+  });
 };
