@@ -13,28 +13,18 @@ module.exports = (app) => {
   // Retrieve all PersonAppointment
   router.get("/", [authenticate], personappointment.findAll);
 
+  // Retrieve personappointments for a specific person
+  router.get(
+    "/person/:personId",
+    [authenticate],
+    personappointment.findAllForPerson
+  );
+
   // Retrieve a single PersonAppointment with appointment and person
   router.get(
     "/person/:personId/appointment/:appointmentId",
     [authenticate],
     personappointment.findPersonAppointmentByPersonAndAppointment
-  );
-
-  // Retrieve personappointments for a specific person
-  router.get(
-    "/person/:personId",
-    [authenticate],
-    personappointment.findAllForPerson
-  );
-
-  // Retrieve a single PersonAppointment with id
-  router.get("/:id", [authenticate], personappointment.findOne);
-
-  // Retrieve personappointments for a specific person
-  router.get(
-    "/person/:personId",
-    [authenticate],
-    personappointment.findAllForPerson
   );
 
   // Retrieve personappointments for a specific person
@@ -50,6 +40,9 @@ module.exports = (app) => {
     [authenticate],
     personappointment.findTutorDataForTable
   );
+
+  // Retrieve a single PersonAppointment with id
+  router.get("/:id", [authenticate], personappointment.findOne);
 
   // Update a PersonAppointment with id
   router.put("/:id", [authenticate], personappointment.update);

@@ -8,17 +8,35 @@ exports.createPrivilege = async (personRolePrivilegeData) => {
     );
     error.statusCode = 400;
     throw error;
+  } else if (!personRolePrivilegeData.personRoleId) {
+    const error = new Error(
+      "Person role ID cannot be empty for person role privilege!"
+    );
+    error.statusCode = 400;
+    throw error;
   }
 
-  // Create a personroleprivilege
-  const personroleprivilege = {
-    id: personRolePrivilegeData.id,
-    privilege: personRolePrivilegeData.privilege,
-    personroleId: personRolePrivilegeData.personroleId,
-  };
+  // make sure we don't create a duplicate value
+  let existingPrivilege = (
+    await this.findPrivilegeByPersonRoleByPrivilege(
+      personRolePrivilegeData.privilege,
+      personRolePrivilegeData.personRoleId
+    )
+  )[0].dataValues;
 
-  // Save personroleprivilege in the database
-  return await PersonRolePrivilege.create(personroleprivilege);
+  if (existingPrivilege.id !== undefined) {
+    return existingPrivilege;
+  } else {
+    // Create a personroleprivilege
+    const personroleprivilege = {
+      id: personRolePrivilegeData.id,
+      privilege: personRolePrivilegeData.privilege,
+      personroleId: personRolePrivilegeData.personroleId,
+    };
+
+    // Save personroleprivilege in the database
+    return await PersonRolePrivilege.create(personroleprivilege);
+  }
 };
 
 exports.findAllPrivileges = async () => {
@@ -32,6 +50,15 @@ exports.findPrivilegeByPersonRole = async (personRoleId) => {
   return await PersonRolePrivilege.findAll({
     where: { personroleId: personRoleId },
     order: [["privilege", "ASC"]],
+  });
+};
+
+exports.findPrivilegeByPersonRoleByPrivilege = async (
+  privilege,
+  personRoleId
+) => {
+  return await PersonRolePrivilege.findAll({
+    where: { privilege: privilege, personroleId: personRoleId },
   });
 };
 

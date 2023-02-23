@@ -23,20 +23,28 @@ exports.createPerson = async (personData) => {
     throw error;
   }
 
-  // Create a person
-  const person = {
-    id: personData.id,
-    fName: personData.fName,
-    lName: personData.lName,
-    email: personData.email,
-    phoneNum: personData.phoneNum,
-    textOptIn: req.body.textOptIn ? req.body.textOptIn : true,
-    refresh_token: personData.refresh_token,
-    expiration_date: personData.expiration_date,
-  };
+  // make sure we don't create a duplicate value
+  let existingPerson = await this.findOnePersonByEmail(personData.email)
+    .dataValues;
 
-  // Save person in the database
-  return await Person.create(person);
+  if (existingPerson.id !== undefined) {
+    return existingPerson;
+  } else {
+    // Create a person
+    const person = {
+      id: personData.id,
+      fName: personData.fName,
+      lName: personData.lName,
+      email: personData.email,
+      phoneNum: personData.phoneNum,
+      textOptIn: req.body.textOptIn ? req.body.textOptIn : true,
+      refresh_token: personData.refresh_token,
+      expiration_date: personData.expiration_date,
+    };
+
+    // Save person in the database
+    return await Person.create(person);
+  }
 };
 
 exports.findAllPeople = async () => {

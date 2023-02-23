@@ -13,9 +13,6 @@ module.exports = (app) => {
   // Retrieve all Location
   router.get("/", [authenticate], location.findAll);
 
-  // Retrieve a single Location with id
-  router.get("/:id", [authenticate], location.findOne);
-
   // Retrieve locations for a specific group
   router.get("/group/:groupId", [authenticate], location.findAllForGroup);
 
@@ -25,6 +22,9 @@ module.exports = (app) => {
     [authenticate],
     location.findActiveForGroup
   );
+
+  // Retrieve a single Location with id
+  router.get("/:id", [authenticate], location.findOne);
 
   // Update a Location with id
   router.put("/:id", [authenticate, isAdmin], location.update);

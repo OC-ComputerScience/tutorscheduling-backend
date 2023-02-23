@@ -13,9 +13,6 @@ module.exports = (app) => {
   // Retrieve all PersonTopic
   router.get("/", [authenticate], persontopic.findAll);
 
-  // Retrieve a single PersonTopic with id
-  router.get("/:id", [authenticate], persontopic.findOne);
-
   // Retrieve personroles for a specific person
   router.get("/person/:personId", [authenticate], persontopic.findAllForPerson);
 
@@ -26,14 +23,21 @@ module.exports = (app) => {
     persontopic.getTopicForPersonGroup
   );
 
+  // Retrieve a single PersonTopic with id
+  router.get("/:id", [authenticate], persontopic.findOne);
+
   // Update a PersonTopic with id
   router.put("/:id", [authenticate], persontopic.update);
 
+  // Delete a PersonTopic with topic id
+  router.delete(
+    "/topic/:topicId",
+    [authenticate],
+    persontopic.deleteWithTopicId
+  );
+
   // Delete a PersonTopic with id
   router.delete("/:id", [authenticate], persontopic.delete);
-
-  // Delete a PersonTopic with topic id
-  router.delete("/topic/:id", [authenticate], persontopic.deleteWithTopicId);
 
   // Delete all PersonTopic for person
   router.delete(
