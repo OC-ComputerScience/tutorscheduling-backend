@@ -17,7 +17,7 @@ exports.createTopic = async (topicData) => {
 
   // make sure we don't create a duplicate value
   let existingTopic = (
-    await this.findRoleByGroupByType(topicData.name, topicData.groupId)
+    await this.findTopicsByGroupByName(topicData.name, topicData.groupId)
   )[0].dataValues;
 
   if (existingTopic.id !== undefined) {
