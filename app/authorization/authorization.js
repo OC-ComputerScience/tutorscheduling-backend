@@ -1,24 +1,26 @@
 const db = require("../models");
-const Session = db.session;
+const Session = require("../utils/session.js");
 const PersonRole = db.personrole;
 const Role = db.role;
 
-authenticate = (req, res, next) => {
+authenticate = async (req, res, next) => {
   let token = null;
   console.log("authenticate");
   let authHeader = req.get("authorization");
   if (authHeader != null) {
     if (authHeader.startsWith("Bearer ")) {
       token = authHeader.slice(7);
-      Session.findAll({ where: { token: token } })
-        .then((data) => {
+      await Session.findAllSessionsByToken(token)
+        .then(async (data) => {
           let session = data[0];
-          console.log(session.expirationDate);
           if (session != null) {
             if (session.expirationDate >= Date.now()) {
               next();
               return;
             } else {
+              session.token = "";
+              // clear session's token if it's expired
+              await Session.updateSession(session, session.id);
               return res.status(401).send({
                 message: "Unauthorized! Expired Token, Logout and Login again",
               });
@@ -42,9 +44,10 @@ authenticate = (req, res, next) => {
   }
 };
 
-isAdmin = (req, res, next) => {
+isAdmin = async (req, res, next) => {
   let authHeader = req.get("authorization");
   let token = "";
+  let roles = [];
 
   if (authHeader != null) {
     if (authHeader.startsWith("Bearer ")) {
@@ -54,14 +57,12 @@ isAdmin = (req, res, next) => {
         message: "Unauthorized! missing Bearer",
       });
   }
-  Session.findAll({
-    where: { token: token },
-  })
-    .then((data) => {
+  await Session.findAllSessionsByToken(token)
+    .then(async (data) => {
       let session = data[0];
-      console.log(session.personId);
       if (session.personId != null) {
-        PersonRole.findAll({
+        console.log(session.personId);
+        await PersonRole.findAll({
           where: { personId: session.personId, status: "approved" },
           as: "personrole",
           include: [
@@ -100,9 +101,10 @@ isAdmin = (req, res, next) => {
     });
 };
 
-isSuperAdmin = (req, res, next) => {
+isSuperAdmin = async (req, res, next) => {
   let authHeader = req.get("authorization");
   let token = "";
+  let roles = [];
 
   if (authHeader != null) {
     if (authHeader.startsWith("Bearer ")) {
@@ -112,14 +114,12 @@ isSuperAdmin = (req, res, next) => {
         message: "Unauthorized! missing Bearer",
       });
   }
-  Session.findAll({
-    where: { token: token },
-  })
-    .then((data) => {
+  await Session.findAllSessionsByToken(token)
+    .then(async (data) => {
       let session = data[0];
-      console.log(session.personId);
       if (session.personId != null) {
-        PersonRole.findAll({
+        console.log(session.personId);
+        await PersonRole.findAll({
           where: { personId: session.personId, status: "approved" },
           as: "personrole",
           include: [
