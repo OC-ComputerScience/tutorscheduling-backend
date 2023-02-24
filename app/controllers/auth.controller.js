@@ -123,7 +123,7 @@ exports.login = async (req, res) => {
 
   // try to find session first
   await Session.findSessionByEmail(email)
-    .then(async (data) => {
+    .then((data) => {
       console.log(data);
       if (data.length > 0) {
         session = data[0].dataValues;
@@ -167,7 +167,10 @@ exports.login = async (req, res) => {
       // if the session is still valid, we don't need to make another one
       console.log("Found a session, don't need to make another one");
     }
-  } else {
+  }
+
+  // testing this conditional again because the previous conditional may have cleared out a session
+  if (session.id === undefined) {
     // create a new Session with an expiration date and save to database
     let token = jwt.sign({ id: email }, "eaglesoftwareteam", {
       expiresIn: 86400,
@@ -199,6 +202,7 @@ exports.login = async (req, res) => {
     access: access,
     userID: person.id,
     token: session.token,
+    sessionExpirationDate: session.expirationDate,
     refresh_token: person.refresh_token,
     expiration_date: person.expiration_date,
   };
@@ -265,6 +269,8 @@ exports.authorize = async (req, res) => {
 };
 
 exports.logout = async (req, res) => {
+  console.log("RIGHT HERE");
+  console.log(req);
   if (req.body === null) {
     res.send({
       message: "User has already been successfully logged out!",
