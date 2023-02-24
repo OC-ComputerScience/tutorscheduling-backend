@@ -4,7 +4,7 @@ const Person = db.person;
 const Topic = db.topic;
 
 exports.createRequest = async (requestData) => {
-  if (!requestData.description) {
+  if (requestData.description === undefined) {
     const error = new Error("Description cannot be empty for request!");
     error.statusCode = 400;
     throw error;

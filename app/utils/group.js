@@ -7,18 +7,17 @@ const PersonTopic = db.persontopic;
 const Op = db.Sequelize.Op;
 
 exports.createGroup = async (groupData) => {
-  if (!groupData.name) {
+  if (groupData.name === undefined) {
     const error = new Error("Name cannot be empty for group!");
     error.statusCode = 400;
     throw error;
   }
 
   // make sure we don't create a duplicate value
-  let existingGroup = (await this.findGroupByName(groupData.name))[0]
-    .dataValues;
+  let existingGroup = await this.findGroupByName(groupData.name);
 
-  if (existingGroup.id !== undefined) {
-    return existingGroup;
+  if (existingGroup[0] !== undefined) {
+    return existingGroup[0].dataValues;
   } else {
     // Create a Group
     const group = {

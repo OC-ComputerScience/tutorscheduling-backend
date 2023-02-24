@@ -5,23 +5,24 @@ const PersonTopic = db.persontopic;
 const Time = require("./timeFunctions.js");
 
 exports.createTopic = async (topicData) => {
-  if (!topicData.name) {
+  if (topicData.name === undefined) {
     const error = new Error("Name cannot be empty for topic!");
     error.statusCode = 400;
     throw error;
-  } else if (!topicData.groupId) {
+  } else if (topicData.groupId === undefined) {
     const error = new Error("Group ID cannot be empty for topic!");
     error.statusCode = 400;
     throw error;
   }
 
   // make sure we don't create a duplicate value
-  let existingTopic = (
-    await this.findTopicsByGroupByName(topicData.name, topicData.groupId)
-  )[0].dataValues;
+  let existingTopic = await this.findTopicsByGroupByName(
+    topicData.name,
+    topicData.groupId
+  );
 
-  if (existingTopic.id !== undefined) {
-    return existingTopic;
+  if (existingTopic[0] !== undefined) {
+    return existingTopic[0].dataValues;
   } else {
     // Create a topic
     const topic = {

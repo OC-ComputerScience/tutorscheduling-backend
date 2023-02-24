@@ -2,30 +2,28 @@ const db = require("../models");
 const PersonTopic = db.persontopic;
 
 exports.createPersonTopic = async (personTopicData) => {
-  if (!personTopicData.skillLevel) {
+  if (personTopicData.skillLevel === undefined) {
     const error = new Error("Skill level cannot be empty for person topic!");
     error.statusCode = 400;
     throw error;
-  } else if (!personTopicData.personId) {
+  } else if (personTopicData.personId === undefined) {
     const error = new Error("Person ID cannot be empty for person topic!");
     error.statusCode = 400;
     throw error;
-  } else if (!personTopicData.topicId) {
+  } else if (personTopicData.topicId === undefined) {
     const error = new Error("Topic ID cannot be empty for person topic!");
     error.statusCode = 400;
     throw error;
   }
 
   // make sure we don't create a duplicate value
-  let existingPersonTopic = (
-    await this.findPersonTopicsForPersonForTopic(
-      personTopicData.personId,
-      personTopicData.topicId
-    )
-  )[0].dataValues;
+  let existingPersonTopic = await this.findPersonTopicsForPersonForTopic(
+    personTopicData.personId,
+    personTopicData.topicId
+  );
 
-  if (existingPersonTopic.id !== undefined) {
-    return existingPersonTopic;
+  if (existingPersonTopic[0] !== undefined) {
+    return existingPersonTopic[0].dataValues;
   } else {
     // Create a persontopic
     const persontopic = {

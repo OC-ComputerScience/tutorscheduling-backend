@@ -5,23 +5,24 @@ const PersonRole = db.personrole;
 const PersonRolePrivilege = db.personroleprivilege;
 
 exports.createRole = async (roleData) => {
-  if (!roleData.type) {
+  if (roleData.type === undefined) {
     const error = new Error("Type cannot be empty for role!");
     error.statusCode = 400;
     throw error;
-  } else if (!roleData.groupId) {
+  } else if (roleData.groupId === undefined) {
     const error = new Error("Group ID cannot be empty for role!");
     error.statusCode = 400;
     throw error;
   }
 
   // make sure we don't create a duplicate value
-  let existingRole = (
-    await this.findRoleByGroupByType(roleData.type, roleData.groupId)
-  )[0].dataValues;
+  let existingRole = await this.findRoleByGroupByType(
+    roleData.type,
+    roleData.groupId
+  );
 
-  if (existingRole.id !== undefined) {
-    return existingRole;
+  if (existingRole[0] !== undefined) {
+    return existingRole[0].dataValues;
   } else {
     // Create a role
     const role = {

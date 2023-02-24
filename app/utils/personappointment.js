@@ -4,7 +4,7 @@ const Person = db.person;
 const Appointment = db.appointment;
 
 exports.createPersonAppointment = async (personAppointmentData) => {
-  if (!personAppointmentData.isTutor) {
+  if (personAppointmentData.isTutor === undefined) {
     const error = new Error(
       "IsTutor (true or false) cannot be empty for person appointment!"
     );
