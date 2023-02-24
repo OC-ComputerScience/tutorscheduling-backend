@@ -78,7 +78,6 @@ module.exports = (app) => {
     appointment.getAppointmentHourCount
   );
 
-  // Retrieve all Appointment for reporting (literally all)
   router.get("/text/:id", [authenticate], appointment.findOneForText);
 
   // Retrieve a single Appointment with id

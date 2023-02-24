@@ -5,11 +5,11 @@ const PersonTopic = db.persontopic;
 const Time = require("./timeFunctions.js");
 
 exports.createTopic = async (topicData) => {
-  if (!topicData.name) {
+  if (topicData.name === undefined) {
     const error = new Error("Name cannot be empty for topic!");
     error.statusCode = 400;
     throw error;
-  } else if (!topicData.groupId) {
+  } else if (topicData.groupId === undefined) {
     const error = new Error("Group ID cannot be empty for topic!");
     error.statusCode = 400;
     throw error;

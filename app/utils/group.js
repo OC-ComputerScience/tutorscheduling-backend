@@ -7,7 +7,7 @@ const PersonTopic = db.persontopic;
 const Op = db.Sequelize.Op;
 
 exports.createGroup = async (groupData) => {
-  if (!groupData.name) {
+  if (groupData.name === undefined) {
     const error = new Error("Name cannot be empty for group!");
     error.statusCode = 400;
     throw error;

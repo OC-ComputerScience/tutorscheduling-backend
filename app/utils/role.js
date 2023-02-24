@@ -5,11 +5,11 @@ const PersonRole = db.personrole;
 const PersonRolePrivilege = db.personroleprivilege;
 
 exports.createRole = async (roleData) => {
-  if (!roleData.type) {
+  if (roleData.type === undefined) {
     const error = new Error("Type cannot be empty for role!");
     error.statusCode = 400;
     throw error;
-  } else if (!roleData.groupId) {
+  } else if (roleData.groupId === undefined) {
     const error = new Error("Group ID cannot be empty for role!");
     error.statusCode = 400;
     throw error;

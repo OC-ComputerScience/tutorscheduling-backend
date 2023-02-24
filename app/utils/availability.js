@@ -5,15 +5,15 @@ const PersonAppointment = db.personappointment;
 const Op = db.Sequelize.Op;
 
 exports.createAvailability = async (availabilityData) => {
-  if (!availabilityData.date) {
+  if (availabilityData.date === undefined) {
     const error = new Error("Date cannot be empty for availability!");
     error.statusCode = 400;
     throw error;
-  } else if (!availabilityData.startTime) {
+  } else if (availabilityData.startTime === undefined) {
     const error = new Error("Start time cannot be empty for availability!");
     error.statusCode = 400;
     throw error;
-  } else if (!availabilityData.endTime) {
+  } else if (availabilityData.endTime === undefined) {
     const error = new Error("End time cannot be empty for availability!");
     error.statusCode = 400;
     throw error;

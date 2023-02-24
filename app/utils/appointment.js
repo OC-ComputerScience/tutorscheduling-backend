@@ -10,23 +10,23 @@ const Op = db.Sequelize.Op;
 const Time = require("./timeFunctions.js");
 
 exports.createAppointment = async (appointmentData) => {
-  if (!appointmentData.date) {
+  if (appointmentData.date === undefined) {
     const error = new Error("Date cannot be empty for appointment!");
     error.statusCode = 400;
     throw error;
-  } else if (!appointmentData.startTime) {
+  } else if (appointmentData.startTime === undefined) {
     const error = new Error("Start time cannot be empty for appointment!");
     error.statusCode = 400;
     throw error;
-  } else if (!appointmentData.endTime) {
+  } else if (appointmentData.endTime === undefined) {
     const error = new Error("End time cannot be empty for appointment!");
     error.statusCode = 400;
     throw error;
-  } else if (!appointmentData.type) {
+  } else if (appointmentData.type === undefined) {
     const error = new Error("Type cannot be empty for appointment!");
     error.statusCode = 400;
     throw error;
-  } else if (!appointmentData.status) {
+  } else if (appointmentData.status === undefined) {
     const error = new Error("Status cannot be empty for appointment!");
     error.statusCode = 400;
     throw error;
@@ -601,18 +601,20 @@ exports.getAppointmentHours = async (groupId, currWeek) => {
 };
 
 exports.findOneAppointmentInfo = async (id) => {
+  console.log("here");
+  console.log(id);
   return await Appointment.findAll({
     where: { id: id },
     include: [
       {
         model: Location,
         as: "location",
-        required: true,
+        required: false,
       },
       {
         model: Topic,
         as: "topic",
-        required: true,
+        required: false,
       },
       {
         model: PersonAppointment,

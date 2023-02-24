@@ -2,13 +2,13 @@ const db = require("../models");
 const PersonRolePrivilege = db.personroleprivilege;
 
 exports.createPrivilege = async (personRolePrivilegeData) => {
-  if (!personRolePrivilegeData.privilege) {
+  if (personRolePrivilegeData.privilege === undefined) {
     const error = new Error(
       "Privilege cannot be empty for person role privilege!"
     );
     error.statusCode = 400;
     throw error;
-  } else if (!personRolePrivilegeData.personRoleId) {
+  } else if (personRolePrivilegeData.personRoleId === undefined) {
     const error = new Error(
       "Person role ID cannot be empty for person role privilege!"
     );

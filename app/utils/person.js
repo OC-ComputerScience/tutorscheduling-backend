@@ -9,15 +9,15 @@ const Role = db.role;
 const Topic = db.topic;
 
 exports.createPerson = async (personData) => {
-  if (!personData.fName) {
+  if (personData.fName === undefined) {
     const error = new Error("First name cannot be empty for person!");
     error.statusCode = 400;
     throw error;
-  } else if (!personData.lName) {
+  } else if (personData.lName === undefined) {
     const error = new Error("Last name cannot be empty for person!");
     error.statusCode = 400;
     throw error;
-  } else if (!personData.email) {
+  } else if (personData.email === undefined) {
     const error = new Error("Email cannot be empty for person!");
     error.statusCode = 400;
     throw error;

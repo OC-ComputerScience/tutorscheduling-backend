@@ -2,19 +2,19 @@ const db = require("../models");
 const Location = db.location;
 
 exports.createLocation = async (locationData) => {
-  if (!locationData.name) {
+  if (locationData.name === undefined) {
     const error = new Error("Name cannot be empty for location!");
     error.statusCode = 400;
     throw error;
-  } else if (!locationData.type) {
+  } else if (locationData.type === undefined) {
     const error = new Error("Type cannot be empty for location!");
     error.statusCode = 400;
     throw error;
-  } else if (!locationData.building) {
+  } else if (locationData.building === undefined) {
     const error = new Error("Building cannot be empty for location!");
     error.statusCode = 400;
     throw error;
-  } else if (!locationData.groupId) {
+  } else if (locationData.groupId === undefined) {
     const error = new Error("Group ID cannot be empty for location!");
     error.statusCode = 400;
     throw error;
