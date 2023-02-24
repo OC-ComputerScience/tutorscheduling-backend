@@ -21,15 +21,13 @@ exports.createLocation = async (locationData) => {
   }
 
   // make sure we don't create a duplicate value
-  let existingLocation = (
-    await this.findLocationByGroupByName(
-      locationData.groupId,
-      locationData.name
-    )
-  )[0].dataValues;
+  let existingLocation = await this.findLocationByGroupByName(
+    locationData.groupId,
+    locationData.name
+  );
 
-  if (existingLocation.id !== undefined) {
-    return existingLocation;
+  if (existingLocation[0] !== undefined) {
+    return existingLocation[0].dataValues;
   } else {
     // Create a Location
     const location = {

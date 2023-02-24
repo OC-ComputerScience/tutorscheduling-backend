@@ -16,12 +16,13 @@ exports.createRole = async (roleData) => {
   }
 
   // make sure we don't create a duplicate value
-  let existingRole = (
-    await this.findRoleByGroupByType(roleData.type, roleData.groupId)
-  )[0].dataValues;
+  let existingRole = await this.findRoleByGroupByType(
+    roleData.type,
+    roleData.groupId
+  );
 
-  if (existingRole.id !== undefined) {
-    return existingRole;
+  if (existingRole[0] !== undefined) {
+    return existingRole[0].dataValues;
   } else {
     // Create a role
     const role = {

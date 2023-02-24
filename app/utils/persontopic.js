@@ -17,15 +17,13 @@ exports.createPersonTopic = async (personTopicData) => {
   }
 
   // make sure we don't create a duplicate value
-  let existingPersonTopic = (
-    await this.findPersonTopicsForPersonForTopic(
-      personTopicData.personId,
-      personTopicData.topicId
-    )
-  )[0].dataValues;
+  let existingPersonTopic = await this.findPersonTopicsForPersonForTopic(
+    personTopicData.personId,
+    personTopicData.topicId
+  );
 
-  if (existingPersonTopic.id !== undefined) {
-    return existingPersonTopic;
+  if (existingPersonTopic[0] !== undefined) {
+    return existingPersonTopic[0].dataValues;
   } else {
     // Create a persontopic
     const persontopic = {

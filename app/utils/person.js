@@ -24,11 +24,10 @@ exports.createPerson = async (personData) => {
   }
 
   // make sure we don't create a duplicate value
-  let existingPerson = await this.findOnePersonByEmail(personData.email)
-    .dataValues;
+  let existingPerson = await this.findOnePersonByEmail(personData.email);
 
-  if (existingPerson.id !== undefined) {
-    return existingPerson;
+  if (existingPerson !== undefined) {
+    return existingPerson.dataValues;
   } else {
     // Create a person
     const person = {
