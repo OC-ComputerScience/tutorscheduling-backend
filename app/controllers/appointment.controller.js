@@ -277,9 +277,9 @@ exports.updateForGoogle = async (req, res) => {
       req.body.googleEventId === null)
   ) {
     await GoogleCalendar.addAppointmentToGoogle(req.params.id)
-      .then(() => {
+      .then((response) => {
         console.log("Successfully added appointment to Google");
-        res.send(data);
+        res.send(response);
         // res.send({
         //   message: "Appointment was successfully added to Google.",
         // });
@@ -305,9 +305,9 @@ exports.updateForGoogle = async (req, res) => {
                 req.body.googleEventId === null)
             ) {
               await GoogleCalendar.addAppointmentToGoogle(req.params.id)
-                .then(() => {
+                .then((response) => {
                   console.log("Successfully added appointment to Google");
-                  res.send(data);
+                  res.send(response);
                   // res.send({
                   //   message: "Appointment was successfully added to Google.",
                   // });
@@ -325,9 +325,9 @@ exports.updateForGoogle = async (req, res) => {
               req.body.status === "tutorCancel"
             ) {
               await GoogleCalendar.deleteFromGoogle(req.params.id)
-                .then(() => {
+                .then((response) => {
                   console.log("Successfully deleted appointment from Google");
-                  res.send(data);
+                  res.send(response);
                   // res.send({
                   //   message: "Appointment was successfully deleted from Google.",
                   // });
@@ -342,9 +342,9 @@ exports.updateForGoogle = async (req, res) => {
             // otherwise, update the google event
             else {
               await GoogleCalendar.updateEventForGoogle(req.params.id)
-                .then(() => {
+                .then((response) => {
                   console.log("Successfully updated appointment with Google");
-                  res.send(data);
+                  res.send(response);
                   // res.send({
                   //   message: "Appointment was successfully updated with Google.",
                   // });
@@ -360,9 +360,9 @@ exports.updateForGoogle = async (req, res) => {
             // if a tutor cancels, delete the google event
             if (req.body.status === "tutorCancel") {
               await GoogleCalendar.deleteFromGoogle(req.params.id)
-                .then(() => {
+                .then((response) => {
                   console.log("Successfully deleted appointment from Google");
-                  res.send(data);
+                  res.send(response);
                   // res.send({
                   //   message: "Appointment was successfully deleted from Google.",
                   // });
@@ -377,9 +377,9 @@ exports.updateForGoogle = async (req, res) => {
             // otherwise, update the google event
             else {
               await GoogleCalendar.updateEventForGoogle(req.params.id)
-                .then(() => {
+                .then((response) => {
                   console.log("Successfully updated appointment with Google");
-                  res.send(data);
+                  res.send(response);
                   // res.send({
                   //   message: "Appointment was successfully updated with Google.",
                   // });
