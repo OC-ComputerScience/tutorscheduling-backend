@@ -159,9 +159,9 @@ exports.updateGoogleEventIdForAppointment = async (id, eventId) => {
 exports.deleteFromGoogle = async (id) => {
   let error;
 
-  await Appointment.findAll({ where: { id: id } })
+  await Appointment.findOneAppointment(id)
     .then((data) => {
-      eventId = data[0].dataValues.googleEventId;
+      eventId = data.dataValues.googleEventId;
     })
     .catch((err) => {
       error = err;
@@ -227,6 +227,7 @@ exports.cancelAppointmentFromGoogle = async (appointment, event) => {
               },
             };
           } else {
+            // TODO
             // if it's not the creator's email, then it's a student cancel
             // need to make a new appointment for the same time
             let temp = {

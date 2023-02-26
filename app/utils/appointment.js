@@ -329,11 +329,7 @@ exports.findAllUpcomingForPerson = async (personId) => {
   });
 };
 
-exports.findAllUpcomingForPersonForGroup = async (
-  checkTime,
-  groupId,
-  personId
-) => {
+exports.findAllUpcomingForTutor = async (checkTime, groupId, personId) => {
   const date = new Date();
   date.setHours(date.getHours() - date.getTimezoneOffset() / 60);
   date.setHours(0, 0, 0, 0);
@@ -376,6 +372,7 @@ exports.findAllUpcomingForPersonForGroup = async (
         model: PersonAppointment,
         as: "personappointment",
         required: true,
+        where: { isTutor: true },
         include: [
           {
             model: Person,
@@ -394,7 +391,69 @@ exports.findAllUpcomingForPersonForGroup = async (
   });
 };
 
-exports.findAllPassedForTutorForGroup = async (groupId, personId) => {
+exports.findAllUpcomingForStudent = async (checkTime, groupId, personId) => {
+  const date = new Date();
+  date.setHours(date.getHours() - date.getTimezoneOffset() / 60);
+  date.setHours(0, 0, 0, 0);
+
+  return await Appointment.findAll({
+    where: {
+      groupId: groupId,
+      [Op.or]: [
+        {
+          [Op.and]: [
+            { startTime: { [Op.gte]: checkTime } },
+            { date: { [Op.eq]: date } },
+          ],
+        },
+        {
+          date: { [Op.gt]: date },
+        },
+      ],
+      [Op.and]: [
+        {
+          status: { [Op.not]: "studentCancel" },
+        },
+        {
+          status: { [Op.not]: "tutorCancel" },
+        },
+      ],
+    },
+    include: [
+      {
+        model: Location,
+        as: "location",
+        required: false,
+      },
+      {
+        model: Topic,
+        as: "topic",
+        required: false,
+      },
+      {
+        model: PersonAppointment,
+        as: "personappointment",
+        required: true,
+        where: { isTutor: false },
+        include: [
+          {
+            model: Person,
+            as: "person",
+            required: true,
+            right: true,
+            where: { id: personId },
+          },
+        ],
+      },
+    ],
+    order: [
+      ["date", "ASC"],
+      ["startTime", "ASC"],
+    ],
+  });
+};
+
+exports.findAllPassedForTutor = async (groupId, personId) => {
   const date = new Date();
   let endTime = date.toLocaleTimeString("it-IT");
   date.setHours(date.getHours() - date.getTimezoneOffset() / 60);
@@ -446,7 +505,7 @@ exports.findAllPassedForTutorForGroup = async (groupId, personId) => {
   });
 };
 
-exports.findAllPassedForStudentForGroup = async (groupId, personId) => {
+exports.findAllPassedForStudent = async (groupId, personId) => {
   const date = new Date();
 
   return await Appointment.findAll({

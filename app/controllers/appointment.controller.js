@@ -101,7 +101,7 @@ exports.findAllUpcomingForPerson = async (req, res) => {
     });
 };
 
-exports.findAllUpcomingForPersonForGroup = async (req, res) => {
+exports.findAllUpcomingForTutor = async (req, res) => {
   let group = await Group.findOneGroup(req.params.groupId);
 
   let delTime = new Date().toLocaleTimeString("it-IT");
@@ -112,7 +112,7 @@ exports.findAllUpcomingForPersonForGroup = async (req, res) => {
   let checkTime = Time.subtractMinsFromTime(group.bookPastMinutes, delTime);
   console.log(checkTime);
 
-  await Appointment.findAllUpcomingForPersonForGroup(
+  await Appointment.findAllUpcomingForTutor(
     checkTime,
     req.params.groupId,
     req.params.personId
@@ -129,8 +129,36 @@ exports.findAllUpcomingForPersonForGroup = async (req, res) => {
     });
 };
 
-exports.findAllPassedForPersonForGroupTutor = async (req, res) => {
-  await Appointment.findAllPassedForTutorForGroup(
+exports.findAllUpcomingForStudent = async (req, res) => {
+  let group = await Group.findOneGroup(req.params.groupId);
+
+  let delTime = new Date().toLocaleTimeString("it-IT");
+  console.log(delTime);
+  console.log(group.bookPastMinutes);
+
+  // need to get appointments outside of the book past minutes buffer
+  let checkTime = Time.subtractMinsFromTime(group.bookPastMinutes, delTime);
+  console.log(checkTime);
+
+  await Appointment.findAllUpcomingForStudent(
+    checkTime,
+    req.params.groupId,
+    req.params.personId
+  )
+    .then((data) => {
+      res.send(data);
+    })
+    .catch((err) => {
+      res.status(500).send({
+        message:
+          err.message ||
+          "Some error occurred while retrieving upcoming appointments for person for group while considering group's book past start time.",
+      });
+    });
+};
+
+exports.findAllPassedForTutor = async (req, res) => {
+  await Appointment.findAllPassedForTutor(
     req.params.groupId,
     req.params.personId
   )
@@ -146,8 +174,8 @@ exports.findAllPassedForPersonForGroupTutor = async (req, res) => {
     });
 };
 
-exports.findAllPassedForPersonForGroupStudent = async (req, res) => {
-  await Appointment.findAllPassedForStudentForGroup(
+exports.findAllPassedForStudent = async (req, res) => {
+  await Appointment.findAllPassedForStudent(
     req.params.groupId,
     req.params.personId
   )
@@ -249,9 +277,9 @@ exports.updateForGoogle = async (req, res) => {
       req.body.googleEventId === null)
   ) {
     await GoogleCalendar.addAppointmentToGoogle(req.params.id)
-      .then(() => {
+      .then((response) => {
         console.log("Successfully added appointment to Google");
-        res.send(data);
+        res.send(response);
         // res.send({
         //   message: "Appointment was successfully added to Google.",
         // });
@@ -277,9 +305,9 @@ exports.updateForGoogle = async (req, res) => {
                 req.body.googleEventId === null)
             ) {
               await GoogleCalendar.addAppointmentToGoogle(req.params.id)
-                .then(() => {
+                .then((response) => {
                   console.log("Successfully added appointment to Google");
-                  res.send(data);
+                  res.send(response);
                   // res.send({
                   //   message: "Appointment was successfully added to Google.",
                   // });
@@ -297,9 +325,9 @@ exports.updateForGoogle = async (req, res) => {
               req.body.status === "tutorCancel"
             ) {
               await GoogleCalendar.deleteFromGoogle(req.params.id)
-                .then(() => {
+                .then((response) => {
                   console.log("Successfully deleted appointment from Google");
-                  res.send(data);
+                  res.send(response);
                   // res.send({
                   //   message: "Appointment was successfully deleted from Google.",
                   // });
@@ -314,9 +342,9 @@ exports.updateForGoogle = async (req, res) => {
             // otherwise, update the google event
             else {
               await GoogleCalendar.updateEventForGoogle(req.params.id)
-                .then(() => {
+                .then((response) => {
                   console.log("Successfully updated appointment with Google");
-                  res.send(data);
+                  res.send(response);
                   // res.send({
                   //   message: "Appointment was successfully updated with Google.",
                   // });
@@ -332,9 +360,9 @@ exports.updateForGoogle = async (req, res) => {
             // if a tutor cancels, delete the google event
             if (req.body.status === "tutorCancel") {
               await GoogleCalendar.deleteFromGoogle(req.params.id)
-                .then(() => {
+                .then((response) => {
                   console.log("Successfully deleted appointment from Google");
-                  res.send(data);
+                  res.send(response);
                   // res.send({
                   //   message: "Appointment was successfully deleted from Google.",
                   // });
@@ -349,9 +377,9 @@ exports.updateForGoogle = async (req, res) => {
             // otherwise, update the google event
             else {
               await GoogleCalendar.updateEventForGoogle(req.params.id)
-                .then(() => {
+                .then((response) => {
                   console.log("Successfully updated appointment with Google");
-                  res.send(data);
+                  res.send(response);
                   // res.send({
                   //   message: "Appointment was successfully updated with Google.",
                   // });
