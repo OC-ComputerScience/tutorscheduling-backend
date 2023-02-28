@@ -13,11 +13,11 @@ module.exports = (app) => {
   // Retrieve all Request
   router.get("/", [authenticate], request.findAll);
 
-  // Retrieve a single Request with id
-  router.get("/:id", [authenticate], request.findOne);
-
   // Retrieve requests for a specific group
   router.get("/group/:groupId", [authenticate], request.findAllForGroup);
+
+  // Retrieve a single Request with id
+  router.get("/:id", [authenticate], request.findOne);
 
   // Update a Request with id
   router.put("/:id", [authenticate], request.update);

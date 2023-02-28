@@ -13,29 +13,11 @@ module.exports = (app) => {
   // Retrieve all Appointment
   router.get("/", [authenticate], appointment.findAll);
 
-  // Retrieve all Appointment
-  router.get("/person/:personId", [authenticate], appointment.findAllForPerson);
-
   // Retrieve all Appointment for reporting (literally all)
   router.get("/group/:groupId", [authenticate], appointment.findAllForGroup);
 
-  // Retrieve all Appointment for reporting (literally all)
-  router.get("/text/:id", [authenticate], appointment.findOneForText);
-
-  // -------------------------------------------- FOR GROUP ---------------------------------------
-  // Retrieve all appointment hour count
-  router.get(
-    "/group/:groupId/hours/week/:currWeek",
-    [authenticate],
-    appointment.getAppointmentHourCount
-  );
-
   // Retrieve all Appointment for calendar (one month behind)
-  router.get(
-    "/allGroup/:groupId",
-    [authenticate],
-    appointment.findAppointmentsForGroup
-  );
+  router.get("/allGroup/:groupId", [authenticate], appointment.findAllForGroup);
 
   // Retrieve all upcoming Appointment
   router.get(
@@ -45,11 +27,7 @@ module.exports = (app) => {
   );
 
   // Retrieve all Appointment
-  router.get(
-    "/group/:groupId/person/:personId",
-    [authenticate],
-    appointment.findAllForPersonForGroup
-  );
+  router.get("/person/:personId", [authenticate], appointment.findAllForPerson);
 
   // Retrieve all upcoming Appointments for a person
   router.get(
@@ -60,30 +38,37 @@ module.exports = (app) => {
 
   // Retrieve all upcoming Appointment
   router.get(
-    "/upGroup/:groupId/person/:personId",
+    "/upcoming/tutor/:groupId/person/:personId",
     [authenticate],
-    appointment.findAllUpcomingForPersonForGroup
+    appointment.findAllUpcomingForTutor
   );
 
   // Retrieve all upcoming Appointment
   router.get(
-    "/passGroupTutor/:groupId/person/:personId",
+    "/upcoming/student/:groupId/person/:personId",
     [authenticate],
-    appointment.findAllPassedForPersonForGroupTutor
+    appointment.findAllUpcomingForStudent
   );
 
   // Retrieve all upcoming Appointment
   router.get(
-    "/passGroupStudent/:groupId/person/:personId",
+    "/passed/tutor/:groupId/person/:personId",
     [authenticate],
-    appointment.findAllPassedForPersonForGroupStudent
+    appointment.findAllPassedForTutor
   );
 
-  // Retrieve tutor for an appointment
+  // Retrieve all upcoming Appointment
   router.get(
-    "/tutorAppointment/:id",
+    "/passed/student/:groupId/person/:personId",
     [authenticate],
-    appointment.getTutorForAppointment
+    appointment.findAllPassedForStudent
+  );
+
+  // Retrieve all Appointment
+  router.get(
+    "/group/:groupId/person/:personId",
+    [authenticate],
+    appointment.findAllForPersonForGroup
   );
 
   // Retrieve appointment for feedback
@@ -92,6 +77,15 @@ module.exports = (app) => {
     [authenticate],
     appointment.findFeedbackApptForPerson
   );
+
+  // Retrieve all appointment hour count
+  router.get(
+    "/group/:groupId/hours/week/:currWeek",
+    [authenticate],
+    appointment.getAppointmentHourCount
+  );
+
+  router.get("/text/:id", [authenticate], appointment.findOneForText);
 
   // Retrieve a single Appointment with id
   router.get("/:id", [authenticate], appointment.findOne);

@@ -1,21 +1,34 @@
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const authToken =
-  process.env.TWILIO_AUTH_TOKEN1 + process.env.TWILIO_AUTH_TOKEN2;
-const phoneNum = process.env.TWILIO_NUMBER;
-const client = require("twilio")(accountSid, authToken);
+const Twilio = require("../utils/twilio.js");
 
-exports.send = (req, res) => {
-  client.messages
-    .create({
-      body: req.body.message,
-      from: phoneNum,
-      to: req.body.phoneNum,
+exports.send = async (req, res) => {
+  await Twilio.sendText(req.body.message, req.body.phoneNum)
+    .then((message) => {
+      if (message.sid !== undefined) {
+        console.log("Sent text " + message.sid);
+        res.send({ message: "Sent Text " + message.sid });
+      } else {
+        console.log(message);
+        res.send({ message: message });
+      }
     })
-    .then((message) => console.log("sent" + message.sid))
     .catch((err) => {
-      console.log("Could not send messsage" + err);
+      console.log("Error sending text message: " + err);
       res.status(500).send({
-        message: err.message || "Could not send messsage: " + err,
+        message: "Error sending text message: " + err,
+      });
+    });
+};
+
+exports.respond = async (req, res) => {
+  await Twilio.respondToStop(req.body.Body, req.body.From)
+    .then((data) => {
+      console.log("finished the response");
+      res.type("text/xml").send(data);
+    })
+    .catch((err) => {
+      console.log("Error responding to STOP message: " + err);
+      res.status(500).send({
+        message: "Error responding to STOP message: " + err,
       });
     });
 };

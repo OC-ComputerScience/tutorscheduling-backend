@@ -1,75 +1,33 @@
-const db = require("../models");
-const Availability = db.availability;
-const Appointment = db.appointment;
-const PersonAppointment = db.personappointment;
-const Op = db.Sequelize.Op;
+const Availability = require("../utils/availability.js");
 
-// Create and Save a new Availability
-exports.create = (req, res) => {
-  // Validate request
-  if (!req.body.date) {
-    res.status(400).send({
-      message: "Content can not be empty!",
-    });
-    return;
-  }
-
-  // Create a Availability
-  const availability = {
-    id: req.body.id,
-    personId: req.body.personId,
-    date: req.body.date,
-    startTime: req.body.startTime,
-    endTime: req.body.endTime,
-  };
-
-  // Save Availability in the database
-  Availability.create(availability)
+exports.create = async (req, res) => {
+  await Availability.createAvailability(req.body)
     .then((data) => {
       res.send(data);
     })
     .catch((err) => {
       res.status(500).send({
         message:
-          err.message || "Some error occurred while creating the Person.",
+          err.message || "Some error occurred while creating the availability.",
       });
     });
 };
 
-// Retrieve all Availability from the database.
-exports.findAll = (req, res) => {
-  const id = req.query.id;
-  var condition = id ? { id: { [Op.like]: `%${id}%` } } : null;
-
-  Availability.findAll({
-    where: condition,
-    order: [
-      ["date", "ASC"],
-      ["startTime", "ASC"],
-    ],
-  })
+exports.findAll = async (req, res) => {
+  await Availability.findAllAvailabilities()
     .then((data) => {
       res.send(data);
     })
     .catch((err) => {
       res.status(500).send({
         message:
-          err.message || "Some error occurred while retrieving Availability.",
+          err.message || "Some error occurred while retrieving availabilities.",
       });
     });
 };
 
-// Retrieve all availabilities for a person from the database.
-exports.findAllForPerson = (req, res) => {
-  const id = req.params.personId;
-
-  Availability.findAll({
-    where: { personId: id },
-    order: [
-      ["date", "ASC"],
-      ["startTime", "ASC"],
-    ],
-  })
+exports.findAllForPerson = async (req, res) => {
+  await Availability.findAllAvailabilitiesForPerson(req.params.personId)
     .then((data) => {
       res.send(data);
     })
@@ -82,16 +40,8 @@ exports.findAllForPerson = (req, res) => {
     });
 };
 
-// Retrieve all availabilities for a group from the database.
-exports.findAllForGroup = (req, res) => {
-  const id = req.params.personId;
-  Availability.findAll({
-    where: { personId: id },
-    order: [
-      ["date", "ASC"],
-      ["startTime", "ASC"],
-    ],
-  })
+exports.findAllUpcomingForPerson = async (req, res) => {
+  await Availability.findAllUpcomingForPerson(req.params.personId)
     .then((data) => {
       res.send(data);
     })
@@ -99,85 +49,32 @@ exports.findAllForGroup = (req, res) => {
       res.status(500).send({
         message:
           err.message ||
-          "Some error occurred while retrieving availabilities for person.",
+          "Some error occurred while retrieving upcoming availabilities for person.",
       });
     });
 };
 
-exports.findAllUpcomingForPerson = (req, res) => {
-  const personId = req.params.personId;
-  const date = new Date();
-  date.setHours(date.getHours() - date.getTimezoneOffset() / 60);
-  date.setHours(0, 0, 0, 0);
-
-  let checkTime = new Date();
-  checkTime =
-    checkTime.getHours() +
-    ":" +
-    checkTime.getMinutes() +
-    ":" +
-    checkTime.getSeconds();
-
-  Availability.findAll({
-    where: {
-      personId: personId,
-      [Op.or]: [
-        {
-          [Op.and]: [
-            { startTime: { [Op.gte]: checkTime } },
-            { date: { [Op.eq]: date } },
-          ],
-        },
-        {
-          date: { [Op.gt]: date },
-        },
-      ],
-    },
-    order: [
-      ["date", "ASC"],
-      ["startTime", "ASC"],
-    ],
-  })
-    .then((data) => {
-      res.send(data);
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message ||
-          "Some error occurred while retrieving appointments for person for group.",
-      });
-    });
-};
-
-// Find a single Availability with an id
-exports.findOne = (req, res) => {
-  const id = req.params.id;
-
-  Availability.findByPk(id)
+exports.findOne = async (req, res) => {
+  await Availability.findOneAvailability(req.params.id)
     .then((data) => {
       if (data) {
         res.send(data);
       } else {
         res.status(404).send({
-          message: `Cannot find Availability with id=${id}.`,
+          message: `Cannot find availability with id = ${req.params.id}.`,
         });
       }
     })
     .catch((err) => {
       res.status(500).send({
-        message: "Error retrieving Availability with id=" + id,
+        message: "Error retrieving availability with id = " + req.params.id,
       });
+      console.log("Could not find availability: " + err);
     });
 };
 
-// Update a Availability by the id in the request
-exports.update = (req, res) => {
-  const id = req.params.id;
-
-  Availability.update(req.body, {
-    where: { id: id },
-  })
+exports.update = async (req, res) => {
+  await Availability.updateAvailability(req.body, req.params.id)
     .then((num) => {
       if (num == 1) {
         res.send({
@@ -185,112 +82,45 @@ exports.update = (req, res) => {
         });
       } else {
         res.send({
-          message: `Cannot update Availability with id=${id}. Maybe Availability was not found or req.body is empty!`,
+          message: `Cannot update availability with id = ${req.params.id}. Maybe availability was not found or req.body was empty!`,
         });
       }
     })
     .catch((err) => {
       res.status(500).send({
-        message: "Error updating Availability with id=" + id,
+        message: "Error updating availability with id = " + id,
       });
+      console.log("Could not update availability: " + err);
     });
 };
 
-// Delete a Availability with the specified id in the request
-// and delete any available appointents for the tutor in tthe availabilty time window
-exports.delete = (req, res) => {
-  const id = req.params.id;
-  Availability.findByPk(id)
-    .then((data) => {
-      if (data) {
-        let availability = data.dataValues;
-        Availability.destroy({
-          where: { id: id },
-        })
-          .then((num) => {
-            if (num == 1) {
-              let tutorId = availability.personId;
-              let date = availability.date;
-              date.setHours(date.getHours() + date.getTimezoneOffset() / 60);
-              let startTime = availability.startTime;
-              console.log(tutorId);
-              let endTime = availability.endTime;
-              console.log(date);
-              Appointment.destroy({
-                where: {
-                  id: {
-                    [Op.in]: db.sequelize.literal(
-                      "(SELECT appointmentId FROM personappointments where personID=" +
-                        tutorId +
-                        " AND isTutor='1')"
-                    ),
-                  },
-                  status: "available",
-                  date: { [Op.eq]: date },
-                  startTime: { [Op.gte]: startTime },
-                  endTime: { [Op.lte]: endTime },
-                },
-              })
-                .then(() => {
-                  PersonAppointment.destroy({
-                    where: {
-                      appointmentId: null,
-                    },
-                  }).catch((err) => {
-                    console.log(
-                      "Could not delete past PersonAppointments" + err
-                    );
-                  });
-                  res.send({
-                    message:
-                      "Availability/Appointments were deleted successfully!",
-                  });
-                })
-                .catch((err) => {
-                  res.status(500).send({
-                    message:
-                      "Error deleteing Appointments for Availability with id=" +
-                      id,
-                  });
-                });
-            } else {
-              res.send({
-                message: `Cannot delete Availability with id=${id}. Maybe Availability was not found!`,
-              });
-            }
-          })
-          .catch((err) => {
-            res.status(500).send({
-              message:
-                "Could not delete Availability with id=" + id + " :" + err,
-            });
-          });
-      } else {
-        res.status(404).send({
-          message: `Cannot find Availability with id=${id}.`,
-        });
-      }
+exports.delete = async (req, res) => {
+  await Availability.deleteAvailability(req.params.id)
+    .then(() => {
+      res.send({
+        message: "Availability was deleted successfully!",
+      });
     })
     .catch((err) => {
       res.status(500).send({
-        message: "Error retrieving Availability with id=" + id,
+        message: "Could not delete availability with id = " + id,
       });
+      console.log("Could not delete availability: " + err);
     });
 };
 
-// Delete all Availability from the database.
-exports.deleteAll = (req, res) => {
-  Availability.destroy({
-    where: {},
-    truncate: false,
-  })
+exports.deleteAll = async (req, res) => {
+  await Availability.deleteAllAvailabilities()
     .then((nums) => {
-      res.send({ message: `${nums} Availability were deleted successfully!` });
+      res.send({
+        message: `${nums} availabilities were deleted successfully!`,
+      });
     })
     .catch((err) => {
       res.status(500).send({
         message:
-          err.message || "Some error occurred while removing all Availability.",
+          err.message ||
+          "Some error occurred while removing all availabilities.",
       });
     });
 };

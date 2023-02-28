@@ -13,11 +13,15 @@ module.exports = (app) => {
   // Retrieve all Groups
   router.get("/", group.findAll);
 
-  // Retrieve Group by name
-  router.get("/name/:name", [authenticate], group.findOneByName);
-
   // Retrieve all Groups for a person
   router.get("/person/:personId", [authenticate], group.findAllForPerson);
+
+  // Retrieve all active Groups for a person
+  router.get(
+    "/active/person/:personId",
+    [authenticate],
+    group.findAllActiveForPerson
+  );
 
   // Retrieve all incomplete Groups for a person
   router.get(
@@ -32,6 +36,9 @@ module.exports = (app) => {
     [authenticate],
     group.findTopicsNeededForTutor
   );
+
+  // Retrieve Group by name
+  router.get("/name/:name", [authenticate], group.findOneByName);
 
   // Retrieve a single Group with id
   router.get("/:id", [authenticate], group.findOne);
