@@ -5,7 +5,9 @@ const Person = db.person;
 const Group = db.group;
 const Location = db.location;
 const Topic = db.topic;
+const Role = db.role;
 const PersonTopic = db.persontopic;
+const PersonRole = db.personrole;
 const Op = db.Sequelize.Op;
 const Time = require("./timeFunctions.js");
 
@@ -660,8 +662,7 @@ exports.getAppointmentHours = async (groupId, currWeek) => {
 };
 
 exports.findOneAppointmentInfo = async (id) => {
-  console.log("here");
-  console.log(id);
+  console.log("HERE");
   return await Appointment.findAll({
     where: { id: id },
     include: [
@@ -696,6 +697,27 @@ exports.findOneAppointmentInfo = async (id) => {
                     as: "topic",
                     required: true,
                     right: true,
+                  },
+                ],
+              },
+              {
+                model: PersonRole,
+                as: "personrole",
+                required: true,
+                include: [
+                  {
+                    model: Role,
+                    as: "role",
+                    required: true,
+                    right: true,
+                    where: {
+                      type: [
+                        db.sequelize.literal(
+                          "IF(personappointment.isTutor = 1, 'Tutor', 'Student')"
+                        ),
+                      ],
+                      groupId: [db.sequelize.literal("appointment.groupId")],
+                    },
                   },
                 ],
               },
