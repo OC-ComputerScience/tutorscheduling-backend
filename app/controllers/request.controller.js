@@ -61,7 +61,7 @@ exports.findOne = async (req, res) => {
 };
 
 exports.update = async (req, res) => {
-  await Request.updateRequest(req.params.id)
+  await Request.updateRequest(req.body, req.params.id)
     .then((num) => {
       if (num == 1) {
         res.send({
