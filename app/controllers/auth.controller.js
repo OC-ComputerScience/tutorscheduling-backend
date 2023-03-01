@@ -25,8 +25,6 @@ exports.login = async (req, res) => {
   let firstName = googleUser.given_name;
   let lastName = googleUser.family_name;
 
-  console.log(lastName);
-
   let person = {};
   let session = {};
   let access = [];
@@ -206,71 +204,79 @@ exports.login = async (req, res) => {
     refresh_token: person.refresh_token,
     expiration_date: person.expiration_date,
   };
-  console.log(userInfo);
   res.send(userInfo);
 };
 
 exports.authorize = async (req, res) => {
-  const oauth2Client = new google.auth.OAuth2(
-    process.env.GOOGLE_AUDIENCE,
-    process.env.CLIENT_SECRET,
-    "postmessage"
-  );
+  if (
+    req.body.code !== "undefined" &&
+    req.body.code !== undefined &&
+    req.body.code !== null
+  ) {
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.GOOGLE_AUDIENCE,
+      process.env.CLIENT_SECRET,
+      "postmessage"
+    );
 
-  // Get access and refresh tokens (if access_type is offline)
-  let { tokens } = await oauth2Client.getToken(req.body.code);
-  oauth2Client.setCredentials(tokens);
+    // Get access and refresh tokens (if access_type is offline)
+    let { tokens } = await oauth2Client.getToken(req.body.code);
+    oauth2Client.setCredentials(tokens);
 
-  let person = {};
+    let person = {};
 
-  await Person.findOnePerson(req.params.id)
-    .then((data) => {
-      if (data != null) {
-        person = data.dataValues;
-      }
-    })
-    .catch((err) => {
-      res.status(500).send({ message: err.message });
-      return;
-    });
-
-  console.log("Person to authorize:");
-  console.log(person);
-
-  person.refresh_token = tokens.refresh_token;
-
-  let tempExpirationDate = new Date();
-  // set to expire in 100 days
-  tempExpirationDate.setDate(tempExpirationDate.getDate() + 100);
-  person.expiration_date = tempExpirationDate;
-
-  await Person.updatePerson(person, person.id)
-    .then((num) => {
-      if (num == 1) {
-        console.log("Updated person's Google calendar token.");
-      } else {
-        console.log(
-          `Cannot update person's Google calendar token with id = ${person.id}. Maybe person was not found or req.body was empty!`
-        );
-      }
-      let userInfo = {
-        refresh_token: person.refresh_token,
-        expiration_date: person.expiration_date,
-      };
-      console.log(userInfo);
-      res.send(userInfo);
-    })
-    .catch((err) => {
-      console.log("Error updating person's Google calendar token: " + err);
-      res.status(500).send({
-        message: "Error updating person's Google calendar token: " + err,
+    await Person.findOnePerson(req.params.id)
+      .then((data) => {
+        if (data != null) {
+          person = data.dataValues;
+        }
+      })
+      .catch((err) => {
+        res.status(500).send({ message: err.message });
+        return;
       });
+
+    person.refresh_token = tokens.refresh_token;
+
+    let tempExpirationDate = new Date();
+    // set to expire in 100 days
+    tempExpirationDate.setDate(tempExpirationDate.getDate() + 100);
+    person.expiration_date = tempExpirationDate;
+
+    await Person.updatePerson(person, person.id)
+      .then((num) => {
+        if (num == 1) {
+          console.log("Updated person's Google calendar token.");
+        } else {
+          console.log(
+            `Cannot update person's Google calendar token with id = ${person.id}. Maybe person was not found or req.body was empty!`
+          );
+        }
+        let userInfo = {
+          refresh_token: person.refresh_token,
+          expiration_date: person.expiration_date,
+        };
+        res.send({
+          userInfo: userInfo,
+          message:
+            "You have successfully authorized Tutor Scheduling to link your Google calendar to ours.",
+        });
+      })
+      .catch((err) => {
+        console.log("Error updating person's Google calendar token: " + err);
+        res.status(500).send({
+          message: "Error updating person's Google calendar token: " + err,
+        });
+      });
+  } else {
+    res.send({
+      message:
+        "You did not authorize us to access your Google Calendar. Please try again.",
     });
+  }
 };
 
 exports.logout = async (req, res) => {
-  console.log("RIGHT HERE");
-  console.log(req);
   if (req.body === null) {
     res.send({
       message: "User has already been successfully logged out!",
