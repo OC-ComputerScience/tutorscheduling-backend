@@ -8,7 +8,7 @@ exports.createPrivilege = async (personRolePrivilegeData) => {
     );
     error.statusCode = 400;
     throw error;
-  } else if (personRolePrivilegeData.personRoleId === undefined) {
+  } else if (personRolePrivilegeData.personroleId === undefined) {
     const error = new Error(
       "Person role ID cannot be empty for person role privilege!"
     );
