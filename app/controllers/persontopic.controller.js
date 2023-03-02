@@ -100,6 +100,7 @@ exports.update = async (req, res) => {
 
 exports.deleteWithTopicId = async (req, res) => {
   let disableTopics = await Topic.findAllDisabledTopics(req.params.topicId);
+  console.log(disableTopics);
   if (disableTopics[0] !== undefined && disableTopics !== null) {
     for (let i = 0; i < disableTopics[0].persontopic.length; i++) {
       let personTopic = disableTopics[0].persontopic[i];
