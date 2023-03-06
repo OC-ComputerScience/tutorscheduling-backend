@@ -68,6 +68,12 @@ exports.deleteOnePersonTopic = async (id) => {
   });
 };
 
+exports.deletePersonTopicsForTopic = async (topicId) => {
+  return await PersonTopic.destroy({
+    where: { topicId: topicId },
+  });
+};
+
 exports.deleteAllPersonTopics = async () => {
   return await PersonTopic.destroy({
     where: {},

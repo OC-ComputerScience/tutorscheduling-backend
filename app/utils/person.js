@@ -26,8 +26,6 @@ exports.createPerson = async (personData) => {
   // make sure we don't create a duplicate value
   let existingPerson = await this.findOnePersonByEmail(personData.email);
 
-  console.log(existingPerson !== undefined);
-
   if (existingPerson !== undefined && existingPerson !== null) {
     return existingPerson.dataValues;
   } else {

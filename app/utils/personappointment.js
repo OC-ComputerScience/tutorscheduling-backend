@@ -12,18 +12,32 @@ exports.createPersonAppointment = async (personAppointmentData) => {
     throw error;
   }
 
-  // Create a personappointment
-  const personappointment = {
-    id: personAppointmentData.id,
-    isTutor: personAppointmentData.isTutor,
-    feedbacknumber: personAppointmentData.feedbacknumber,
-    feedbacktext: personAppointmentData.feedbacktext,
-    appointmentId: personAppointmentData.appointmentId,
-    personId: personAppointmentData.personId,
-  };
+  // make sure we don't create a duplicate value
+  let existingPersonAppointment =
+    await this.findPersonAppointmentForPersonForAppointment(
+      personAppointmentData.appointmentId,
+      personAppointmentData.personId
+    );
 
-  // Save personappointment in the database
-  return await PersonAppointment.create(personappointment);
+  if (
+    existingPersonAppointment !== undefined &&
+    existingPersonAppointment !== null
+  ) {
+    return existingPersonAppointment.dataValues;
+  } else {
+    // Create a personappointment
+    const personappointment = {
+      id: personAppointmentData.id,
+      isTutor: personAppointmentData.isTutor,
+      feedbacknumber: personAppointmentData.feedbacknumber,
+      feedbacktext: personAppointmentData.feedbacktext,
+      appointmentId: personAppointmentData.appointmentId,
+      personId: personAppointmentData.personId,
+    };
+
+    // Save personappointment in the database
+    return await PersonAppointment.create(personappointment);
+  }
 };
 
 exports.findAllPersonAppointments = async () => {

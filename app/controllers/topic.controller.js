@@ -1,4 +1,5 @@
 const Topic = require("../utils/topic.js");
+const PersonTopic = require("../utils/persontopic.js");
 
 exports.create = async (req, res) => {
   await Topic.createTopic(req.body)
@@ -106,6 +107,12 @@ exports.findOne = async (req, res) => {
 };
 
 exports.update = async (req, res) => {
+  if (req.body.status === "disabled") {
+    await PersonTopic.deletePersonTopicsForTopic(req.body.id).catch((err) => {
+      res.status(500).send({ message: err.message });
+      return;
+    });
+  }
   await Topic.updateTopic(req.body, req.params.id)
     .then((num) => {
       if (num == 1) {
