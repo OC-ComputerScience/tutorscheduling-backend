@@ -57,6 +57,25 @@ exports.sendRequestMessage = async (req, res) => {
     });
 };
 
+exports.sendMessageFromAdmin = async (req, res) => {
+  await Twilio.sendMessageFromAdmin(req.body)
+    .then((message) => {
+      if (message.sid !== undefined) {
+        console.log("Sent text " + message.sid);
+        res.send({ message: "Sent Text " + message.sid });
+      } else {
+        console.log(message);
+        res.send({ message: message });
+      }
+    })
+    .catch((err) => {
+      console.log("Error sending notification text from admin: " + err);
+      res.status(500).send({
+        message: "Error sending notification text from admin: " + err,
+      });
+    });
+};
+
 exports.sendPendingMessage = async (req, res) => {
   await Twilio.sendPendingMessage(req.params.appointmentId)
     .then((message) => {
@@ -72,6 +91,25 @@ exports.sendPendingMessage = async (req, res) => {
       console.log("Error sending pending appointment text: " + err);
       res.status(500).send({
         message: "Error sending pending appointment text: " + err,
+      });
+    });
+};
+
+exports.sendConfirmedMessage = async (req, res) => {
+  await Twilio.sendConfirmedMessage(req.params.appointmentId)
+    .then((message) => {
+      if (message.sid !== undefined) {
+        console.log("Sent text " + message.sid);
+        res.send({ message: "Sent Text " + message.sid });
+      } else {
+        console.log(message);
+        res.send({ message: message });
+      }
+    })
+    .catch((err) => {
+      console.log("Error sending confirmed appointment text: " + err);
+      res.status(500).send({
+        message: "Error sending confirmed appointment text: " + err,
       });
     });
 };

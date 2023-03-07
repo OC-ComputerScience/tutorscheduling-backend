@@ -20,11 +20,25 @@ module.exports = (app) => {
   // send a request message
   router.post("/sendRequest", [authenticate], twilio.sendRequestMessage);
 
+  // send a message from admin
+  router.post(
+    "/sendMessageFromAdmin",
+    [authenticate],
+    twilio.sendMessageFromAdmin
+  );
+
   // send a pending message
   router.post(
     "/sendPending/:appointmentId",
     [authenticate],
     twilio.sendPendingMessage
+  );
+
+  // send a confirmed message
+  router.post(
+    "/sendConfirmed/:appointmentId",
+    [authenticate],
+    twilio.sendConfirmedMessage
   );
 
   // send a response to unsubscribing
