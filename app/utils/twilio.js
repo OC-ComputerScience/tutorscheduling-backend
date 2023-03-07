@@ -1,31 +1,36 @@
 const Appointment = require("./appointment.js");
+const Group = require("./group.js");
 const Person = require("./person.js");
+const PersonRole = require("./personrole.js");
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken =
   process.env.TWILIO_AUTH_TOKEN1 + process.env.TWILIO_AUTH_TOKEN2;
 const phoneNum = process.env.TWILIO_NUMBER;
 const client = require("twilio")(accountSid, authToken);
 const MessagingResponse = require("twilio/lib/twiml/MessagingResponse");
+let prefix = "OC Tutor Scheduling:\n";
+// let postfix = "\nReply STOP to unsubscribe.";
+let appointment = {};
 
-exports.sendText = async (message, phone) => {
-  let prefix = "OC Tutor Scheduling:\n";
-  // let postfix = "\nReply STOP to unsubscribe.";
-  let finalMessage = prefix + message;
+exports.sendText = async (text) => {
+  let finalMessage = prefix + text.message;
   // + postfix;
 
-  let person = await Person.findOnePersonByPhoneNumber(phone).catch((err) => {
-    console.log(
-      "Error retrieving person by phone number " + phone + ": " + err
-    );
-  });
+  let person = await Person.findOnePersonByPhoneNumber(text.phoneNum).catch(
+    (err) => {
+      console.log(
+        "Error retrieving person by phone number " + text.phone + ": " + err
+      );
+    }
+  );
 
-  if (phone === null || person === undefined) {
+  if (text.phone === null || person === undefined) {
     return "Could not find person by phone number";
   } else if (person.textOptIn) {
     return await client.messages
       .create({
         body: finalMessage,
-        to: phone,
+        to: text.phoneNum,
         from: phoneNum,
       })
       .then((message) => {
@@ -53,11 +58,13 @@ exports.respondToStop = async (body, from) => {
     let phoneNum = from.substring(2);
     console.log(phoneNum);
     //we need to update person to opt out of texts
-    let person = await Person.findOnePersonByPhoneNumber(phone).catch((err) => {
-      console.log(
-        "Error retrieving person by phone number " + phone + ": " + err
-      );
-    });
+    let person = await Person.findOnePersonByPhoneNumber(phoneNum).catch(
+      (err) => {
+        console.log(
+          "Error retrieving person by phone number " + phoneNum + ": " + err
+        );
+      }
+    );
     if (person === undefined) {
       return "Could not find person by phone number";
     } else {
@@ -78,8 +85,7 @@ exports.respondToStop = async (body, from) => {
   }
 };
 
-exports.sendCanceledMessage = async (fromUser, appointId) => {
-  let appointment = {};
+getAppointmentInfoForText = async (appointId) => {
   await Appointment.findOneAppointmentInfo(appointId)
     .then(async (response) => {
       appointment = response.data[0];
@@ -98,7 +104,50 @@ exports.sendCanceledMessage = async (fromUser, appointId) => {
     .catch((error) => {
       console.log("There was an error:", error);
     });
+};
 
+exports.sendApplicationMessage = async (textInfo) => {
+  let text = {
+    phoneNum: textInfo.adminPhoneNum,
+    message:
+      "You have a new tutor application from " +
+      textInfo.fromFirstName +
+      " " +
+      textInfo.fromLastName +
+      " for the " +
+      textInfo.groupName +
+      ".\nPlease view this application: " +
+      process.env.URL +
+      "/adminApprove/" +
+      textInfo.adminPersonRoleId +
+      "?personRoleId=" +
+      textInfo.applicationPersonRoleId,
+  };
+  return await this.sendText(text);
+};
+
+exports.sendRequestMessage = async (textInfo) => {
+  let text = {
+    phoneNum: textInfo.adminPhoneNum,
+    message:
+      "You have a new request from " +
+      textInfo.fromFirstName +
+      " " +
+      textInfo.fromLastName +
+      " for the " +
+      textInfo.groupName +
+      ".\nPlease view this request: " +
+      process.env.URL +
+      "/adminRequests/" +
+      textInfo.adminPersonRoleId +
+      "?requestId=" +
+      textInfo.requestId,
+  };
+  return await this.sendText(text);
+};
+
+exports.sendCanceledMessage = async (fromUser, appointId) => {
+  let appointment = await this.getAppointmentInfoForText(appointId);
   let text = {
     phoneNum: "",
     message: "",
