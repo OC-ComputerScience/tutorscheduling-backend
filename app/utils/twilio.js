@@ -1,7 +1,6 @@
 const Appointment = require("./appointment.js");
-const Group = require("./group.js");
 const Person = require("./person.js");
-const PersonRole = require("./personrole.js");
+const Time = require("./timeFunctions.js");
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken =
   process.env.TWILIO_AUTH_TOKEN1 + process.env.TWILIO_AUTH_TOKEN2;
@@ -142,6 +141,34 @@ exports.sendRequestMessage = async (textInfo) => {
       textInfo.adminPersonRoleId +
       "?requestId=" +
       textInfo.requestId,
+  };
+  return await this.sendText(text);
+};
+
+exports.sendPendingMessage = async (appointmentId) => {
+  await this.getAppointmentInfoForText(appointmentId);
+  let text = {
+    phoneNum: appointment.tutors[0].person.phoneNum,
+    message:
+      "You have a new pending private appointment." +
+      "\n    Date: " +
+      Time.formatDate(appointment.date) +
+      "\n    Time: " +
+      Time.calcTime(appointment.startTime) +
+      "\n    Location: " +
+      appointment.location.name +
+      "\n    Topic: " +
+      appointment.topic.name +
+      "\n    Student: " +
+      appointment.students[0].person.fName +
+      " " +
+      appointment.students[0].person.lName +
+      "\nPlease confirm or reject this pending appointment: " +
+      process.env.URL +
+      "/tutorHome/" +
+      appointment.tutors[0].person.personrole[0].id +
+      "?appointmentId=" +
+      appointment.id,
   };
   return await this.sendText(text);
 };

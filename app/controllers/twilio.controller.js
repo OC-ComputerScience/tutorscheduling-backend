@@ -57,6 +57,25 @@ exports.sendRequestMessage = async (req, res) => {
     });
 };
 
+exports.sendPendingMessage = async (req, res) => {
+  await Twilio.sendPendingMessage(req.params.appointmentId)
+    .then((message) => {
+      if (message.sid !== undefined) {
+        console.log("Sent text " + message.sid);
+        res.send({ message: "Sent Text " + message.sid });
+      } else {
+        console.log(message);
+        res.send({ message: message });
+      }
+    })
+    .catch((err) => {
+      console.log("Error sending pending appointment text: " + err);
+      res.status(500).send({
+        message: "Error sending pending appointment text: " + err,
+      });
+    });
+};
+
 exports.respond = async (req, res) => {
   await Twilio.respondToStop(req.body.Body, req.body.From)
     .then((data) => {

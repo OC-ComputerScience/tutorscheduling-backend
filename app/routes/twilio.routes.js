@@ -20,6 +20,13 @@ module.exports = (app) => {
   // send a request message
   router.post("/sendRequest", [authenticate], twilio.sendRequestMessage);
 
+  // send a pending message
+  router.post(
+    "/sendPending/:appointmentId",
+    [authenticate],
+    twilio.sendPendingMessage
+  );
+
   // send a response to unsubscribing
   router.post("/respond", twilio.respond);
 
