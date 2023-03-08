@@ -1,31 +1,35 @@
 const Appointment = require("./appointment.js");
 const Person = require("./person.js");
+const Time = require("./timeFunctions.js");
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken =
   process.env.TWILIO_AUTH_TOKEN1 + process.env.TWILIO_AUTH_TOKEN2;
 const phoneNum = process.env.TWILIO_NUMBER;
 const client = require("twilio")(accountSid, authToken);
 const MessagingResponse = require("twilio/lib/twiml/MessagingResponse");
+let prefix = "OC Tutor Scheduling:\n";
+// let postfix = "\nReply STOP to unsubscribe.";
+let appointment = {};
 
-exports.sendText = async (message, phone) => {
-  let prefix = "OC Tutor Scheduling:\n";
-  // let postfix = "\nReply STOP to unsubscribe.";
-  let finalMessage = prefix + message;
+exports.sendText = async (text) => {
+  let finalMessage = prefix + text.message;
   // + postfix;
 
-  let person = await Person.findOnePersonByPhoneNumber(phone).catch((err) => {
-    console.log(
-      "Error retrieving person by phone number " + phone + ": " + err
-    );
-  });
+  let person = await Person.findOnePersonByPhoneNumber(text.phoneNum).catch(
+    (err) => {
+      console.log(
+        "Error retrieving person by phone number " + text.phone + ": " + err
+      );
+    }
+  );
 
-  if (phone === null || person === undefined) {
+  if (text.phone === null || person === undefined) {
     return "Could not find person by phone number";
   } else if (person.textOptIn) {
     return await client.messages
       .create({
         body: finalMessage,
-        to: phone,
+        to: text.phoneNum,
         from: phoneNum,
       })
       .then((message) => {
@@ -53,11 +57,13 @@ exports.respondToStop = async (body, from) => {
     let phoneNum = from.substring(2);
     console.log(phoneNum);
     //we need to update person to opt out of texts
-    let person = await Person.findOnePersonByPhoneNumber(phone).catch((err) => {
-      console.log(
-        "Error retrieving person by phone number " + phone + ": " + err
-      );
-    });
+    let person = await Person.findOnePersonByPhoneNumber(phoneNum).catch(
+      (err) => {
+        console.log(
+          "Error retrieving person by phone number " + phoneNum + ": " + err
+        );
+      }
+    );
     if (person === undefined) {
       return "Could not find person by phone number";
     } else {
@@ -78,11 +84,10 @@ exports.respondToStop = async (body, from) => {
   }
 };
 
-exports.sendCanceledMessage = async (fromUser, appointId) => {
-  let appointment = {};
+getAppointmentInfoForText = async (appointId) => {
   await Appointment.findOneAppointmentInfo(appointId)
     .then(async (response) => {
-      appointment = response.data[0];
+      appointment = response[0].dataValues;
       if (
         appointment.personappointment !== null &&
         appointment.personappointment !== undefined
@@ -98,7 +103,180 @@ exports.sendCanceledMessage = async (fromUser, appointId) => {
     .catch((error) => {
       console.log("There was an error:", error);
     });
+};
 
+exports.sendApplicationMessage = async (textInfo) => {
+  let text = {
+    phoneNum: textInfo.adminPhoneNum,
+    message:
+      "You have a new tutor application from " +
+      textInfo.fromFirstName +
+      " " +
+      textInfo.fromLastName +
+      " for the " +
+      textInfo.groupName +
+      ".\nPlease view this application: " +
+      process.env.URL +
+      "/adminApprove/" +
+      textInfo.adminPersonRoleId +
+      "?personRoleId=" +
+      textInfo.applicationPersonRoleId,
+  };
+  return await this.sendText(text);
+};
+
+exports.sendRequestMessage = async (textInfo) => {
+  let text = {
+    phoneNum: textInfo.adminPhoneNum,
+    message:
+      "You have a new request from " +
+      textInfo.fromFirstName +
+      " " +
+      textInfo.fromLastName +
+      " for the " +
+      textInfo.groupName +
+      ".\nPlease view this request: " +
+      process.env.URL +
+      "/adminRequests/" +
+      textInfo.adminPersonRoleId +
+      "?requestId=" +
+      textInfo.requestId,
+  };
+  return await this.sendText(text);
+};
+
+exports.sendMessageFromAdmin = async (textInfo) => {
+  console.log("textInfo");
+  console.log(textInfo);
+  // this is for when admin sign students up for private or group appointments
+  // handle sending to all tutors of group appointments
+  await getAppointmentInfoForText(textInfo.appointmentId);
+  let text = {
+    phoneNum: appointment.tutors[0].person.phoneNum,
+    message:
+      (appointment.type === "Private"
+        ? "You have a new booked private appointment."
+        : appointment.type === "Group"
+        ? "A student has joined your group appointment."
+        : "") +
+      "\n    Date: " +
+      Time.formatDate(appointment.date) +
+      "\n    Time: " +
+      Time.calcTime(appointment.startTime) +
+      "\n    Location: " +
+      appointment.location.name +
+      "\n    Topic: " +
+      appointment.topic.name +
+      "\n    Student: " +
+      textInfo.studentFirstName +
+      " " +
+      textInfo.studentLastName +
+      "\n    Booked by: " +
+      textInfo.adminFirstName +
+      " " +
+      textInfo.adminLastName +
+      "\nPlease view this " +
+      appointment.type.toLowerCase() +
+      " appointment: " +
+      process.env.URL +
+      "/tutorHome/" +
+      appointment.tutors[0].person.personrole[0].id +
+      "?appointmentId=" +
+      appointment.id,
+  };
+  return await this.sendText(text);
+};
+
+exports.sendGroupMessage = async (textInfo) => {
+  // TODO don't just text the first tutor for the group, text all tutors
+  await getAppointmentInfoForText(textInfo.appointmentId);
+  let text = {
+    phoneNum: appointment.tutors[0].person.phoneNum,
+    message:
+      "A " +
+      textInfo.roleType.toLowerCase() +
+      " has joined your group appointment." +
+      "\n    Date: " +
+      Time.formatDate(appointment.date) +
+      "\n    Time: " +
+      Time.calcTime(appointment.startTime) +
+      "\n    Location: " +
+      appointment.location.name +
+      "\n    Topic: " +
+      appointment.topic.name +
+      "\n    " +
+      textInfo.roleType +
+      ": " +
+      textInfo.firstName +
+      " " +
+      textInfo.lastName +
+      "\nPlease view this group appointment: " +
+      process.env.URL +
+      "/tutorHome/" +
+      appointment.tutors[0].person.personrole[0].id +
+      "?appointmentId=" +
+      appointment.id,
+  };
+  return await this.sendText(text);
+};
+
+exports.sendPendingMessage = async (appointmentId) => {
+  await getAppointmentInfoForText(appointmentId);
+  let text = {
+    phoneNum: appointment.tutors[0].person.phoneNum,
+    message:
+      "You have a new pending private appointment." +
+      "\n    Date: " +
+      Time.formatDate(appointment.date) +
+      "\n    Time: " +
+      Time.calcTime(appointment.startTime) +
+      "\n    Location: " +
+      appointment.location.name +
+      "\n    Topic: " +
+      appointment.topic.name +
+      "\n    Student: " +
+      appointment.students[0].person.fName +
+      " " +
+      appointment.students[0].person.lName +
+      "\nPlease confirm or reject this pending appointment: " +
+      process.env.URL +
+      "/tutorHome/" +
+      appointment.tutors[0].person.personrole[0].id +
+      "?appointmentId=" +
+      appointment.id,
+  };
+  return await this.sendText(text);
+};
+
+exports.sendConfirmedMessage = async (appointmentId) => {
+  await getAppointmentInfoForText(appointmentId);
+  let text = {
+    phoneNum: appointment.students[0].person.phoneNum,
+    message:
+      "The " +
+      appointment.type.toLowerCase() +
+      " appointment you booked for " +
+      appointment.topic.name +
+      " on " +
+      Time.formatDate(appointment.date) +
+      " at " +
+      Time.calcTime(appointment.startTime) +
+      " has been confirmed by " +
+      appointment.tutors[0].person.fName +
+      " " +
+      appointment.tutors[0].person.lName +
+      ". \nPlease review this appointment: " +
+      process.env.URL +
+      "/studentHome/" +
+      appointment.students[0].person.personrole[0].id +
+      "?appointmentId=" +
+      appointment.id,
+  };
+  return await this.sendText(text);
+};
+
+exports.sendCanceledMessage = async (fromUser, appointId) => {
+  getAppointmentInfoForText(appointId);
   let text = {
     phoneNum: "",
     message: "",

@@ -1,3 +1,18 @@
+exports.calcTime = (time) => {
+  if (time == null) {
+    return null;
+  }
+  let temp = time.split(":");
+  let milHours = parseInt(temp[0]);
+  let minutes = temp[1];
+  let hours = milHours % 12;
+  if (hours == 0) {
+    hours = 12;
+  }
+  let dayTime = ~~(milHours / 12) > 0 ? "PM" : "AM";
+  return "" + hours + ":" + minutes + " " + dayTime;
+};
+
 exports.addMinsToTime = (mins, time) => {
   let temp = new Date();
   var [timeHrs, timeMins] = this.getHoursAndMinsFromTime(time);
