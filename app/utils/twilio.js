@@ -145,6 +145,81 @@ exports.sendRequestMessage = async (textInfo) => {
   return await this.sendText(text);
 };
 
+exports.sendMessageFromAdmin = async (textInfo) => {
+  console.log("textInfo");
+  console.log(textInfo);
+  // this is for when admin sign students up for private or group appointments
+  // handle sending to all tutors of group appointments
+  await getAppointmentInfoForText(textInfo.appointmentId);
+  let text = {
+    phoneNum: appointment.tutors[0].person.phoneNum,
+    message:
+      (appointment.type === "Private"
+        ? "You have a new booked private appointment."
+        : appointment.type === "Group"
+        ? "A student has joined your group appointment."
+        : "") +
+      "\n    Date: " +
+      Time.formatDate(appointment.date) +
+      "\n    Time: " +
+      Time.calcTime(appointment.startTime) +
+      "\n    Location: " +
+      appointment.location.name +
+      "\n    Topic: " +
+      appointment.topic.name +
+      "\n    Student: " +
+      textInfo.studentFirstName +
+      " " +
+      textInfo.studentLastName +
+      "\n    Booked by: " +
+      textInfo.adminFirstName +
+      " " +
+      textInfo.adminLastName +
+      "\nPlease view this " +
+      appointment.type.toLowerCase() +
+      " appointment: " +
+      process.env.URL +
+      "/tutorHome/" +
+      appointment.tutors[0].person.personrole[0].id +
+      "?appointmentId=" +
+      appointment.id,
+  };
+  return await this.sendText(text);
+};
+
+exports.sendGroupMessage = async (textInfo) => {
+  // TODO don't just text the first tutor for the group, text all tutors
+  await getAppointmentInfoForText(textInfo.appointmentId);
+  let text = {
+    phoneNum: appointment.tutors[0].person.phoneNum,
+    message:
+      "A " +
+      textInfo.roleType.toLowerCase() +
+      " has joined your group appointment." +
+      "\n    Date: " +
+      Time.formatDate(appointment.date) +
+      "\n    Time: " +
+      Time.calcTime(appointment.startTime) +
+      "\n    Location: " +
+      appointment.location.name +
+      "\n    Topic: " +
+      appointment.topic.name +
+      "\n    " +
+      textInfo.roleType +
+      ": " +
+      textInfo.firstName +
+      " " +
+      textInfo.lastName +
+      "\nPlease view this group appointment: " +
+      process.env.URL +
+      "/tutorHome/" +
+      appointment.tutors[0].person.personrole[0].id +
+      "?appointmentId=" +
+      appointment.id,
+  };
+  return await this.sendText(text);
+};
+
 exports.sendPendingMessage = async (appointmentId) => {
   await getAppointmentInfoForText(appointmentId);
   let text = {
@@ -194,47 +269,6 @@ exports.sendConfirmedMessage = async (appointmentId) => {
       process.env.URL +
       "/studentHome/" +
       appointment.students[0].person.personrole[0].id +
-      "?appointmentId=" +
-      appointment.id,
-  };
-  return await this.sendText(text);
-};
-
-exports.sendMessageFromAdmin = async (textInfo) => {
-  console.log("textInfo");
-  console.log(textInfo);
-  // this is for when admin sign students up for private or group appointments
-  await getAppointmentInfoForText(textInfo.appointmentId);
-  let text = {
-    phoneNum: appointment.tutors[0].person.phoneNum,
-    message:
-      (appointment.type === "Private"
-        ? "You have a new booked private appointment."
-        : appointment.type === "Group"
-        ? "A student has joined your group appointment."
-        : "") +
-      "\n    Date: " +
-      Time.formatDate(appointment.date) +
-      "\n    Time: " +
-      Time.calcTime(appointment.startTime) +
-      "\n    Location: " +
-      appointment.location.name +
-      "\n    Topic: " +
-      appointment.topic.name +
-      "\n    Student: " +
-      textInfo.studentFirstName +
-      " " +
-      textInfo.studentLastName +
-      "\n    Booked by: " +
-      textInfo.adminFirstName +
-      " " +
-      textInfo.adminLastName +
-      "\nPlease view this " +
-      appointment.type.toLowerCase() +
-      " appointment: " +
-      process.env.URL +
-      "/tutorHome/" +
-      appointment.tutors[0].person.personrole[0].id +
       "?appointmentId=" +
       appointment.id,
   };
