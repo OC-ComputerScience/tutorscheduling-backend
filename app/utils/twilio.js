@@ -121,6 +121,24 @@ exports.sendRequestMessage = async (textInfo) => {
   return await this.sendText(text);
 };
 
+exports.sendFeedbackMessage = async (textInfo) => {
+  let text = {
+    phoneNum: textInfo.toPhoneNum,
+    message:
+      "Please leave feedback for " +
+      textInfo.appointmentCount +
+      " appointment(s) that you " +
+      (textInfo.roleType === "Tutor"
+        ? "tutored"
+        : textInfo.roleType === "Student"
+        ? "attended"
+        : "") +
+      ".\n" +
+      process.env.URL,
+  };
+  return await this.sendText(text);
+};
+
 exports.sendMessageFromAdmin = async (textInfo) => {
   // this is for when admin sign students up for private or group appointments
   let text = {

@@ -34,24 +34,7 @@ exports.addAppointmentToGoogle = async (id) => {
       console.log("Some error occurred: " + error);
       // if we get back 403 or 429, try again
       if (error.status === 403 || error.status === 429) {
-        // We make a request to Google Calendar API.
-        console.log("Google status is: " + error.status);
-        console.log("Attempting insert again.");
-        await calendar.events
-          .insert({
-            auth: auth,
-            calendarId: "primary",
-            resource: event,
-            conferenceDataVersion: 1,
-            sendUpdates: "all",
-          })
-          .then(async (event) => {
-            await this.updateGoogleEventIdForAppointment(id, event.data.id);
-            return event;
-          })
-          .catch((error) => {
-            return error;
-          });
+        await this.addAppointmentToGoogle(id);
       }
     });
 };

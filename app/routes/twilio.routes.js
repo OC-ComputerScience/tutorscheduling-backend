@@ -7,9 +7,6 @@ module.exports = (app) => {
 
   var router = require("express").Router();
 
-  // send a general message
-  router.post("/sendMessage", [authenticate], twilio.send);
-
   // send an application message
   router.post(
     "/sendApplication",

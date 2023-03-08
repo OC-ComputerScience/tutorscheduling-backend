@@ -7,6 +7,7 @@ const PersonAppointment = db.personappointment;
 const Appointment = db.appointment;
 const Role = db.role;
 const Topic = db.topic;
+const Op = db.Sequelize.Op;
 
 exports.createPerson = async (personData) => {
   if (personData.fName === undefined) {
@@ -145,6 +146,91 @@ exports.findApprovedTutorsForGroup = async (groupId) => {
     order: [
       ["lName", "ASC"],
       ["fName", "ASC"],
+    ],
+  });
+};
+
+exports.findTutorsForPassedAppointments = async () => {
+  let date = new Date();
+  let endTime = date.toLocaleTimeString("it-IT");
+  date.setHours(date.getHours() - date.getTimezoneOffset() / 60);
+  date.setHours(0, 0, 0);
+  return await Person.findAll({
+    include: [
+      {
+        model: PersonAppointment,
+        as: "personappointment",
+        where: {
+          isTutor: true,
+          feedbackNumber: null,
+        },
+        include: [
+          {
+            model: Appointment,
+            as: "appointment",
+            where: {
+              [Op.and]: [
+                {
+                  [Op.or]: [
+                    { date: { [Op.lt]: date } },
+                    {
+                      [Op.and]: [
+                        { date: { [Op.eq]: date } },
+                        { endTime: { [Op.lt]: endTime } },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  [Op.or]: [
+                    { status: "booked" },
+                    { [Op.and]: [{ type: "Group" }, { status: "available" }] },
+                  ],
+                },
+              ],
+            },
+            required: true,
+          },
+        ],
+      },
+    ],
+  });
+};
+
+exports.findStudentsForPassedAppointments = async () => {
+  let date = new Date();
+  let endTime = date.toLocaleTimeString("it-IT");
+  date.setHours(date.getHours() - date.getTimezoneOffset() / 60);
+  date.setHours(0, 0, 0);
+  return await Person.findAll({
+    include: [
+      {
+        model: PersonAppointment,
+        as: "personappointment",
+        where: {
+          isTutor: false,
+          feedbackNumber: null,
+        },
+        include: [
+          {
+            model: Appointment,
+            as: "appointment",
+            where: {
+              status: "complete",
+              [Op.or]: [
+                { date: { [Op.lt]: date } },
+                {
+                  [Op.and]: [
+                    { date: { [Op.eq]: date } },
+                    { endTime: { [Op.lt]: endTime } },
+                  ],
+                },
+              ],
+            },
+            required: true,
+          },
+        ],
+      },
     ],
   });
 };
