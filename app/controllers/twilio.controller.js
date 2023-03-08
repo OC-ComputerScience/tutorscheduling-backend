@@ -133,6 +133,44 @@ exports.sendGroupMessage = async (req, res) => {
     });
 };
 
+exports.sendEditedMessage = async (req, res) => {
+  await Twilio.sendEditedMessage(req.body)
+    .then((message) => {
+      if (message.sid !== undefined) {
+        console.log("Sent text " + message.sid);
+        res.send({ message: "Sent Text " + message.sid });
+      } else {
+        console.log(message);
+        res.send({ message: message });
+      }
+    })
+    .catch((err) => {
+      console.log("Error sending edited appointment text: " + err);
+      res.status(500).send({
+        message: "Error sending edited appointment text: " + err,
+      });
+    });
+};
+
+exports.sendCanceledMessage = async (req, res) => {
+  await Twilio.sendCanceledMessage(req.body)
+    .then((message) => {
+      if (message.sid !== undefined) {
+        console.log("Sent text " + message.sid);
+        res.send({ message: "Sent Text " + message.sid });
+      } else {
+        console.log(message);
+        res.send({ message: message });
+      }
+    })
+    .catch((err) => {
+      console.log("Error sending canceled appointment text: " + err);
+      res.status(500).send({
+        message: "Error sending canceled appointment text: " + err,
+      });
+    });
+};
+
 exports.respond = async (req, res) => {
   await Twilio.respondToStop(req.body.Body, req.body.From)
     .then((data) => {

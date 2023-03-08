@@ -36,6 +36,12 @@ module.exports = (app) => {
   // send a group message
   router.post("/sendGroup", [authenticate], twilio.sendGroupMessage);
 
+  // send an edited message
+  router.post("/sendEdited", [authenticate], twilio.sendEditedMessage);
+
+  // send a canceled message
+  router.post("/sendCanceled", [authenticate], twilio.sendCanceledMessage);
+
   // send a response to unsubscribing
   router.post("/respond", twilio.respond);
 
