@@ -19,7 +19,7 @@ exports.createPrivilege = async (personRolePrivilegeData) => {
   // make sure we don't create a duplicate value
   let existingPrivilege = await this.findPrivilegeByPersonRoleByPrivilege(
     personRolePrivilegeData.privilege,
-    personRolePrivilegeData.personRoleId
+    personRolePrivilegeData.personroleId
   );
 
   if (existingPrivilege[0] !== undefined) {
