@@ -57,6 +57,44 @@ exports.sendRequestMessage = async (req, res) => {
     });
 };
 
+exports.sendPendingMessage = async (req, res) => {
+  await Twilio.sendPendingMessage(req.body)
+    .then((message) => {
+      if (message.sid !== undefined) {
+        console.log("Sent text " + message.sid);
+        res.send({ message: "Sent Text " + message.sid });
+      } else {
+        console.log(message);
+        res.send({ message: message });
+      }
+    })
+    .catch((err) => {
+      console.log("Error sending pending appointment text: " + err);
+      res.status(500).send({
+        message: "Error sending pending appointment text: " + err,
+      });
+    });
+};
+
+exports.sendConfirmedMessage = async (req, res) => {
+  await Twilio.sendConfirmedMessage(req.body)
+    .then((message) => {
+      if (message.sid !== undefined) {
+        console.log("Sent text " + message.sid);
+        res.send({ message: "Sent Text " + message.sid });
+      } else {
+        console.log(message);
+        res.send({ message: message });
+      }
+    })
+    .catch((err) => {
+      console.log("Error sending confirmed appointment text: " + err);
+      res.status(500).send({
+        message: "Error sending confirmed appointment text: " + err,
+      });
+    });
+};
+
 exports.sendMessageFromAdmin = async (req, res) => {
   await Twilio.sendMessageFromAdmin(req.body)
     .then((message) => {
@@ -76,8 +114,8 @@ exports.sendMessageFromAdmin = async (req, res) => {
     });
 };
 
-exports.sendPendingMessage = async (req, res) => {
-  await Twilio.sendPendingMessage(req.params.appointmentId)
+exports.sendGroupMessage = async (req, res) => {
+  await Twilio.sendGroupMessage(req.body)
     .then((message) => {
       if (message.sid !== undefined) {
         console.log("Sent text " + message.sid);
@@ -88,28 +126,9 @@ exports.sendPendingMessage = async (req, res) => {
       }
     })
     .catch((err) => {
-      console.log("Error sending pending appointment text: " + err);
+      console.log("Error sending group appointment text: " + err);
       res.status(500).send({
-        message: "Error sending pending appointment text: " + err,
-      });
-    });
-};
-
-exports.sendConfirmedMessage = async (req, res) => {
-  await Twilio.sendConfirmedMessage(req.params.appointmentId)
-    .then((message) => {
-      if (message.sid !== undefined) {
-        console.log("Sent text " + message.sid);
-        res.send({ message: "Sent Text " + message.sid });
-      } else {
-        console.log(message);
-        res.send({ message: message });
-      }
-    })
-    .catch((err) => {
-      console.log("Error sending confirmed appointment text: " + err);
-      res.status(500).send({
-        message: "Error sending confirmed appointment text: " + err,
+        message: "Error sending group appointment text: " + err,
       });
     });
 };

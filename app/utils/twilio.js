@@ -7,6 +7,7 @@ const authToken =
 const phoneNum = process.env.TWILIO_NUMBER;
 const client = require("twilio")(accountSid, authToken);
 const MessagingResponse = require("twilio/lib/twiml/MessagingResponse");
+const { text } = require("express");
 let prefix = "OC Tutor Scheduling:\n";
 // let postfix = "\nReply STOP to unsubscribe.";
 let appointment = {};
@@ -84,27 +85,6 @@ exports.respondToStop = async (body, from) => {
   }
 };
 
-getAppointmentInfoForText = async (appointId) => {
-  await Appointment.findOneAppointmentInfo(appointId)
-    .then(async (response) => {
-      appointment = response[0].dataValues;
-      if (
-        appointment.personappointment !== null &&
-        appointment.personappointment !== undefined
-      ) {
-        appointment.students = appointment.personappointment.filter(
-          (pa) => pa.isTutor === false
-        );
-        appointment.tutors = appointment.personappointment.filter(
-          (pa) => pa.isTutor === true
-        );
-      }
-    })
-    .catch((error) => {
-      console.log("There was an error:", error);
-    });
-};
-
 exports.sendApplicationMessage = async (textInfo) => {
   let text = {
     phoneNum: textInfo.adminPhoneNum,
@@ -146,27 +126,23 @@ exports.sendRequestMessage = async (textInfo) => {
 };
 
 exports.sendMessageFromAdmin = async (textInfo) => {
-  console.log("textInfo");
-  console.log(textInfo);
   // this is for when admin sign students up for private or group appointments
-  // handle sending to all tutors of group appointments
-  await getAppointmentInfoForText(textInfo.appointmentId);
   let text = {
-    phoneNum: appointment.tutors[0].person.phoneNum,
+    phoneNum: textInfo.tutorPhoneNum,
     message:
-      (appointment.type === "Private"
+      (textInfo.appointmentType === "Private"
         ? "You have a new booked private appointment."
-        : appointment.type === "Group"
+        : textInfo.appointmentType === "Group"
         ? "A student has joined your group appointment."
         : "") +
       "\n    Date: " +
-      Time.formatDate(appointment.date) +
+      textInfo.date +
       "\n    Time: " +
-      Time.calcTime(appointment.startTime) +
+      textInfo.startTime +
       "\n    Location: " +
-      appointment.location.name +
+      textInfo.locationName +
       "\n    Topic: " +
-      appointment.topic.name +
+      textInfo.topicName +
       "\n    Student: " +
       textInfo.studentFirstName +
       " " +
@@ -176,107 +152,102 @@ exports.sendMessageFromAdmin = async (textInfo) => {
       " " +
       textInfo.adminLastName +
       "\nPlease view this " +
-      appointment.type.toLowerCase() +
+      textInfo.appointmentType.toLowerCase() +
       " appointment: " +
       process.env.URL +
       "/tutorHome/" +
-      appointment.tutors[0].person.personrole[0].id +
+      textInfo.tutorPersonRoleId +
       "?appointmentId=" +
-      appointment.id,
+      textInfo.appointmentId,
   };
   return await this.sendText(text);
 };
 
 exports.sendGroupMessage = async (textInfo) => {
-  // TODO don't just text the first tutor for the group, text all tutors
-  await getAppointmentInfoForText(textInfo.appointmentId);
   let text = {
-    phoneNum: appointment.tutors[0].person.phoneNum,
+    phoneNum: textInfo.tutorPhoneNum,
     message:
       "A " +
       textInfo.roleType.toLowerCase() +
       " has joined your group appointment." +
       "\n    Date: " +
-      Time.formatDate(appointment.date) +
+      textInfo.date +
       "\n    Time: " +
-      Time.calcTime(appointment.startTime) +
+      textInfo.startTime +
       "\n    Location: " +
-      appointment.location.name +
+      textInfo.locationName +
       "\n    Topic: " +
-      appointment.topic.name +
+      textInfo.topicName +
       "\n    " +
       textInfo.roleType +
       ": " +
-      textInfo.firstName +
+      textInfo.fromFirstName +
       " " +
-      textInfo.lastName +
+      textInfo.fromLastName +
       "\nPlease view this group appointment: " +
       process.env.URL +
       "/tutorHome/" +
-      appointment.tutors[0].person.personrole[0].id +
+      textInfo.tutorPersonRoleId +
       "?appointmentId=" +
-      appointment.id,
+      textInfo.appointmentId,
   };
   return await this.sendText(text);
 };
 
-exports.sendPendingMessage = async (appointmentId) => {
-  await getAppointmentInfoForText(appointmentId);
+exports.sendPendingMessage = async (textInfo) => {
   let text = {
-    phoneNum: appointment.tutors[0].person.phoneNum,
+    phoneNum: textInfo.tutorPhoneNum,
     message:
       "You have a new pending private appointment." +
       "\n    Date: " +
-      Time.formatDate(appointment.date) +
+      textInfo.date +
       "\n    Time: " +
-      Time.calcTime(appointment.startTime) +
+      textInfo.startTime +
       "\n    Location: " +
-      appointment.location.name +
+      textInfo.locationName +
       "\n    Topic: " +
-      appointment.topic.name +
+      textInfo.topicName +
       "\n    Student: " +
-      appointment.students[0].person.fName +
+      textInfo.studentFirstName +
       " " +
-      appointment.students[0].person.lName +
+      textInfo.studentLastName +
       "\nPlease confirm or reject this pending appointment: " +
       process.env.URL +
       "/tutorHome/" +
-      appointment.tutors[0].person.personrole[0].id +
+      textInfo.tutorPersonRoleId +
       "?appointmentId=" +
-      appointment.id,
+      textInfo.appointmentId,
   };
   return await this.sendText(text);
 };
 
-exports.sendConfirmedMessage = async (appointmentId) => {
-  await getAppointmentInfoForText(appointmentId);
+exports.sendConfirmedMessage = async (textInfo) => {
   let text = {
-    phoneNum: appointment.students[0].person.phoneNum,
+    phoneNum: textInfo.studentPhoneNum,
     message:
       "The " +
-      appointment.type.toLowerCase() +
+      textInfo.appointmentType.toLowerCase() +
       " appointment you booked for " +
-      appointment.topic.name +
+      textInfo.topicName +
       " on " +
-      Time.formatDate(appointment.date) +
+      textInfo.date +
       " at " +
-      Time.calcTime(appointment.startTime) +
+      textInfo.startTime +
       " has been confirmed by " +
-      appointment.tutors[0].person.fName +
+      textInfo.tutorFirstName +
       " " +
-      appointment.tutors[0].person.lName +
+      textInfo.tutorLastName +
       ". \nPlease review this appointment: " +
       process.env.URL +
       "/studentHome/" +
-      appointment.students[0].person.personrole[0].id +
+      textInfo.studentPersonRoleId +
       "?appointmentId=" +
-      appointment.id,
+      textInfo.appointmentId,
   };
   return await this.sendText(text);
 };
 
 exports.sendCanceledMessage = async (fromUser, appointId) => {
-  getAppointmentInfoForText(appointId);
   let text = {
     phoneNum: "",
     message: "",

@@ -23,22 +23,6 @@ exports.addMinsToTime = (mins, time) => {
   console.log(timeHrs);
   console.log(timeMins);
 
-  // // get the times hour and min value
-  // var [timeHrs, timeMins] = this.getHoursAndMinsFromTime(time);
-
-  // // time arithmetic (addition)
-  // if (timeMins + mins >= 60) {
-  //   var addedHrs = parseInt((timeMins + mins) / 60);
-  //   timeMins = (timeMins + mins) % 60;
-  //   if (timeHrs + addedHrs > 23) {
-  //     timeHrs = (timeHrs + addedHrs) % 24;
-  //   } else {
-  //     timeHrs += addedHrs;
-  //   }
-  // } else {
-  //   timeMins += mins;
-  // }
-
   // make sure the time slots are padded correctly
   return (
     String("00" + timeHrs).slice(-2) +
@@ -59,20 +43,6 @@ exports.subtractMinsFromTime = (mins, time) => {
   console.log(timeMins);
 
   // //TODO test when hour should be -1 but it's -0
-
-  // // time arithmetic (subtraction)
-  // if (timeMins - mins <= 0) {
-  //   var subtractedHrs = parseInt((timeMins - mins) / 60);
-  //   timeMins = ((timeMins - mins) % 60) + 60;
-
-  //   if (timeHrs - subtractedHrs < 0) {
-  //     timeHrs = ((timeHrs - subtractedHrs) % 24) + 24;
-  //   } else {
-  //     timeHrs -= subtractedHrs;
-  //   }
-  // } else {
-  //   timeMins -= mins;
-  // }
 
   // make sure the time slots are padded correctly
   return (
