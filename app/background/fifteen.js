@@ -27,7 +27,6 @@ async function deletePastAppointments() {
   // need to get appointments outside of the book past minutes buffer
   for (let i = 0; i < groups.length; i++) {
     let group = groups[i].dataValues;
-    console.log(group.id);
     await Appointment.findAllToDeleteForGroup(group)
       .then((data) => {
         appointments = data;
@@ -46,14 +45,13 @@ async function deletePastAppointments() {
     );
 
     if (appointments.length > 0) {
-      // for each appointment check to see if they need to have start time update or be deleted
+      // for each appointment check to see if they need to have start time updated or be deleted
       for (let j = 0; j < appointments.length; j++) {
         let appointment = appointments[j];
         let startTime = Time.addMinsToTime(
           appointment.group.timeInterval,
           appointment.startTime
         );
-        console.log(startTime);
         // should not try to change time of group appointment, should just delete those
         if (appointment.type === "Private") {
           if (
@@ -64,10 +62,9 @@ async function deletePastAppointments() {
           ) {
             appointment.startTime = startTime;
             let newAppointment = appointment.dataValues;
-            let appointmentId = newAppointment.id;
             await Appointment.updateAppointment(
               newAppointment,
-              appointmentId
+              newAppointment.id
             ).catch((err) => {
               console.log("Could not update appointment: " + err);
             });

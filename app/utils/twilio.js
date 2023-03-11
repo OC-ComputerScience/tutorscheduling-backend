@@ -139,6 +139,33 @@ exports.sendFeedbackMessage = async (textInfo) => {
   return await this.sendText(text);
 };
 
+exports.sendUpcomingMessage = async (textInfo) => {
+  let text = {
+    phoneNum: textInfo.toPhoneNum,
+    message:
+      "You have an upcoming " +
+      textInfo.appointmentType.toLowerCase() +
+      " appointment:" +
+      "\n    Date: " +
+      textInfo.date +
+      "\n    Time: " +
+      textInfo.startTime +
+      "\n    Location: " +
+      textInfo.locationName +
+      "\n    Topic: " +
+      textInfo.topicName +
+      "\nPlease review the changes: " +
+      process.env.URL +
+      "/" +
+      textInfo.roleType.toLowerCase() +
+      "Home/" +
+      textInfo.toPersonRoleId +
+      "?appointmentId=" +
+      textInfo.appointmentId,
+  };
+  return await this.sendText(text);
+};
+
 exports.sendMessageFromAdmin = async (textInfo) => {
   // this is for when admin sign students up for private or group appointments
   let text = {

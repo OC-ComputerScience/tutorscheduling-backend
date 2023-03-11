@@ -175,8 +175,8 @@ exports.deleteFromGoogle = async (id) => {
     });
 };
 
-exports.cancelAppointmentFromGoogle = async (appointment, event) => {
-  let updateAppt = {
+exports.updateGoogleAppointment = async (appointment, event) => {
+  let updateAppointment = {
     id: appointment.id,
     date: appointment.originalDate,
     startTime: appointment.originalStart,
@@ -190,6 +190,18 @@ exports.cancelAppointmentFromGoogle = async (appointment, event) => {
     topicId: appointment.topicId,
   };
 
+  // confirmed
+  //   private student - remake appointment time and notify
+  //   group student - remove pa and notify tutors
+  //   tutor cancel with no students - delete
+  //   tutor cancel with one tutor - delete and notify
+  //   tutor cancel with multiple tutors - change tutors and notify
+  //   NOT DECLINED - update info and person appointments (group, etc)
+  // cancelled - tutor deleted event on google
+  //   tutor cancel with no students - delete
+  //   tutor cancel with one tutor - delete and notify
+  //   tutor cancel with multiple tutors - change tutors and notify
+
   if (appointment.type === "Private") {
     let student = await Person.findFirstStudentForAppointment(appointment.id);
     let tutor = await Person.findFirstTutorForAppointment(appointment.id);
@@ -200,7 +212,7 @@ exports.cancelAppointmentFromGoogle = async (appointment, event) => {
         if (attendee.responseStatus === "declined") {
           if (attendee.email === event.creator.email) {
             // the tutor declined but didn't delete the event
-            updateAppt.status = "tutorCancel";
+            updateAppointment.status = "tutorCancel";
             fromUser = {
               fName: tutor.fName,
               lName: tutor.lName,
@@ -233,7 +245,7 @@ exports.cancelAppointmentFromGoogle = async (appointment, event) => {
                 await PersonAppointmentServices.addPersonAppointment(pap);
               }
             );
-            updateAppt.status = "studentCancel";
+            updateAppointment.status = "studentCancel";
             fromUser = {
               fName: student.fName,
               lName: student.lName,
@@ -244,17 +256,23 @@ exports.cancelAppointmentFromGoogle = async (appointment, event) => {
             };
           }
 
-          updateAppt.googleEventId = null;
-          await Appointment.updateAppointment(updateAppt, updateAppt.id);
-          await this.deleteFromGoogle(updateAppt.id);
+          updateAppointment.googleEventId = null;
+          await Appointment.updateAppointment(
+            updateAppointment,
+            updateAppointment.id
+          );
+          await this.deleteFromGoogle(updateAppointment.id);
         }
       }
     } else if (event.data.status === "cancelled") {
       // this means that the tutor deleted the event
-      updateAppt.googleEventId = null;
-      updateAppt.status = "tutorCancel";
-      await Appointment.updateAppointment(updateAppt, updateAppt.id);
-      await this.deleteFromGoogle(updateAppt.id);
+      updateAppointment.googleEventId = null;
+      updateAppointment.status = "tutorCancel";
+      await Appointment.updateAppointment(
+        updateAppointment,
+        updateAppointment.id
+      );
+      await this.deleteFromGoogle(updateAppointment.id);
     }
   } else if (appointment.type === "Group") {
     if (event.data.status === "confirmed") {
@@ -264,6 +282,7 @@ exports.cancelAppointmentFromGoogle = async (appointment, event) => {
       // if private, set to student cancel
       console.log(event.data);
     } else if (event.data.status === "cancelled") {
+      // check for another tutor
       console.log(event.data);
     } else if (event.data.status === "notfound") {
       // check if there are any other tutors for this appointment
