@@ -1,6 +1,6 @@
 const cron = require("node-cron");
 const Appointment = require("../utils/appointment.js");
-const GoogleCalendar = require("../utils/googleCalendar");
+const AppointmentActions = require("../utils/appointmentActions");
 const PersonAppointment = require("../utils/personappointment.js");
 const Time = require("../utils/timeFunctions.js");
 const Twilio = require("../utils/twilio.js");
@@ -10,11 +10,11 @@ const Twilio = require("../utils/twilio.js");
 
 exports.hourlyTasks = () => {
   // for prod, runs at ever hour at 55 minute past the hour.
-  cron.schedule("55 * * * *", async function () {
-    // for testing, runs every minute
-    // cron.schedule('* * * * *', async function() {
+  // cron.schedule("55 * * * *", async function () {
+  // for testing, runs every minute
+  cron.schedule("* * * * *", async function () {
     console.log("Every 55-Minute Tasks:");
-    // await checkGoogleEvents();
+    await checkGoogleEvents();
     await notifyUpcomingAppointments();
   });
 };
@@ -33,13 +33,15 @@ async function checkGoogleEvents() {
   // all of these appointments need to be added to Google calendar
   for (let i = 0; i < appointmentsNeedingGoogle.length; i++) {
     let appointment = appointmentsNeedingGoogle[i];
-    await GoogleCalendar.addAppointmentToGoogle(appointment.id).catch((err) => {
-      console.log(err);
-    });
+    await AppointmentActions.addAppointmentToGoogle(appointment.id).catch(
+      (err) => {
+        console.log(err);
+      }
+    );
   }
 
   let appointmentsWithGoogle = [];
-  await Appointment.findAllWithGoogleId()
+  await Appointment.findAllUpcomingWithGoogleId()
     .then(async (data) => {
       appointmentsWithGoogle = data;
     })
@@ -55,7 +57,7 @@ async function checkGoogleEvents() {
     appointment.tutors = appointment.personappointment.filter(
       (pa) => pa.isTutor === true
     );
-    let event = await GoogleCalendar.getAppointmentFromGoogle(
+    let event = await AppointmentActions.getAppointmentFromGoogle(
       appointment.id
     ).catch((err) => {
       console.log("Error getting appointment from Google: " + err);
@@ -66,7 +68,7 @@ async function checkGoogleEvents() {
     console.log(appointment);
 
     if (event.data !== undefined) {
-      await GoogleCalendar.updateGoogleAppointment(appointment, event);
+      await AppointmentActions.updateAppointmentFromGoogle(appointment, event);
     }
   }
 }

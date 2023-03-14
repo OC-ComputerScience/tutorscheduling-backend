@@ -1,6 +1,6 @@
 const cron = require("node-cron");
 const Appointment = require("../utils/appointment.js");
-const GoogleCalendar = require("../utils/googleCalendar");
+const AppointmentActions = require("../utils/appointmentActions");
 const Group = require("../utils/group.js");
 const PersonAppointment = require("../utils/personAppointment.js");
 const Time = require("../utils/timeFunctions.js");
@@ -75,9 +75,11 @@ async function deletePastAppointments() {
           }
         } else if (appointment.type === "Group") {
           // need to delete from Google first and then delete the actual appointment
-          await GoogleCalendar.deleteFromGoogle(appointment.id).catch((err) => {
-            console.log("Could not delete appointment from Google " + err);
-          });
+          await AppointmentActions.deleteFromGoogle(appointment.id).catch(
+            (err) => {
+              console.log("Could not delete appointment from Google " + err);
+            }
+          );
 
           await Appointment.deleteAppointment(appointment.id).catch((err) => {
             console.log("Could not delete appointment: " + err);

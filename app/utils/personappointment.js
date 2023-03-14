@@ -2,6 +2,7 @@ const db = require("../models");
 const PersonAppointment = db.personappointment;
 const Person = db.person;
 const Appointment = db.appointment;
+const Op = db.Sequelize.Op;
 
 exports.createPersonAppointment = async (personAppointmentData) => {
   if (personAppointmentData.isTutor === undefined) {
@@ -164,6 +165,15 @@ exports.findOnePersonAppointment = async (id) => {
 exports.updatePersonAppointment = async (personappointment, id) => {
   return await PersonAppointment.update(personappointment, {
     where: { id: id },
+  });
+};
+
+exports.deletePersonAppointmentForPersonAndAppointment = async (
+  personId,
+  appointmentId
+) => {
+  return await PersonAppointment.destroy({
+    where: { personId: personId, appointmentId: appointmentId },
   });
 };
 

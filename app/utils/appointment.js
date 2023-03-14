@@ -42,8 +42,6 @@ exports.createAppointment = async (appointmentData) => {
     endTime: appointmentData.endTime,
     type: appointmentData.type,
     status: appointmentData.status,
-    tutorStart: appointmentData.tutorStart,
-    tutorEnd: appointmentData.tutorEnd,
     URL: appointmentData.URL,
     preSessionInfo: appointmentData.preSessionInfo,
     googleEventId: appointmentData.googleEventId,
@@ -118,9 +116,32 @@ exports.findAllNeedingGoogleId = async () => {
   });
 };
 
-exports.findAllWithGoogleId = async () => {
+exports.findAllUpcomingWithGoogleId = async () => {
+  const date = new Date();
+  date.setHours(date.getHours() - date.getTimezoneOffset() / 60);
+  date.setHours(0, 0, 0, 0);
+
+  let checkTime = new Date();
+  checkTime =
+    checkTime.getHours() +
+    ":" +
+    checkTime.getMinutes() +
+    ":" +
+    checkTime.getSeconds();
+
   return await Appointment.findAll({
     where: {
+      [Op.or]: [
+        {
+          [Op.and]: [
+            { startTime: { [Op.gte]: checkTime } },
+            { date: { [Op.eq]: date } },
+          ],
+        },
+        {
+          date: { [Op.gt]: date },
+        },
+      ],
       googleEventId: {
         [Op.ne]: null,
       },
@@ -549,46 +570,6 @@ exports.findAllForPersonForGroup = async (groupId, personId) => {
         model: Topic,
         as: "topic",
         required: true,
-      },
-    ],
-    order: [
-      ["date", "ASC"],
-      ["startTime", "ASC"],
-    ],
-  });
-};
-
-exports.findFeedbackApptForPerson = async (id) => {
-  return await Appointment.findAll({
-    where: { id: id },
-    include: [
-      {
-        model: Location,
-        as: "location",
-        required: true,
-      },
-      {
-        model: Topic,
-        as: "topic",
-        required: true,
-      },
-      {
-        model: Group,
-        as: "group",
-        required: true,
-      },
-      {
-        model: PersonAppointment,
-        as: "personappointment",
-        required: true,
-        include: [
-          {
-            model: Person,
-            as: "person",
-            required: true,
-            right: true,
-          },
-        ],
       },
     ],
     order: [

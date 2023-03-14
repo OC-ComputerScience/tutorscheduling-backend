@@ -1,5 +1,5 @@
 const Appointment = require("../utils/appointment.js");
-const GoogleCalendar = require("../utils/googleCalendar");
+const AppointmentActions = require("../utils/appointmentActions.js");
 const Group = require("../utils/group.js");
 const Time = require("../utils/timeFunctions.js");
 
@@ -265,151 +265,31 @@ exports.findOne = async (req, res) => {
     });
 };
 
-exports.updateForGoogle = async (req, res) => {
-  // shouldn't need to update appointment
-  if (
-    req.body.type === "Group" &&
-    req.body.status === "available" &&
-    (req.body.googleEventId === "" ||
-      req.body.googleEventId === undefined ||
-      req.body.googleEventId === null)
-  ) {
-    await GoogleCalendar.addAppointmentToGoogle(req.params.id)
-      .then((response) => {
-        console.log("Successfully added appointment to Google");
-        res.send(response);
-        // res.send({
-        //   message: "Appointment was successfully added to Google.",
-        // });
-      })
-      .catch((err) => {
-        console.log("Error adding appointment to Google: " + err);
-        res.status(500).send({
-          message: "Error adding appointment to Google",
+exports.cancel = async (req, res) => {
+  await AppointmentActions.cancelAppointment(req.params.id, req.body)
+    .then((num) => {
+      if (num == 1) {
+        res.send({
+          message: "Appointment was canceled successfully.",
         });
-      });
-  }
-  // all other cases should require updating
-  else {
-    await Appointment.updateAppointment(req.body, req.params.id)
-      .then(async (num) => {
-        if (num == 1) {
-          if (req.body.type === "Private") {
-            // if appointment is private and booked, and there isn't a google event id, add the google event
-            if (
-              req.body.status === "booked" &&
-              (req.body.googleEventId === "" ||
-                req.body.googleEventId === undefined ||
-                req.body.googleEventId === null)
-            ) {
-              await GoogleCalendar.addAppointmentToGoogle(req.params.id)
-                .then((response) => {
-                  console.log("Successfully added appointment to Google");
-                  res.send(response);
-                  // res.send({
-                  //   message: "Appointment was successfully added to Google.",
-                  // });
-                })
-                .catch((err) => {
-                  console.log("Error adding appointment to Google: " + err);
-                  res.status(500).send({
-                    message: "Error adding appointment to Google",
-                  });
-                });
-            }
-            // if appointment is private and cancelled, delete the google event
-            else if (
-              req.body.status === "studentCancel" ||
-              req.body.status === "tutorCancel"
-            ) {
-              await GoogleCalendar.deleteFromGoogle(req.params.id)
-                .then((response) => {
-                  console.log("Successfully deleted appointment from Google");
-                  res.send(response);
-                  // res.send({
-                  //   message: "Appointment was successfully deleted from Google.",
-                  // });
-                })
-                .catch((err) => {
-                  console.log("Error deleting appointment from Google: " + err);
-                  res.status(500).send({
-                    message: "Error deleting appointment from Google",
-                  });
-                });
-            }
-            // otherwise, update the google event
-            else {
-              await GoogleCalendar.updateEventForGoogle(req.params.id)
-                .then((response) => {
-                  console.log("Successfully updated appointment with Google");
-                  res.send(response);
-                  // res.send({
-                  //   message: "Appointment was successfully updated with Google.",
-                  // });
-                })
-                .catch((err) => {
-                  console.log("Error updating appointment with Google: " + err);
-                  res.status(500).send({
-                    message: "Error updating appointment with Google",
-                  });
-                });
-            }
-          } else if (req.body.type === "Group") {
-            // if a tutor cancels, delete the google event
-            if (req.body.status === "tutorCancel") {
-              await GoogleCalendar.deleteFromGoogle(req.params.id)
-                .then((response) => {
-                  console.log("Successfully deleted appointment from Google");
-                  res.send(response);
-                  // res.send({
-                  //   message: "Appointment was successfully deleted from Google.",
-                  // });
-                })
-                .catch((err) => {
-                  console.log("Error deleting appointment from Google: " + err);
-                  res.status(500).send({
-                    message: "Error deleting appointment from Google",
-                  });
-                });
-            }
-            // otherwise, update the google event
-            else {
-              await GoogleCalendar.updateEventForGoogle(req.params.id)
-                .then((response) => {
-                  console.log("Successfully updated appointment with Google");
-                  res.send(response);
-                  // res.send({
-                  //   message: "Appointment was successfully updated with Google.",
-                  // });
-                })
-                .catch((err) => {
-                  console.log("Error updating appointment with Google: " + err);
-                  res.status(500).send({
-                    message: "Error updating appointment with Google",
-                  });
-                });
-            }
-          }
-        } else {
-          res.send({
-            message: `Cannot update appointment for Google with id = ${req.params.id}. Maybe appointment was not found or req.body was empty!`,
-          });
-        }
-      })
-      .catch((err) => {
-        res.status(500).send({
-          message:
-            "Error updating appointment for Google with id = " +
-            req.params.id +
-            " error: " +
-            err,
+      } else {
+        res.send({
+          message: `Cannot cancel appointment with id = ${req.params.id}. Maybe appointment was not found or req.body was empty!`,
         });
+      }
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).send({
+        message:
+          err.message ||
+          "Error canceling appointment with id = " + req.params.id,
       });
-  }
+    });
 };
 
 exports.update = async (req, res) => {
-  await Appointment.updateAppointment(req.body, req.params.id)
+  await AppointmentActions.updateAppointment(req.body)
     .then((num) => {
       if (num == 1) {
         res.send({
@@ -422,8 +302,11 @@ exports.update = async (req, res) => {
       }
     })
     .catch((err) => {
+      console.log(err);
       res.status(500).send({
-        message: "Error updating appointment with id = " + req.params.id,
+        message:
+          err.message ||
+          "Error updating appointment with id = " + req.params.id,
       });
     });
 };
@@ -442,16 +325,21 @@ exports.delete = async (req, res) => {
       }
     })
     .catch((err) => {
+      console.log(err);
       res.status(500).send({
-        message: "Could not delete appointment with id = " + req.params.id,
+        message:
+          err.message ||
+          "Could not delete appointment with id = " + req.params.id,
       });
     });
 };
 
 exports.deleteAll = async (req, res) => {
   await Appointment.deleteAllAppointments()
-    .then((nums) => {
-      res.send({ message: `${nums} appointments were deleted successfully!` });
+    .then((number) => {
+      res.send({
+        message: `${number} appointments were deleted successfully!`,
+      });
     })
     .catch((err) => {
       res.status(500).send({

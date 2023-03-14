@@ -90,11 +90,11 @@ module.exports = (app) => {
   // Retrieve a single Appointment with id
   router.get("/:id", [authenticate], appointment.findOne);
 
+  // cancel an appointment
+  router.post("/cancel/:id", [authenticate], appointment.cancel);
+
   // Update a Appointment with id
   router.put("/:id", [authenticate], appointment.update);
-
-  // Update a Appointment for google stuff
-  router.put("/google/:id", [authenticate], appointment.updateForGoogle);
 
   // Delete a Appointment with id
   router.delete("/:id", [authenticate], appointment.delete);
