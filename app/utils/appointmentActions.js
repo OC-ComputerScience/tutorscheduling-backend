@@ -53,7 +53,7 @@ exports.cancelAppointment = async (id, fromUser) => {
       if (appointment.status === "pending") {
         return await this.pendingStudentCancel(appointment);
       } else if (appointment.status === "booked") {
-        return await this.bookedStudentCancel(appointment, fromUser);
+        return await this.bookedStudentCancel(appointment);
       }
     } else if (appointment.type === "Group") {
       return await this.groupStudentTutorCancel(appointment, fromUser);
@@ -65,12 +65,12 @@ exports.cancelAppointment = async (id, fromUser) => {
       appointment.tutors.length === 1 &&
       appointment.students.length > 0
     ) {
-      return await this.oneTutorCancel(appointment, fromUser);
+      return await this.oneTutorCancel(appointment);
     } else if (appointment.tutors.length > 1) {
       let tutorOwnsAppointment = await Person.findFirstTutorForAppointment(
         appointment.id
       );
-      if (tutorOwnsAppointment.id === fromUser.userId) {
+      if (tutorOwnsAppointment.id === fromUser.userID) {
         return await this.swapTutorCancel(appointment, fromUser);
       } else {
         return await this.groupStudentTutorCancel(appointment, fromUser);
@@ -85,12 +85,12 @@ exports.cancelFeedbackMessage = async (personAppointments, fromUser) => {
     let temp = {
       id: pa.id,
       isTutor: pa.isTutor,
-      feedbacknumber: pa.feedbacknumber,
+      feedbacknumber: null,
       feedbacktext: `Canceled by ${fromUser.fName} ${fromUser.lName}`,
       appointmentId: pa.appointmentId,
       personId: pa.personId,
     };
-    await PersonAppointment.updatePersonAppointment(temp.id, temp);
+    await PersonAppointment.updatePersonAppointment(temp, temp.id);
   }
 };
 
@@ -108,22 +108,16 @@ exports.pendingStudentCancel = async (appointment) => {
     status: "available",
     preSessionInfo: "",
     groupId: appointment.groupId,
+    owner: false,
   };
   await Appointment.updateAppointment(
     updatedAppointment,
     updatedAppointment.id
-  ).catch((err) => {
-    return "Error updating canceled pending appointment from student: " + err;
-  });
-  await PersonAppointment.deletePersonAppointment(
-    appointment.students[0].id
-  ).catch((err) => {
-    return "Error deleting person appointment for student: " + err;
-  });
-  return "Pending appointment was canceled successfully by student";
+  );
+  await PersonAppointment.deletePersonAppointment(appointment.students[0].id);
 };
 
-exports.bookedStudentCancel = async (appointment, fromUser) => {
+exports.bookedStudentCancel = async (appointment) => {
   // 1. notify tutor
   // 2. update person appointments with cancel feedback
   // 3. delete appointment from google
@@ -140,6 +134,8 @@ exports.bookedStudentCancel = async (appointment, fromUser) => {
     groupId: appointment.groupId,
     topicId: appointment.topicId,
     locationId: appointment.locationId,
+    googleEventId: null,
+    owner: false,
   };
   let textInfo = {
     appointmentType: appointment.type,
@@ -148,32 +144,22 @@ exports.bookedStudentCancel = async (appointment, fromUser) => {
     date: Time.formatDate(appointment.date),
     startTime: Time.calcTime(appointment.startTime),
     topicName: appointment.topic.name,
-    fromFirstName: fromUser.fName,
-    fromLastName: fromUser.lName,
+    fromFirstName: appointment.students[0].person.fName,
+    fromLastName: appointment.students[0].person.lName,
     fromRoleType: "Student",
   };
-  console.log(textInfo);
-  await Twilio.sendCanceledMessage(textInfo).catch((err) => {
-    return (
-      "Error sending cancel booked appointment message from student: " + err
-    );
-  });
-  await PersonAppointment.cancelFeedbackMessage(
-    appointment.personappointment,
-    fromUser
-  ).catch((err) => {
-    return (
-      "Error adding cancelation text to person appointments from student: " +
-      err
-    );
-  });
+  await Twilio.sendCanceledMessage(textInfo);
+  let fromUser = {
+    fName: appointment.students[0].person.fName,
+    lName: appointment.students[0].person.lName,
+  };
+  await this.cancelFeedbackMessage(appointment.personappointment, fromUser);
   await this.deleteFromGoogle(appointment.id);
   await Appointment.updateAppointment(
     updatedAppointment,
     updatedAppointment.id
-  ).catch((err) => {
-    return "Error canceling pending appointment from student: " + err;
-  });
+  );
+  updatedAppointment.id = undefined;
   updatedAppointment.status = "available";
   updatedAppointment.preSessionInfo = "";
   updatedAppointment.topicId = null;
@@ -202,23 +188,24 @@ exports.groupStudentTutorCancel = async (appointment, fromUser) => {
     date: Time.formatDate(appointment.date),
     startTime: Time.calcTime(appointment.startTime),
     topicName: appointment.topic.name,
+    locationName: appointment.location.name,
     fromFirstName: fromUser.fName,
     fromLastName: fromUser.lName,
     fromRoleType: fromUser.type,
+    owner: false,
   };
-  console.log(textInfo);
   // let other tutors know
   for (let i = 0; i < appointment.tutors.length; i++) {
     if (appointment.tutors[i].personId !== fromUser.userID) {
       textInfo.toPhoneNum = appointment.tutors[i].person.phoneNum;
       textInfo.toPersonRoleId = appointment.tutors[i].person.personrole[0].id;
-      await TwilioServices.sendCanceledMessage(textInfo);
+      await Twilio.sendCanceledMessage(textInfo);
     }
   }
   await PersonAppointment.deletePersonAppointmentForPersonAndAppointment(
     fromUser.userID,
     appointment.id
-  );
+  ).catch((err) => console.log("ERROR: " + err));
   await this.updateForGoogle(appointment.id);
 };
 
@@ -236,7 +223,7 @@ exports.emptyTutorCancel = async (appointment) => {
   await Appointment.deleteAppointment(appointment.id);
 };
 
-exports.oneTutorCancel = async (appointment, fromUser) => {
+exports.oneTutorCancel = async (appointment) => {
   // 1. notify all students
   // 2. update personappointments with cancel feedback
   // 3. delete appointment from google
@@ -252,6 +239,7 @@ exports.oneTutorCancel = async (appointment, fromUser) => {
     groupId: appointment.groupId,
     topicId: appointment.topicId,
     locationId: appointment.locationId,
+    googleEventId: null,
   };
   let textInfo = {
     appointmentType: appointment.type,
@@ -260,17 +248,21 @@ exports.oneTutorCancel = async (appointment, fromUser) => {
     date: Time.formatDate(appointment.date),
     startTime: Time.calcTime(appointment.startTime),
     topicName: appointment.topic.name,
-    fromFirstName: fromUser.fName,
-    fromLastName: fromUser.lName,
+    fromFirstName: appointment.tutors[0].person.fName,
+    fromLastName: appointment.tutors[0].person.lName,
     fromRoleType: "Tutor",
+    owner: true,
   };
-  console.log(textInfo);
   // notify the students
   for (let i = 0; i < appointment.students.length; i++) {
     textInfo.toPhoneNum = appointment.students[i].person.phoneNum;
     textInfo.toPersonRoleId = appointment.students[i].person.personrole[0].id;
     await Twilio.sendCanceledMessage(textInfo);
   }
+  let fromUser = {
+    fName: appointment.tutors[0].person.fName,
+    lName: appointment.tutors[0].person.lName,
+  };
   await this.cancelFeedbackMessage(appointment.personappointment, fromUser);
   await this.deleteFromGoogle(appointment.id);
   await Appointment.updateAppointment(
@@ -295,19 +287,19 @@ exports.swapTutorCancel = async (appointment, fromUser) => {
     fromFirstName: fromUser.fName,
     fromLastName: fromUser.lName,
     fromRoleType: "Tutor",
+    owner: false,
   };
-  console.log(textInfo);
   await this.deleteFromGoogle(appointment.id);
   // let other tutors know
   for (let i = 0; i < appointment.tutors.length; i++) {
     if (appointment.tutors[i].personId !== fromUser.userID) {
       textInfo.toPhoneNum = appointment.tutors[i].person.phoneNum;
       textInfo.toPersonRoleId = appointment.tutors[i].person.personrole[0].id;
-      await TwilioServices.sendCanceledMessage(textInfo);
+      await Twilio.sendCanceledMessage(textInfo);
     }
   }
   await PersonAppointment.deletePersonAppointmentForPersonAndAppointment(
-    fromUser.userId,
+    fromUser.userID,
     appointment.id
   );
   await this.addAppointmentToGoogle(appointment.id);
@@ -346,23 +338,8 @@ exports.addAppointmentToGoogle = async (id) => {
     });
 };
 
-exports.getAppointmentFromGoogle = async (id) => {
-  let error;
-  let appointment = [];
-
-  await Appointment.findOneAppointment(id)
-    .then((data) => {
-      appointment = data;
-    })
-    .catch((err) => {
-      error = err;
-    });
-
-  if (error !== undefined) {
-    return error;
-  }
-
-  let auth = await getAccessToken(id);
+exports.getAppointmentFromGoogle = async (appointment) => {
+  let auth = await getAccessToken(appointment.id);
 
   const calendar = google.calendar({
     version: "v3",
@@ -387,6 +364,62 @@ exports.getAppointmentFromGoogle = async (id) => {
         console.log("Google returned an error: " + err);
         return err;
       }
+    });
+};
+
+exports.patchForGoogle = async (appointment) => {
+  let auth = await getAccessToken(appointment.id);
+
+  // make sure generic information is the same
+  let summary = "";
+  if (appointment.type === "Private") {
+    summary =
+      appointment.students[0].fName +
+      appointment.students[0].lName +
+      " - " +
+      appointment.topic.name +
+      " Tutoring";
+  } else {
+    summary = "Group - " + appointment.topic.name + " Tutoring";
+  }
+
+  let event = {
+    summary: summary,
+    location: appointment.location.name,
+    description: appointment.preSessionInfo,
+  };
+
+  if (appointment.type.toLowerCase() === "online") {
+    event.conferenceData = {
+      createRequest: {
+        conferenceSolutionKey: {
+          type: "hangoutsMeet",
+        },
+        requestId: appointment.group.name + appointment.date,
+      },
+    };
+  }
+
+  const calendar = google.calendar({
+    version: "v3",
+    auth: auth,
+  });
+
+  // We make a request to Google Calendar API.
+  return await calendar.events
+    .patch({
+      auth: auth,
+      calendarId: "primary",
+      eventId: appointment.googleEventId,
+      resource: event,
+      conferenceDataVersion: 1,
+      sendUpdates: "all",
+    })
+    .then(async (event) => {
+      return event;
+    })
+    .catch((error) => {
+      return error;
     });
 };
 
@@ -502,18 +535,28 @@ exports.updateAppointmentFromGoogle = async (appointment, event) => {
         stopChecking = true;
       } else if (
         appointment.tutors.length === 1 &&
-        appointment.students.length > 1
+        appointment.students.length > 0
       ) {
         // tutor cancel with one tutor
         await this.oneTutorCancel(appointment);
         stopChecking = true;
       } else if (appointment.tutors.length > 1) {
         // tutor cancel with multiple tutors
-        await this.swapTutorCancel(appointment);
+        let ownerTutor = appointment.tutors.find(
+          (tutor) => tutor.person.email === attendee.email
+        );
+        let fromUser = {
+          fName: ownerTutor.person.fName,
+          lName: ownerTutor.person.lName,
+          userID: ownerTutor.personId,
+          type: "Tutor",
+        };
+        await this.swapTutorCancel(appointment, fromUser);
       }
-    } else if (!attendee.organizer && attendee.responseStatus === "declined") {
+    } else if (attendee.responseStatus === "declined") {
       if (appointment.type === "Private") {
-        await this.bookedStudentCancel(appointment, fromUser);
+        await this.bookedStudentCancel(appointment);
+        stopChecking = true;
       } else if (appointment.type === "Group") {
         let otherPerson = appointment.personappointment.find(
           (pa) => pa.person.email === attendee.email
@@ -521,7 +564,7 @@ exports.updateAppointmentFromGoogle = async (appointment, event) => {
         let fromUser = {
           fName: otherPerson.person.fName,
           lName: otherPerson.person.lName,
-          userId: otherPerson.personId,
+          userID: otherPerson.personId,
           type: "",
         };
 
@@ -538,19 +581,7 @@ exports.updateAppointmentFromGoogle = async (appointment, event) => {
   }
 
   if (!stopChecking) {
-    let updatedAppointment = {
-      id: appointment.id,
-      date: appointment.date,
-      startTime: appointment.startTime,
-      endTime: appointment.endTime,
-      type: appointment.type,
-      status: appointment.status,
-      preSessionInfo: appointment.preSessionInfo,
-      groupId: appointment.groupId,
-      topicId: appointment.topicId,
-      locationId: appointment.locationId,
-    };
-    await this.updateAppointment(updatedAppointment);
+    await this.patchForGoogle(appointment);
   }
 };
 

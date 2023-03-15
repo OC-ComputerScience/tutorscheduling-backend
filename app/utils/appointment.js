@@ -107,11 +107,38 @@ exports.findAllToDeleteForGroup = async (group) => {
   });
 };
 
-exports.findAllNeedingGoogleId = async () => {
+exports.findAllUpcomingNeedingGoogleId = async () => {
+  const date = new Date();
+  date.setHours(date.getHours() - date.getTimezoneOffset() / 60);
+  date.setHours(0, 0, 0, 0);
+
+  let checkTime = new Date();
+  checkTime =
+    checkTime.getHours() +
+    ":" +
+    checkTime.getMinutes() +
+    ":" +
+    checkTime.getSeconds();
+
   return await Appointment.findAll({
     where: {
+      [Op.or]: [
+        {
+          [Op.and]: [
+            { startTime: { [Op.gte]: checkTime } },
+            { date: { [Op.eq]: date } },
+          ],
+        },
+        {
+          date: { [Op.gt]: date },
+        },
+      ],
       googleEventId: null,
       [Op.or]: [{ status: "booked" }, { type: "Group" }],
+      [Op.and]: [
+        { status: { [Op.ne]: "studentCancel" } },
+        { status: { [Op.ne]: "tutorCancel" } },
+      ],
     },
   });
 };
@@ -142,20 +169,21 @@ exports.findAllUpcomingWithGoogleId = async () => {
           date: { [Op.gt]: date },
         },
       ],
-      googleEventId: {
-        [Op.ne]: null,
-      },
+      [Op.and]: [
+        { googleEventId: { [Op.ne]: "" } },
+        { googleEventId: { [Op.ne]: null } },
+      ],
     },
     include: [
       {
         model: Location,
         as: "location",
-        required: true,
+        required: false,
       },
       {
         model: Topic,
         as: "topic",
-        required: true,
+        required: false,
       },
       {
         model: PersonAppointment,
@@ -167,6 +195,42 @@ exports.findAllUpcomingWithGoogleId = async () => {
             as: "person",
             required: true,
             right: true,
+            include: [
+              {
+                model: PersonTopic,
+                as: "persontopic",
+                required: false,
+                include: [
+                  {
+                    model: Topic,
+                    as: "topic",
+                    required: true,
+                    right: true,
+                  },
+                ],
+              },
+              {
+                model: PersonRole,
+                as: "personrole",
+                required: true,
+                include: [
+                  {
+                    model: Role,
+                    as: "role",
+                    required: true,
+                    right: true,
+                    where: {
+                      type: [
+                        db.sequelize.literal(
+                          "IF(personappointment.isTutor = 1, 'Tutor', 'Student')"
+                        ),
+                      ],
+                      groupId: [db.sequelize.literal("appointment.groupId")],
+                    },
+                  },
+                ],
+              },
+            ],
           },
         ],
       },

@@ -325,13 +325,15 @@ exports.sendCanceledMessage = async (textInfo) => {
     textInfo.fromRoleType === "Student" &&
     textInfo.appointmentType === "Private"
       ? "\nThis appointment is now open again for booking."
-      : textInfo.fromRoleType === "Tutor"
+      : textInfo.fromRoleType === "Tutor" && textInfo.owner
       ? "\nWe apologize for the inconvenience."
       : "";
 
   if (
     textInfo.appointmentType === "Private" ||
-    (textInfo.appointmentType === "Group" && textInfo.fromRoleType === "Tutor")
+    (textInfo.appointmentType === "Group" &&
+      textInfo.fromRoleType === "Tutor" &&
+      textInfo.owner)
   ) {
     text.message =
       "Your " +
@@ -350,10 +352,13 @@ exports.sendCanceledMessage = async (textInfo) => {
       ending;
   } else if (
     textInfo.appointmentType === "Group" &&
-    textInfo.fromRoleType === "Student"
+    (textInfo.fromRoleType === "Student" ||
+      (textInfo.fromRoleType === "Tutor" && !textInfo.owner))
   ) {
     text.message =
-      "A student has left your group appointment." +
+      "A " +
+      textInfo.fromRoleType.toLowerCase() +
+      " has left your group appointment." +
       "\n    Date: " +
       textInfo.date +
       "\n    Time: " +
@@ -362,7 +367,9 @@ exports.sendCanceledMessage = async (textInfo) => {
       textInfo.locationName +
       "\n    Topic: " +
       textInfo.topicName +
-      "\n    Student: " +
+      "\n    " +
+      textInfo.fromRoleType +
+      ": " +
       textInfo.fromFirstName +
       " " +
       textInfo.fromLastName +

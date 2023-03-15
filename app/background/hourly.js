@@ -22,7 +22,7 @@ exports.hourlyTasks = () => {
 async function checkGoogleEvents() {
   console.log("Checking Google Events:");
   let appointmentsNeedingGoogle = [];
-  await Appointment.findAllNeedingGoogleId()
+  await Appointment.findAllUpcomingNeedingGoogleId()
     .then(async (data) => {
       appointmentsNeedingGoogle = data;
     })
@@ -52,13 +52,13 @@ async function checkGoogleEvents() {
   for (let i = 0; i < appointmentsWithGoogle.length; i++) {
     let appointment = appointmentsWithGoogle[i].dataValues;
     appointment.students = appointment.personappointment.filter(
-      (pa) => pa.isTutor === false
+      (pa) => !pa.isTutor
     );
     appointment.tutors = appointment.personappointment.filter(
-      (pa) => pa.isTutor === true
+      (pa) => pa.isTutor
     );
     let event = await AppointmentActions.getAppointmentFromGoogle(
-      appointment.id
+      appointment
     ).catch((err) => {
       console.log("Error getting appointment from Google: " + err);
     });
@@ -68,7 +68,12 @@ async function checkGoogleEvents() {
     console.log(appointment);
 
     if (event.data !== undefined) {
-      await AppointmentActions.updateAppointmentFromGoogle(appointment, event);
+      await AppointmentActions.updateAppointmentFromGoogle(
+        appointment,
+        event
+      ).catch((err) => {
+        console.log("Could not update appointment from Google: " + err);
+      });
     }
   }
 }
