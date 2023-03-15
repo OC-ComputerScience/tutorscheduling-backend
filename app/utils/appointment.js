@@ -42,8 +42,6 @@ exports.createAppointment = async (appointmentData) => {
     endTime: appointmentData.endTime,
     type: appointmentData.type,
     status: appointmentData.status,
-    tutorStart: appointmentData.tutorStart,
-    tutorEnd: appointmentData.tutorEnd,
     URL: appointmentData.URL,
     preSessionInfo: appointmentData.preSessionInfo,
     googleEventId: appointmentData.googleEventId,
@@ -109,32 +107,83 @@ exports.findAllToDeleteForGroup = async (group) => {
   });
 };
 
-exports.findAllNeedingGoogleId = async () => {
+exports.findAllUpcomingNeedingGoogleId = async () => {
+  const date = new Date();
+  date.setHours(date.getHours() - date.getTimezoneOffset() / 60);
+  date.setHours(0, 0, 0, 0);
+
+  let checkTime = new Date();
+  checkTime =
+    checkTime.getHours() +
+    ":" +
+    checkTime.getMinutes() +
+    ":" +
+    checkTime.getSeconds();
+
   return await Appointment.findAll({
     where: {
+      [Op.or]: [
+        {
+          [Op.and]: [
+            { startTime: { [Op.gte]: checkTime } },
+            { date: { [Op.eq]: date } },
+          ],
+        },
+        {
+          date: { [Op.gt]: date },
+        },
+      ],
       googleEventId: null,
       [Op.or]: [{ status: "booked" }, { type: "Group" }],
+      [Op.and]: [
+        { status: { [Op.ne]: "studentCancel" } },
+        { status: { [Op.ne]: "tutorCancel" } },
+      ],
     },
   });
 };
 
-exports.findAllWithGoogleId = async () => {
+exports.findAllUpcomingWithGoogleId = async () => {
+  const date = new Date();
+  date.setHours(date.getHours() - date.getTimezoneOffset() / 60);
+  date.setHours(0, 0, 0, 0);
+
+  let checkTime = new Date();
+  checkTime =
+    checkTime.getHours() +
+    ":" +
+    checkTime.getMinutes() +
+    ":" +
+    checkTime.getSeconds();
+
   return await Appointment.findAll({
     where: {
-      googleEventId: {
-        [Op.ne]: null,
-      },
+      [Op.or]: [
+        {
+          [Op.and]: [
+            { startTime: { [Op.gte]: checkTime } },
+            { date: { [Op.eq]: date } },
+          ],
+        },
+        {
+          date: { [Op.gt]: date },
+        },
+      ],
+      [Op.and]: [
+        { googleEventId: { [Op.ne]: "" } },
+        { googleEventId: { [Op.ne]: null } },
+      ],
     },
     include: [
       {
         model: Location,
         as: "location",
-        required: true,
+        required: false,
       },
       {
         model: Topic,
         as: "topic",
-        required: true,
+        required: false,
       },
       {
         model: PersonAppointment,
@@ -146,6 +195,42 @@ exports.findAllWithGoogleId = async () => {
             as: "person",
             required: true,
             right: true,
+            include: [
+              {
+                model: PersonTopic,
+                as: "persontopic",
+                required: false,
+                include: [
+                  {
+                    model: Topic,
+                    as: "topic",
+                    required: true,
+                    right: true,
+                  },
+                ],
+              },
+              {
+                model: PersonRole,
+                as: "personrole",
+                required: true,
+                include: [
+                  {
+                    model: Role,
+                    as: "role",
+                    required: true,
+                    right: true,
+                    where: {
+                      type: [
+                        db.sequelize.literal(
+                          "IF(personappointment.isTutor = 1, 'Tutor', 'Student')"
+                        ),
+                      ],
+                      groupId: [db.sequelize.literal("appointment.groupId")],
+                    },
+                  },
+                ],
+              },
+            ],
           },
         ],
       },
@@ -549,46 +634,6 @@ exports.findAllForPersonForGroup = async (groupId, personId) => {
         model: Topic,
         as: "topic",
         required: true,
-      },
-    ],
-    order: [
-      ["date", "ASC"],
-      ["startTime", "ASC"],
-    ],
-  });
-};
-
-exports.findFeedbackApptForPerson = async (id) => {
-  return await Appointment.findAll({
-    where: { id: id },
-    include: [
-      {
-        model: Location,
-        as: "location",
-        required: true,
-      },
-      {
-        model: Topic,
-        as: "topic",
-        required: true,
-      },
-      {
-        model: Group,
-        as: "group",
-        required: true,
-      },
-      {
-        model: PersonAppointment,
-        as: "personappointment",
-        required: true,
-        include: [
-          {
-            model: Person,
-            as: "person",
-            required: true,
-            right: true,
-          },
-        ],
       },
     ],
     order: [

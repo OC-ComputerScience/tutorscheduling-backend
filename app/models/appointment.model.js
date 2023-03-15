@@ -25,12 +25,6 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.STRING,
       allowNull: false,
     },
-    tutorStart: {
-      type: Sequelize.TIME,
-    },
-    tutorEnd: {
-      type: Sequelize.TIME,
-    },
     URL: {
       type: Sequelize.STRING,
     },

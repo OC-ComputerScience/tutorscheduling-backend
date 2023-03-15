@@ -1,28 +1,26 @@
+exports.calcTime = (time) => {
+  if (time == null) {
+    return null;
+  }
+  let temp = time.split(":");
+  let milHours = parseInt(temp[0]);
+  let minutes = temp[1];
+  let hours = milHours % 12;
+  if (hours == 0) {
+    hours = 12;
+  }
+  let dayTime = ~~(milHours / 12) > 0 ? "PM" : "AM";
+  return "" + hours + ":" + minutes + " " + dayTime;
+};
+
 exports.addMinsToTime = (mins, time) => {
   let temp = new Date();
   var [timeHrs, timeMins] = this.getHoursAndMinsFromTime(time);
   temp.setHours(timeHrs);
   temp.setMinutes(timeMins + mins);
-  [timeHrs, timeMins] = this.getHoursAndMinsFromTime(temp.toLocaleTimeString());
-  console.log(temp.toLocaleTimeString());
-  console.log(timeHrs);
-  console.log(timeMins);
-
-  // // get the times hour and min value
-  // var [timeHrs, timeMins] = this.getHoursAndMinsFromTime(time);
-
-  // // time arithmetic (addition)
-  // if (timeMins + mins >= 60) {
-  //   var addedHrs = parseInt((timeMins + mins) / 60);
-  //   timeMins = (timeMins + mins) % 60;
-  //   if (timeHrs + addedHrs > 23) {
-  //     timeHrs = (timeHrs + addedHrs) % 24;
-  //   } else {
-  //     timeHrs += addedHrs;
-  //   }
-  // } else {
-  //   timeMins += mins;
-  // }
+  [timeHrs, timeMins] = this.getHoursAndMinsFromTime(
+    temp.toLocaleTimeString("it-IT")
+  );
 
   // make sure the time slots are padded correctly
   return (
@@ -38,26 +36,11 @@ exports.subtractMinsFromTime = (mins, time) => {
   var [timeHrs, timeMins] = this.getHoursAndMinsFromTime(time);
   temp.setHours(timeHrs);
   temp.setMinutes(timeMins - mins);
-  [timeHrs, timeMins] = this.getHoursAndMinsFromTime(temp.toLocaleTimeString());
-  console.log(temp.toLocaleTimeString());
-  console.log(timeHrs);
-  console.log(timeMins);
+  [timeHrs, timeMins] = this.getHoursAndMinsFromTime(
+    temp.toLocaleTimeString("it-IT")
+  );
 
   // //TODO test when hour should be -1 but it's -0
-
-  // // time arithmetic (subtraction)
-  // if (timeMins - mins <= 0) {
-  //   var subtractedHrs = parseInt((timeMins - mins) / 60);
-  //   timeMins = ((timeMins - mins) % 60) + 60;
-
-  //   if (timeHrs - subtractedHrs < 0) {
-  //     timeHrs = ((timeHrs - subtractedHrs) % 24) + 24;
-  //   } else {
-  //     timeHrs -= subtractedHrs;
-  //   }
-  // } else {
-  //   timeMins -= mins;
-  // }
 
   // make sure the time slots are padded correctly
   return (

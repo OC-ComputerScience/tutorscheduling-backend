@@ -1,4 +1,3 @@
-const Appointment = require("./appointment.js");
 const Person = require("./person.js");
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken =
@@ -6,26 +5,28 @@ const authToken =
 const phoneNum = process.env.TWILIO_NUMBER;
 const client = require("twilio")(accountSid, authToken);
 const MessagingResponse = require("twilio/lib/twiml/MessagingResponse");
+let prefix = "OC Tutor Scheduling:\n";
+// let postfix = "\nReply STOP to unsubscribe.";
 
-exports.sendText = async (message, phone) => {
-  let prefix = "OC Tutor Scheduling:\n";
-  // let postfix = "\nReply STOP to unsubscribe.";
-  let finalMessage = prefix + message;
+exports.sendText = async (text) => {
+  let finalMessage = prefix + text.message;
   // + postfix;
 
-  let person = await Person.findOnePersonByPhoneNumber(phone).catch((err) => {
-    console.log(
-      "Error retrieving person by phone number " + phone + ": " + err
-    );
-  });
+  let person = await Person.findOnePersonByPhoneNumber(text.phoneNum).catch(
+    (err) => {
+      console.log(
+        "Error retrieving person by phone number " + text.phone + ": " + err
+      );
+    }
+  );
 
-  if (phone === null || person === undefined) {
+  if (text.phone === null || person === undefined) {
     return "Could not find person by phone number";
   } else if (person.textOptIn) {
     return await client.messages
       .create({
         body: finalMessage,
-        to: phone,
+        to: text.phoneNum,
         from: phoneNum,
       })
       .then((message) => {
@@ -53,11 +54,13 @@ exports.respondToStop = async (body, from) => {
     let phoneNum = from.substring(2);
     console.log(phoneNum);
     //we need to update person to opt out of texts
-    let person = await Person.findOnePersonByPhoneNumber(phone).catch((err) => {
-      console.log(
-        "Error retrieving person by phone number " + phone + ": " + err
-      );
-    });
+    let person = await Person.findOnePersonByPhoneNumber(phoneNum).catch(
+      (err) => {
+        console.log(
+          "Error retrieving person by phone number " + phoneNum + ": " + err
+        );
+      }
+    );
     if (person === undefined) {
       return "Could not find person by phone number";
     } else {
@@ -78,103 +81,300 @@ exports.respondToStop = async (body, from) => {
   }
 };
 
-exports.sendCanceledMessage = async (fromUser, appointId) => {
-  let appointment = {};
-  await Appointment.findOneAppointmentInfo(appointId)
-    .then(async (response) => {
-      appointment = response.data[0];
-      if (
-        appointment.personappointment !== null &&
-        appointment.personappointment !== undefined
-      ) {
-        appointment.students = appointment.personappointment.filter(
-          (pa) => pa.isTutor === false
-        );
-        appointment.tutors = appointment.personappointment.filter(
-          (pa) => pa.isTutor === true
-        );
-      }
-    })
-    .catch((error) => {
-      console.log("There was an error:", error);
-    });
-
+exports.sendApplicationMessage = async (textInfo) => {
   let text = {
-    phoneNum: "",
+    phoneNum: textInfo.adminPhoneNum,
+    message:
+      "You have a new tutor application from " +
+      textInfo.fromFirstName +
+      " " +
+      textInfo.fromLastName +
+      " for the " +
+      textInfo.groupName +
+      ".\nPlease view this application: " +
+      process.env.URL +
+      "/adminApprove/" +
+      textInfo.adminPersonRoleId +
+      "?personRoleId=" +
+      textInfo.applicationPersonRoleId,
+  };
+  return await this.sendText(text);
+};
+
+exports.sendRequestMessage = async (textInfo) => {
+  let text = {
+    phoneNum: textInfo.adminPhoneNum,
+    message:
+      "You have a new request from " +
+      textInfo.fromFirstName +
+      " " +
+      textInfo.fromLastName +
+      " for the " +
+      textInfo.groupName +
+      ".\nPlease view this request: " +
+      process.env.URL +
+      "/adminRequests/" +
+      textInfo.adminPersonRoleId +
+      "?requestId=" +
+      textInfo.requestId,
+  };
+  return await this.sendText(text);
+};
+
+exports.sendFeedbackMessage = async (textInfo) => {
+  let text = {
+    phoneNum: textInfo.toPhoneNum,
+    message:
+      "Please leave feedback for " +
+      textInfo.appointmentCount +
+      " appointment(s) that you " +
+      (textInfo.roleType === "Tutor"
+        ? "tutored"
+        : textInfo.roleType === "Student"
+        ? "attended"
+        : "") +
+      ".\n" +
+      process.env.URL,
+  };
+  return await this.sendText(text);
+};
+
+exports.sendUpcomingMessage = async (textInfo) => {
+  let text = {
+    phoneNum: textInfo.toPhoneNum,
+    message:
+      "You have an upcoming " +
+      textInfo.appointmentType.toLowerCase() +
+      " appointment:" +
+      "\n    Date: " +
+      textInfo.date +
+      "\n    Time: " +
+      textInfo.startTime +
+      "\n    Location: " +
+      textInfo.locationName +
+      "\n    Topic: " +
+      textInfo.topicName +
+      "\nPlease review the changes: " +
+      process.env.URL +
+      "/" +
+      textInfo.roleType.toLowerCase() +
+      "Home/" +
+      textInfo.toPersonRoleId +
+      "?appointmentId=" +
+      textInfo.appointmentId,
+  };
+  return await this.sendText(text);
+};
+
+exports.sendMessageFromAdmin = async (textInfo) => {
+  // this is for when admin sign students up for private or group appointments
+  let text = {
+    phoneNum: textInfo.tutorPhoneNum,
+    message:
+      (textInfo.appointmentType === "Private"
+        ? "You have a new booked private appointment."
+        : textInfo.appointmentType === "Group"
+        ? "A student has joined your group appointment."
+        : "") +
+      "\n    Date: " +
+      textInfo.date +
+      "\n    Time: " +
+      textInfo.startTime +
+      "\n    Location: " +
+      textInfo.locationName +
+      "\n    Topic: " +
+      textInfo.topicName +
+      "\n    Student: " +
+      textInfo.studentFirstName +
+      " " +
+      textInfo.studentLastName +
+      "\n    Booked by: " +
+      textInfo.adminFirstName +
+      " " +
+      textInfo.adminLastName +
+      "\nPlease view this " +
+      textInfo.appointmentType.toLowerCase() +
+      " appointment: " +
+      process.env.URL +
+      "/tutorHome/" +
+      textInfo.tutorPersonRoleId +
+      "?appointmentId=" +
+      textInfo.appointmentId,
+  };
+  return await this.sendText(text);
+};
+
+exports.sendGroupMessage = async (textInfo) => {
+  let text = {
+    phoneNum: textInfo.tutorPhoneNum,
+    message:
+      "A " +
+      textInfo.roleType.toLowerCase() +
+      " has joined your group appointment." +
+      "\n    Date: " +
+      textInfo.date +
+      "\n    Time: " +
+      textInfo.startTime +
+      "\n    Location: " +
+      textInfo.locationName +
+      "\n    Topic: " +
+      textInfo.topicName +
+      "\n    " +
+      textInfo.roleType +
+      ": " +
+      textInfo.fromFirstName +
+      " " +
+      textInfo.fromLastName +
+      "\nPlease view this group appointment: " +
+      process.env.URL +
+      "/tutorHome/" +
+      textInfo.tutorPersonRoleId +
+      "?appointmentId=" +
+      textInfo.appointmentId,
+  };
+  return await this.sendText(text);
+};
+
+exports.sendPendingMessage = async (textInfo) => {
+  let text = {
+    phoneNum: textInfo.tutorPhoneNum,
+    message:
+      "You have a new pending private appointment." +
+      "\n    Date: " +
+      textInfo.date +
+      "\n    Time: " +
+      textInfo.startTime +
+      "\n    Location: " +
+      textInfo.locationName +
+      "\n    Topic: " +
+      textInfo.topicName +
+      "\n    Student: " +
+      textInfo.studentFirstName +
+      " " +
+      textInfo.studentLastName +
+      "\nPlease confirm or reject this pending appointment: " +
+      process.env.URL +
+      "/tutorHome/" +
+      textInfo.tutorPersonRoleId +
+      "?appointmentId=" +
+      textInfo.appointmentId,
+  };
+  return await this.sendText(text);
+};
+
+exports.sendConfirmedMessage = async (textInfo) => {
+  let text = {
+    phoneNum: textInfo.studentPhoneNum,
+    message:
+      "The " +
+      textInfo.appointmentType.toLowerCase() +
+      " appointment you booked for " +
+      textInfo.topicName +
+      " on " +
+      textInfo.date +
+      " at " +
+      textInfo.startTime +
+      " has been confirmed by " +
+      textInfo.tutorFirstName +
+      " " +
+      textInfo.tutorLastName +
+      ". \nPlease review this appointment: " +
+      process.env.URL +
+      "/studentHome/" +
+      textInfo.studentPersonRoleId +
+      "?appointmentId=" +
+      textInfo.appointmentId,
+  };
+  return await this.sendText(text);
+};
+
+exports.sendEditedMessage = async (textInfo) => {
+  let text = {
+    phoneNum: textInfo.toPhoneNum,
+    message:
+      "Your " +
+      textInfo.appointmentType.toLowerCase() +
+      " appointment for " +
+      textInfo.topicName +
+      " on " +
+      textInfo.date +
+      " at " +
+      textInfo.startTime +
+      " has been edited by " +
+      textInfo.fromFirstName +
+      " " +
+      textInfo.fromLastName +
+      ". \nPlease review the changes: " +
+      process.env.URL +
+      "/" +
+      textInfo.roleType.toLowerCase() +
+      "Home/" +
+      textInfo.toPersonRoleId +
+      "?appointmentId=" +
+      textInfo.appointmentId,
+  };
+  return await this.sendText(text);
+};
+
+exports.sendCanceledMessage = async (textInfo) => {
+  let text = {
+    phoneNum: textInfo.toPhoneNum,
     message: "",
   };
-  let ending = "";
-  if (fromUser.selectedRole.type === "Student") {
-    if (appointment.type === "Private") {
-      ending = "\nThis appointment is now open again for booking.";
-    }
-  } else if (fromUser.selectedRole.type === "Tutor") {
-    ending = "\nWe apologize for the inconvenience.";
-  }
+  let ending =
+    textInfo.fromRoleType === "Student" &&
+    textInfo.appointmentType === "Private"
+      ? "\nThis appointment is now open again for booking."
+      : textInfo.fromRoleType === "Tutor" && textInfo.owner
+      ? "\nWe apologize for the inconvenience."
+      : "";
 
   if (
-    appointment.type === "Private" ||
-    (appointment.type === "Group" && fromUser.selectedRole.type === "Tutor")
+    textInfo.appointmentType === "Private" ||
+    (textInfo.appointmentType === "Group" &&
+      textInfo.fromRoleType === "Tutor" &&
+      textInfo.owner)
   ) {
     text.message =
       "Your " +
-      appointment.type +
+      textInfo.appointmentType.toLowerCase() +
       " appointment for " +
-      appointment.topic.name +
+      textInfo.topicName +
       " on " +
-      Time.formatDate(appointment.date) +
+      textInfo.date +
       " at " +
-      Time.calcTime(appointment.startTime) +
+      textInfo.startTime +
       " has been canceled by " +
-      fromUser.fName +
+      textInfo.fromFirstName +
       " " +
-      fromUser.lName +
+      textInfo.fromLastName +
       "." +
       ending;
   } else if (
-    appointment.type === "Group" &&
-    fromUser.selectedRole.type === "Student"
+    textInfo.appointmentType === "Group" &&
+    (textInfo.fromRoleType === "Student" ||
+      (textInfo.fromRoleType === "Tutor" && !textInfo.owner))
   ) {
     text.message =
-      "A student has left your group appointment." +
+      "A " +
+      textInfo.fromRoleType.toLowerCase() +
+      " has left your group appointment." +
       "\n    Date: " +
-      Time.formatDate(appointment.date) +
+      textInfo.date +
       "\n    Time: " +
-      Time.calcTime(appointment.startTime) +
+      textInfo.startTime +
       "\n    Location: " +
-      appointment.location.name +
+      textInfo.locationName +
       "\n    Topic: " +
-      appointment.topic.name +
-      "\n    Student: " +
-      fromUser.fName +
+      textInfo.topicName +
+      "\n    " +
+      textInfo.fromRoleType +
+      ": " +
+      textInfo.fromFirstName +
       " " +
-      fromUser.lName +
+      textInfo.fromLastName +
       ending;
   }
 
-  // notify all tutors involved besides themselves
-  for (let i = 0; i < appointment.tutors.length; i++) {
-    if (appointment.tutors[i].personId !== fromUser.userID) {
-      text.phoneNum = appointment.tutors[i].person.phoneNum;
-      if (text.phoneNum !== "") {
-        await this.sendText(text.message, text.phoneNum).catch((error) => {
-          console.log("There was an error:", error.response);
-        });
-      }
-    }
-  }
-
-  // only notify all students involved besides themselves if tutor canceled
-  if (fromUser.selectedRole.type === "Tutor") {
-    for (let i = 0; i < appointment.students.length; i++) {
-      if (appointment.students[i].personId !== fromUser.userID) {
-        text.phoneNum = appointment.students[i].person.phoneNum;
-        if (text.phoneNum !== "") {
-          await this.sendText(text.message, text.phoneNum).catch((error) => {
-            console.log("There was an error:", error.response);
-          });
-        }
-      }
-    }
-  }
+  return await this.sendText(text);
 };
