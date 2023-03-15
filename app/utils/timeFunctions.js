@@ -18,7 +18,9 @@ exports.addMinsToTime = (mins, time) => {
   var [timeHrs, timeMins] = this.getHoursAndMinsFromTime(time);
   temp.setHours(timeHrs);
   temp.setMinutes(timeMins + mins);
-  [timeHrs, timeMins] = this.getHoursAndMinsFromTime(temp.toLocaleTimeString());
+  [timeHrs, timeMins] = this.getHoursAndMinsFromTime(
+    temp.toLocaleTimeString("it-IT")
+  );
 
   // make sure the time slots are padded correctly
   return (
@@ -34,7 +36,9 @@ exports.subtractMinsFromTime = (mins, time) => {
   var [timeHrs, timeMins] = this.getHoursAndMinsFromTime(time);
   temp.setHours(timeHrs);
   temp.setMinutes(timeMins - mins);
-  [timeHrs, timeMins] = this.getHoursAndMinsFromTime(temp.toLocaleTimeString());
+  [timeHrs, timeMins] = this.getHoursAndMinsFromTime(
+    temp.toLocaleTimeString("it-IT")
+  );
 
   // //TODO test when hour should be -1 but it's -0
 
