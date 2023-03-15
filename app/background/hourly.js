@@ -10,9 +10,9 @@ const Twilio = require("../utils/twilio.js");
 
 exports.hourlyTasks = () => {
   // for prod, runs at ever hour at 55 minute past the hour.
-  // cron.schedule("55 * * * *", async function () {
-  // for testing, runs every minute
-  cron.schedule("* * * * *", async function () {
+  cron.schedule("55 * * * *", async function () {
+    // for testing, runs every minute
+    // cron.schedule("* * * * *", async function () {
     console.log("Every 55-Minute Tasks:");
     await checkGoogleEvents();
     await notifyUpcomingAppointments();
