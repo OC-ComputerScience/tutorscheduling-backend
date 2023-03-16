@@ -21,14 +21,16 @@ authenticate = async (req, res, next) => {
               session.token = "";
               // clear session's token if it's expired
               await Session.updateSession(session, session.id);
-              return res.status(401).send({
-                message: "Unauthorized! Expired Token, Logout and Login again",
+              res.statusMessage = "Expired token";
+              return res.status(498).send({
+                message: "Unauthorized! Expired or invalid token.",
               });
             }
           }
           // if session is null, they are also unauthorized
           else {
-            return res.status(401).send({
+            res.statusMessage = "Invalid session";
+            return res.status(440).send({
               message: "Unauthorized! No active session found.",
             });
           }
@@ -54,9 +56,10 @@ isAdmin = async (req, res, next) => {
       token = authHeader.slice(7);
     } else
       return res.status(401).send({
-        message: "Unauthorized! missing Bearer",
+        message: "Unauthorized! No authentication header.",
       });
   }
+
   await Session.findAllSessionsByToken(token)
     .then(async (data) => {
       let session = data[0];
@@ -81,22 +84,23 @@ isAdmin = async (req, res, next) => {
                 return;
               }
             }
-            res.status(403).send({
-              message: "Requires Admin Role",
+            return res.status(403).send({
+              message: "Forbidden! Requires Admin role.",
             });
           })
           .catch((error) => {
             console.log(error);
-            return res.status(401).send({
-              message: "Error finding Roles",
+            return res.status(500).send({
+              message:
+                "There was an error finding roles to authenticate an admin.",
             });
           });
       }
     })
     .catch((error) => {
       console.log(error);
-      return res.status(401).send({
-        message: "Error finding Session",
+      return res.status(500).send({
+        message: "There was an error find sessions to authenticate an admin.",
       });
     });
 };
@@ -111,9 +115,10 @@ isSuperAdmin = async (req, res, next) => {
       token = authHeader.slice(7);
     } else
       return res.status(401).send({
-        message: "Unauthorized! missing Bearer",
+        message: "Unauthorized! No authentication header.",
       });
   }
+
   await Session.findAllSessionsByToken(token)
     .then(async (data) => {
       let session = data[0];
@@ -138,22 +143,24 @@ isSuperAdmin = async (req, res, next) => {
                 return;
               }
             }
-            res.status(403).send({
-              message: "Requires SuperAdmin Role",
+            return res.status(403).send({
+              message: "Forbidden! Requires SuperAdmin role.",
             });
           })
           .catch((error) => {
             console.log(error);
-            return res.status(401).send({
-              message: "Error finding Roles",
+            return res.status(500).send({
+              message:
+                "There was an error finding roles to authenticate a super admin.",
             });
           });
       }
     })
     .catch((error) => {
       console.log(error);
-      return res.status(401).send({
-        message: "Error finding Session",
+      return res.status(500).send({
+        message:
+          "There was an error find sessions to authenticate a super admin.",
       });
     });
 };

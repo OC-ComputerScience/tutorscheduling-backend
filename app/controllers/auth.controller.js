@@ -182,9 +182,6 @@ exports.login = async (req, res) => {
       expirationDate: tempExpirationDate,
     };
 
-    console.log("Making a new session:");
-    console.log(session);
-
     await Session.createSession(session).catch((err) => {
       console.log("Error creating session: " + err);
       res.status(500).send({ message: "Error creating session: " + err });
