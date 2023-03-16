@@ -63,10 +63,6 @@ async function checkGoogleEvents() {
       console.log("Error getting appointment from Google: " + err);
     });
 
-    console.log("GOOGLE EVENT INFO");
-    console.log(event.data);
-    console.log(appointment);
-
     if (event.data !== undefined) {
       await AppointmentActions.updateAppointmentFromGoogle(
         appointment,

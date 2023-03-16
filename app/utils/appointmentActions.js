@@ -326,7 +326,7 @@ exports.addAppointmentToGoogle = async (id) => {
       sendUpdates: "all",
     })
     .then(async (event) => {
-      await this.updateGoogleEventIdForAppointment(id, event.data.id);
+      await this.updateGoogleInfoForAppointment(id, event.data);
       return event;
     })
     .catch(async (error) => {
@@ -352,8 +352,14 @@ exports.getAppointmentFromGoogle = async (appointment) => {
       calendarId: "primary",
       eventId: appointment.googleEventId,
     })
-    .then((event) => {
+    .then(async (event) => {
       console.log("Event retrieved from Google calendar");
+      if (
+        event.data.hangoutLink !== null &&
+        event.data.hangoutLink !== undefined
+      ) {
+        await this.updateGoogleInfoForAppointment(id, event.data);
+      }
       return event;
     })
     .catch(async (err) => {
@@ -372,15 +378,10 @@ exports.patchForGoogle = async (appointment) => {
 
   // make sure generic information is the same
   let summary = "";
-  if (appointment.type === "Private") {
-    summary =
-      appointment.students[0].fName +
-      appointment.students[0].lName +
-      " - " +
-      appointment.topic.name +
-      " Tutoring";
+  if (appointment.type === "Private" && appointment.students.length > 0) {
+    summary = `${appointment.students[0].person.fName} ${appointment.students[0].person.lName} - ${appointment.topic.name} Tutoring`;
   } else {
-    summary = "Group - " + appointment.topic.name + " Tutoring";
+    summary = `Group - ${appointment.topic.name} Tutoring`;
   }
 
   let event = {
@@ -452,7 +453,7 @@ exports.updateForGoogle = async (id) => {
     });
 };
 
-exports.updateGoogleEventIdForAppointment = async (id, eventId) => {
+exports.updateGoogleInfoForAppointment = async (id, event) => {
   let appointment = {};
   let error;
 
@@ -468,7 +469,8 @@ exports.updateGoogleEventIdForAppointment = async (id, eventId) => {
     throw error;
   }
 
-  appointment.googleEventId = eventId;
+  appointment.googleEventId = event.id;
+  appointment.URL = event.hangoutLink;
 
   return await Appointment.updateAppointment(appointment, appointment.id)
     .then((data) => {
@@ -586,34 +588,29 @@ exports.updateAppointmentFromGoogle = async (appointment, event) => {
 };
 
 setUpEvent = async (id) => {
-  let appointments = []; // there will be multiple for each attendee
-  appointments = await Appointment.findRawAppointmentInfo(id);
+  let appointment = await this.getAppointmentInfo(id);
 
   let startTime = "";
   let endTime = "";
-  let group = "";
-  let location = "";
-  let topic = "";
   let attendees = [];
-  let online = false;
-  let studentName = "";
   let summary = "";
 
-  for (let i = 0; i < appointments.length; i++) {
-    let obj = appointments[i];
-    if (obj.type === "Private" && !obj.personappointment.isTutor) {
-      studentName =
-        obj.personappointment.person.fName +
-        " " +
-        obj.personappointment.person.lName;
-    }
-    let tempObj = {};
-    tempObj.email = obj.personappointment.person.email;
-    if (obj.personappointment.isTutor) tempObj.responseStatus = "accepted";
-    attendees.push(tempObj);
+  if (appointment.type === "Private" && appointment.students.length > 0) {
+    summary = `${appointment.students[0].person.fName} ${appointment.students[0].person.lName} - ${appointment.topic.name} Tutoring`;
+  } else {
+    summary = `Group - ${appointment.topic.name} Tutoring`;
   }
 
-  let appointment = appointments[0];
+  for (let i = 0; i < appointment.personappointment.length; i++) {
+    let pa = appointment.personappointment[i];
+
+    let attendee = {
+      email: pa.person.email,
+      responseStatus: pa.isTutor ? "accepted" : "needsAction",
+    };
+    attendees.push(attendee);
+  }
+
   eventId = appointment.googleEventId;
 
   startTime = new Date(appointment.date).toISOString();
@@ -624,26 +621,10 @@ setUpEvent = async (id) => {
   temp = endTime.slice(11, 19);
   endTime = endTime.replace(temp, appointment.endTime.toString());
   endTime = endTime.slice(0, 23);
-  group = appointment.group.name;
-  location = appointment.location.name;
-  topic = appointment.topic.name;
-  if (
-    appointment.location.type === "Online" ||
-    appointment.location.type === "online"
-  ) {
-    online = true;
-  }
-
-  // set up name
-  if (appointment.type === "Private") {
-    summary = studentName + " - " + topic + " Tutoring";
-  } else {
-    summary = "Group - " + topic + " Tutoring";
-  }
 
   const event = {
     summary: summary,
-    location: location,
+    location: appointment.location.name,
     description: appointment.preSessionInfo,
     start: {
       dateTime: startTime,
@@ -665,13 +646,16 @@ setUpEvent = async (id) => {
     transparency: "opaque",
   };
 
-  if (online) {
+  if (
+    appointment.location.type === "Online" ||
+    appointment.location.type === "online"
+  ) {
     event.conferenceData = {
       createRequest: {
         conferenceSolutionKey: {
           type: "hangoutsMeet",
         },
-        requestId: group + appointment.date,
+        requestId: summary + appointment.date,
       },
     };
   }
