@@ -14,7 +14,7 @@ module.exports = (app) => {
   router.post("/authorize/:id", auth.authorize);
 
   // Logout
-  router.post("/logout", [authenticate], auth.logout);
+  router.post("/logout", auth.logout);
 
   app.use("", router);
 };
