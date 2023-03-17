@@ -42,6 +42,13 @@ module.exports = (app) => {
     person.findFirstTutorForAppointment
   );
 
+  // retrieve student for person and group
+  router.get(
+    "/student/:email/group/:groupId",
+    [authenticate],
+    person.findStudentForPersonForGroup
+  );
+
   // retrieve person for email
   router.get("/email/:email", [authenticate], person.findByEmail);
 
