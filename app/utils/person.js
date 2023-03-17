@@ -341,21 +341,24 @@ exports.findFirstStudentForAppointment = async (appointmentId) => {
   });
 };
 
-exports.findOneStudentForPersonForGroup = async (email, groupId) => {
-  return await Person.findOne({
+exports.findStudentForPersonForGroup = async (email, groupId) => {
+  return await Person.findAll({
     where: { email: email },
     include: [
       {
         model: PersonRole,
         as: "personrole",
-        required: true,
-        where: { type: "Student" },
+        required: false,
         include: [
           {
             model: Role,
             as: "role",
             required: true,
-            where: { "$personrole->role.groupId$": groupId },
+            right: true,
+            where: {
+              groupId: groupId,
+              type: "Student",
+            },
           },
         ],
       },

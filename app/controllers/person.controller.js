@@ -81,15 +81,13 @@ exports.findFirstTutorForAppointment = async (req, res) => {
 };
 
 exports.findStudentForPersonForGroup = async (req, res) => {
-  await Person.findOneStudentForPersonForGroup(
+  await Person.findStudentForPersonForGroup(
     req.params.email,
     req.params.groupId
   )
     .then((data) => {
       if (data) {
         res.send(data);
-      } else {
-        res.send({ email: "not found" });
       }
     })
     .catch((err) => {
