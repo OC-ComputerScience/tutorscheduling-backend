@@ -48,6 +48,7 @@ exports.updateAppointment = async (appointment) => {
 
 exports.cancelAppointment = async (id, fromUser) => {
   let appointment = await this.getAppointmentInfo(id);
+  console.log("in cancel appointment");
   if (fromUser.type === "Student") {
     if (appointment.type === "Private") {
       if (appointment.status === "pending") {
@@ -70,7 +71,8 @@ exports.cancelAppointment = async (id, fromUser) => {
       let tutorOwnsAppointment = await Person.findFirstTutorForAppointment(
         appointment.id
       );
-      if (tutorOwnsAppointment.id === fromUser.userID) {
+      console.log(tutorOwnsAppointment[0]);
+      if (tutorOwnsAppointment[0].id === fromUser.userID) {
         return await this.swapTutorCancel(appointment, fromUser);
       } else {
         return await this.groupStudentTutorCancel(appointment, fromUser);

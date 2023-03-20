@@ -505,14 +505,6 @@ exports.findAllUpcomingForStudent = async (checkTime, groupId, personId) => {
           status: { [Op.not]: "tutorCancel" },
         },
       ],
-      [Op.and]: [
-        {
-          status: { [Op.not]: "available" },
-        },
-        {
-          type: { [Op.not]: "Private" },
-        },
-      ],
     },
     include: [
       {
@@ -529,14 +521,14 @@ exports.findAllUpcomingForStudent = async (checkTime, groupId, personId) => {
         model: PersonAppointment,
         as: "personappointment",
         required: true,
-        // where: { isTutor: false },
+        where: { isTutor: false },
         include: [
           {
             model: Person,
             as: "person",
             required: true,
             right: true,
-            // where: { id: personId },
+            where: { id: personId },
           },
         ],
       },
