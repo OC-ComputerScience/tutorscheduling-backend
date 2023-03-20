@@ -108,8 +108,22 @@ exports.pendingStudentCancel = async (appointment) => {
     status: "available",
     preSessionInfo: "",
     groupId: appointment.groupId,
+    topicId: null,
+    locationId: null,
+  };
+  let textInfo = {
+    appointmentType: appointment.type,
+    toPhoneNum: appointment.tutors[0].person.phoneNum,
+    toPersonRoleId: appointment.tutors[0].person.personrole[0].id,
+    date: Time.formatDate(appointment.date),
+    startTime: Time.calcTime(appointment.startTime),
+    topicName: appointment.topic.name,
+    fromFirstName: appointment.students[0].person.fName,
+    fromLastName: appointment.students[0].person.lName,
+    fromRoleType: "Student",
     owner: false,
   };
+  await Twilio.sendCanceledMessage(textInfo);
   await Appointment.updateAppointment(
     updatedAppointment,
     updatedAppointment.id
@@ -135,7 +149,6 @@ exports.bookedStudentCancel = async (appointment) => {
     topicId: appointment.topicId,
     locationId: appointment.locationId,
     googleEventId: null,
-    owner: false,
   };
   let textInfo = {
     appointmentType: appointment.type,
@@ -147,6 +160,7 @@ exports.bookedStudentCancel = async (appointment) => {
     fromFirstName: appointment.students[0].person.fName,
     fromLastName: appointment.students[0].person.lName,
     fromRoleType: "Student",
+    owner: false,
   };
   await Twilio.sendCanceledMessage(textInfo);
   let fromUser = {
@@ -159,21 +173,26 @@ exports.bookedStudentCancel = async (appointment) => {
     updatedAppointment,
     updatedAppointment.id
   );
-  updatedAppointment.id = undefined;
-  updatedAppointment.status = "available";
-  updatedAppointment.preSessionInfo = "";
-  updatedAppointment.topicId = null;
-  updatedAppointment.locationId = null;
-  await Appointment.createAppointment(updatedAppointment).then(
-    async (response) => {
-      let pap = {
-        isTutor: true,
-        appointmentId: response.data.id,
-        personId: appointment.tutors[0].personId,
-      };
-      await PersonAppointment.createPersonAppointment(pap);
-    }
-  );
+  let newAppointment = {
+    date: appointment.date,
+    startTime: appointment.startTime,
+    endTime: appointment.endTime,
+    type: appointment.type,
+    status: "available",
+    preSessionInfo: "",
+    groupId: appointment.groupId,
+    topicId: null,
+    locationId: null,
+    googleEventId: null,
+  };
+  await Appointment.createAppointment(newAppointment).then(async (response) => {
+    let pap = {
+      isTutor: true,
+      appointmentId: response.id,
+      personId: appointment.tutors[0].personId,
+    };
+    await PersonAppointment.createPersonAppointment(pap);
+  });
 };
 
 exports.groupStudentTutorCancel = async (appointment, fromUser) => {
