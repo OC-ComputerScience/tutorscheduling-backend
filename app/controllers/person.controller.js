@@ -80,6 +80,21 @@ exports.findFirstTutorForAppointment = async (req, res) => {
     });
 };
 
+exports.findStudentForPersonForGroup = async (req, res) => {
+  await Person.findStudentForPersonForGroup(
+    req.params.email,
+    req.params.groupId
+  )
+    .then((data) => {
+      if (data) {
+        res.send(data);
+      }
+    })
+    .catch((err) => {
+      res.status(500).send({ message: err.message });
+    });
+};
+
 exports.findByEmail = async (req, res) => {
   await Person.findOnePersonByEmail(req.params.email)
     .then((data) => {

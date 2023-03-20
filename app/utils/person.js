@@ -341,6 +341,31 @@ exports.findFirstStudentForAppointment = async (appointmentId) => {
   });
 };
 
+exports.findStudentForPersonForGroup = async (email, groupId) => {
+  return await Person.findAll({
+    where: { email: email },
+    include: [
+      {
+        model: PersonRole,
+        as: "personrole",
+        required: false,
+        include: [
+          {
+            model: Role,
+            as: "role",
+            required: true,
+            right: true,
+            where: {
+              groupId: groupId,
+              type: "Student",
+            },
+          },
+        ],
+      },
+    ],
+  });
+};
+
 exports.findOnePersonByEmail = async (email) => {
   return await Person.findOne({
     where: {
