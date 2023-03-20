@@ -346,6 +346,8 @@ exports.getAppointmentFromGoogle = async (appointment) => {
     auth: auth,
   });
 
+  //TODO check the google event id?
+
   return await calendar.events
     .get({
       auth: auth,
