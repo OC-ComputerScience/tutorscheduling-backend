@@ -101,94 +101,6 @@ exports.findAllUpcomingForPerson = async (req, res) => {
     });
 };
 
-exports.findAllUpcomingForTutor = async (req, res) => {
-  let group = await Group.findOneGroup(req.params.groupId);
-
-  let delTime = new Date().toLocaleTimeString("it-IT");
-
-  // need to get appointments outside of the book past minutes buffer
-  let checkTime = Time.subtractMinsFromTime(group.bookPastMinutes, delTime);
-  console.log(checkTime);
-
-  await Appointment.findAllUpcomingForTutor(
-    checkTime,
-    req.params.groupId,
-    req.params.personId
-  )
-    .then((data) => {
-      res.send(data);
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message ||
-          "Some error occurred while retrieving upcoming appointments for person for group while considering group's book past start time.",
-      });
-    });
-};
-
-exports.findAllUpcomingForStudent = async (req, res) => {
-  let group = await Group.findOneGroup(req.params.groupId);
-
-  let delTime = new Date().toLocaleTimeString("it-IT");
-  console.log(delTime);
-  console.log(group.bookPastMinutes);
-
-  // need to get appointments outside of the book past minutes buffer
-  let checkTime = Time.subtractMinsFromTime(group.bookPastMinutes, delTime);
-  console.log(checkTime);
-
-  await Appointment.findAllUpcomingForStudent(
-    checkTime,
-    req.params.groupId,
-    req.params.personId
-  )
-    .then((data) => {
-      res.send(data);
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message ||
-          "Some error occurred while retrieving upcoming appointments for person for group while considering group's book past start time.",
-      });
-    });
-};
-
-exports.findAllPassedForTutor = async (req, res) => {
-  await Appointment.findAllPassedForTutor(
-    req.params.groupId,
-    req.params.personId
-  )
-    .then((data) => {
-      res.send(data);
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message ||
-          "Some error occurred while retrieving passed appointments for tutor for group.",
-      });
-    });
-};
-
-exports.findAllPassedForStudent = async (req, res) => {
-  await Appointment.findAllPassedForStudent(
-    req.params.groupId,
-    req.params.personId
-  )
-    .then((data) => {
-      res.send(data);
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message ||
-          "Some error occurred while retrieving passed appointments for student for group.",
-      });
-    });
-};
-
 exports.findAllForPersonForGroup = async (req, res) => {
   await Appointment.findAllForPersonForGroup(
     req.params.groupId,
@@ -202,20 +114,6 @@ exports.findAllForPersonForGroup = async (req, res) => {
         message:
           err.message ||
           "Some error occurred while retrieving appointments for person for group.",
-      });
-    });
-};
-
-exports.findFeedbackApptForPerson = async (req, res) => {
-  await Appointment.findFeedbackApptForPerson(req.params.appointmentId)
-    .then((data) => {
-      res.send(data);
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message ||
-          "Some error occurred while retrieving feedback appointment for person.",
       });
     });
 };

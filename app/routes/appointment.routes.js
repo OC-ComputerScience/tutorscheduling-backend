@@ -36,46 +36,11 @@ module.exports = (app) => {
     appointment.findAllUpcomingForPerson
   );
 
-  // Retrieve all upcoming Appointment
-  router.get(
-    "/upcoming/tutor/:groupId/person/:personId",
-    [authenticate],
-    appointment.findAllUpcomingForTutor
-  );
-
-  // Retrieve all upcoming Appointment
-  router.get(
-    "/upcoming/student/:groupId/person/:personId",
-    [authenticate],
-    appointment.findAllUpcomingForStudent
-  );
-
-  // Retrieve all upcoming Appointment
-  router.get(
-    "/passed/tutor/:groupId/person/:personId",
-    [authenticate],
-    appointment.findAllPassedForTutor
-  );
-
-  // Retrieve all upcoming Appointment
-  router.get(
-    "/passed/student/:groupId/person/:personId",
-    [authenticate],
-    appointment.findAllPassedForStudent
-  );
-
   // Retrieve all Appointment
   router.get(
     "/group/:groupId/person/:personId",
     [authenticate],
     appointment.findAllForPersonForGroup
-  );
-
-  // Retrieve appointment for feedback
-  router.get(
-    "/feedback/:appointmentId",
-    [authenticate],
-    appointment.findFeedbackApptForPerson
   );
 
   // Retrieve all appointment hour count
