@@ -50,7 +50,7 @@ module.exports = (app) => {
     appointment.getAppointmentHourCount
   );
 
-  router.get("/text/:id", [authenticate], appointment.findOneForText);
+  router.get("/info/:id", [authenticate], appointment.findOneForInfo);
 
   // Retrieve a single Appointment with id
   router.get("/:id", [authenticate], appointment.findOne);

@@ -156,9 +156,7 @@ exports.sendUpcomingMessage = async (textInfo) => {
       textInfo.topicName +
       "\nPlease review the changes: " +
       process.env.URL +
-      "/" +
-      textInfo.roleType.toLowerCase() +
-      "Home/" +
+      "/home/" +
       textInfo.toPersonRoleId +
       "?appointmentId=" +
       textInfo.appointmentId,
@@ -196,7 +194,7 @@ exports.sendMessageFromAdmin = async (textInfo) => {
       textInfo.appointmentType.toLowerCase() +
       " appointment: " +
       process.env.URL +
-      "/tutorHome/" +
+      "/home/" +
       textInfo.tutorPersonRoleId +
       "?appointmentId=" +
       textInfo.appointmentId,
@@ -227,7 +225,7 @@ exports.sendGroupMessage = async (textInfo) => {
       textInfo.fromLastName +
       "\nPlease view this group appointment: " +
       process.env.URL +
-      "/tutorHome/" +
+      "/home/" +
       textInfo.tutorPersonRoleId +
       "?appointmentId=" +
       textInfo.appointmentId,
@@ -254,7 +252,7 @@ exports.sendPendingMessage = async (textInfo) => {
       textInfo.studentLastName +
       "\nPlease confirm or reject this pending appointment: " +
       process.env.URL +
-      "/tutorHome/" +
+      "/home/" +
       textInfo.tutorPersonRoleId +
       "?appointmentId=" +
       textInfo.appointmentId,
@@ -280,7 +278,7 @@ exports.sendConfirmedMessage = async (textInfo) => {
       textInfo.tutorLastName +
       ". \nPlease review this appointment: " +
       process.env.URL +
-      "/studentHome/" +
+      "/home/" +
       textInfo.studentPersonRoleId +
       "?appointmentId=" +
       textInfo.appointmentId,
@@ -306,9 +304,7 @@ exports.sendEditedMessage = async (textInfo) => {
       textInfo.fromLastName +
       ". \nPlease review the changes: " +
       process.env.URL +
-      "/" +
-      textInfo.roleType.toLowerCase() +
-      "Home/" +
+      "/home/" +
       textInfo.toPersonRoleId +
       "?appointmentId=" +
       textInfo.appointmentId,

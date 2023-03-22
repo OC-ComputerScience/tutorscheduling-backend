@@ -130,7 +130,7 @@ exports.getAppointmentHourCount = async (req, res) => {
     });
 };
 
-exports.findOneForText = async (req, res) => {
+exports.findOneForInfo = async (req, res) => {
   await Appointment.findOneAppointmentInfo(req.params.id)
     .then((data) => {
       res.send(data);
@@ -165,16 +165,10 @@ exports.findOne = async (req, res) => {
 
 exports.cancel = async (req, res) => {
   await AppointmentActions.cancelAppointment(req.params.id, req.body)
-    .then((num) => {
-      if (num == 1) {
-        res.send({
-          message: "Appointment was canceled successfully.",
-        });
-      } else {
-        res.send({
-          message: `Cannot cancel appointment with id = ${req.params.id}. Maybe appointment was not found or req.body was empty!`,
-        });
-      }
+    .then(() => {
+      res.send({
+        message: "Appointment was canceled successfully.",
+      });
     })
     .catch((err) => {
       console.log(err);

@@ -277,6 +277,27 @@ exports.findAllAppointmentsForGroup = async (groupId) => {
                   },
                 ],
               },
+              {
+                model: PersonRole,
+                as: "personrole",
+                required: true,
+                include: [
+                  {
+                    model: Role,
+                    as: "role",
+                    required: true,
+                    right: true,
+                    where: {
+                      type: [
+                        db.sequelize.literal(
+                          "IF(personappointment.isTutor = 1, 'Tutor', 'Student')"
+                        ),
+                      ],
+                      groupId: [db.sequelize.literal("appointment.groupId")],
+                    },
+                  },
+                ],
+              },
             ],
           },
         ],
@@ -503,7 +524,6 @@ exports.getAppointmentHours = async (groupId, currWeek) => {
 };
 
 exports.findOneAppointmentInfo = async (id) => {
-  console.log("HERE");
   return await Appointment.findAll({
     where: { id: id },
     include: [
