@@ -101,94 +101,6 @@ exports.findAllUpcomingForPerson = async (req, res) => {
     });
 };
 
-exports.findAllUpcomingForTutor = async (req, res) => {
-  let group = await Group.findOneGroup(req.params.groupId);
-
-  let delTime = new Date().toLocaleTimeString("it-IT");
-
-  // need to get appointments outside of the book past minutes buffer
-  let checkTime = Time.subtractMinsFromTime(group.bookPastMinutes, delTime);
-  console.log(checkTime);
-
-  await Appointment.findAllUpcomingForTutor(
-    checkTime,
-    req.params.groupId,
-    req.params.personId
-  )
-    .then((data) => {
-      res.send(data);
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message ||
-          "Some error occurred while retrieving upcoming appointments for person for group while considering group's book past start time.",
-      });
-    });
-};
-
-exports.findAllUpcomingForStudent = async (req, res) => {
-  let group = await Group.findOneGroup(req.params.groupId);
-
-  let delTime = new Date().toLocaleTimeString("it-IT");
-  console.log(delTime);
-  console.log(group.bookPastMinutes);
-
-  // need to get appointments outside of the book past minutes buffer
-  let checkTime = Time.subtractMinsFromTime(group.bookPastMinutes, delTime);
-  console.log(checkTime);
-
-  await Appointment.findAllUpcomingForStudent(
-    checkTime,
-    req.params.groupId,
-    req.params.personId
-  )
-    .then((data) => {
-      res.send(data);
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message ||
-          "Some error occurred while retrieving upcoming appointments for person for group while considering group's book past start time.",
-      });
-    });
-};
-
-exports.findAllPassedForTutor = async (req, res) => {
-  await Appointment.findAllPassedForTutor(
-    req.params.groupId,
-    req.params.personId
-  )
-    .then((data) => {
-      res.send(data);
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message ||
-          "Some error occurred while retrieving passed appointments for tutor for group.",
-      });
-    });
-};
-
-exports.findAllPassedForStudent = async (req, res) => {
-  await Appointment.findAllPassedForStudent(
-    req.params.groupId,
-    req.params.personId
-  )
-    .then((data) => {
-      res.send(data);
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message ||
-          "Some error occurred while retrieving passed appointments for student for group.",
-      });
-    });
-};
-
 exports.findAllForPersonForGroup = async (req, res) => {
   await Appointment.findAllForPersonForGroup(
     req.params.groupId,
@@ -206,20 +118,6 @@ exports.findAllForPersonForGroup = async (req, res) => {
     });
 };
 
-exports.findFeedbackApptForPerson = async (req, res) => {
-  await Appointment.findFeedbackApptForPerson(req.params.appointmentId)
-    .then((data) => {
-      res.send(data);
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message ||
-          "Some error occurred while retrieving feedback appointment for person.",
-      });
-    });
-};
-
 exports.getAppointmentHourCount = async (req, res) => {
   await Appointment.getAppointmentHours(req.params.groupId, req.params.currWeek)
     .then((data) => {
@@ -232,7 +130,7 @@ exports.getAppointmentHourCount = async (req, res) => {
     });
 };
 
-exports.findOneForText = async (req, res) => {
+exports.findOneForInfo = async (req, res) => {
   await Appointment.findOneAppointmentInfo(req.params.id)
     .then((data) => {
       res.send(data);
@@ -267,16 +165,10 @@ exports.findOne = async (req, res) => {
 
 exports.cancel = async (req, res) => {
   await AppointmentActions.cancelAppointment(req.params.id, req.body)
-    .then((num) => {
-      if (num == 1) {
-        res.send({
-          message: "Appointment was canceled successfully.",
-        });
-      } else {
-        res.send({
-          message: `Cannot cancel appointment with id = ${req.params.id}. Maybe appointment was not found or req.body was empty!`,
-        });
-      }
+    .then(() => {
+      res.send({
+        message: "Appointment was canceled successfully.",
+      });
     })
     .catch((err) => {
       console.log(err);
@@ -290,16 +182,10 @@ exports.cancel = async (req, res) => {
 
 exports.update = async (req, res) => {
   await AppointmentActions.updateAppointment(req.body)
-    .then((num) => {
-      if (num == 1) {
-        res.send({
-          message: "Appointment was updated successfully.",
-        });
-      } else {
-        res.send({
-          message: `Cannot update appointment with id = ${req.params.id}. Maybe appointment was not found or req.body was empty!`,
-        });
-      }
+    .then(() => {
+      res.send({
+        message: "Appointment was updated successfully.",
+      });
     })
     .catch((err) => {
       console.log(err);

@@ -48,7 +48,6 @@ exports.updateAppointment = async (appointment) => {
 
 exports.cancelAppointment = async (id, fromUser) => {
   let appointment = await this.getAppointmentInfo(id);
-  console.log("in cancel appointment");
   if (fromUser.type === "Student") {
     if (appointment.type === "Private") {
       if (appointment.status === "pending") {
@@ -305,6 +304,7 @@ exports.swapTutorCancel = async (appointment, fromUser) => {
     date: Time.formatDate(appointment.date),
     startTime: Time.calcTime(appointment.startTime),
     topicName: appointment.topic.name,
+    locationName: appointment.location.name,
     fromFirstName: fromUser.fName,
     fromLastName: fromUser.lName,
     fromRoleType: "Tutor",
