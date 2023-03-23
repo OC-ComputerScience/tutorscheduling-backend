@@ -182,16 +182,10 @@ exports.cancel = async (req, res) => {
 
 exports.update = async (req, res) => {
   await AppointmentActions.updateAppointment(req.body)
-    .then((num) => {
-      if (num == 1) {
-        res.send({
-          message: "Appointment was updated successfully.",
-        });
-      } else {
-        res.send({
-          message: `Cannot update appointment with id = ${req.params.id}. Maybe appointment was not found or req.body was empty!`,
-        });
-      }
+    .then(() => {
+      res.send({
+        message: "Appointment was updated successfully.",
+      });
     })
     .catch((err) => {
       console.log(err);

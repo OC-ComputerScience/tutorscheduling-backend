@@ -511,7 +511,7 @@ exports.getAppointmentHours = async (groupId, currWeek) => {
       ],
       [
         db.sequelize.literal(
-          "SUM(CASE WHEN status = 'no-show' THEN TIMESTAMPDIFF(minute,startTime,endTime) ELSE 0 END)"
+          "SUM(CASE WHEN status = 'noShow' THEN TIMESTAMPDIFF(minute,startTime,endTime) ELSE 0 END)"
         ),
         "noshow",
       ],
