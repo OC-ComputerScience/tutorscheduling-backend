@@ -381,13 +381,15 @@ exports.getAppointmentFromGoogle = async (appointment) => {
         event.data.hangoutLink !== null &&
         event.data.hangoutLink !== undefined
       ) {
-        await this.updateGoogleInfoForAppointment(id, event.data);
+        await this.updateGoogleInfoForAppointment(appointment.id, event.data);
       }
       return event;
     })
     .catch(async (err) => {
       if (err.message.includes("Not Found")) {
-        appointment.data.status = "notfound";
+        appointment.data = {
+          status: "notfound",
+        };
         return appointment;
       } else {
         console.log("Google returned an error: " + err);
