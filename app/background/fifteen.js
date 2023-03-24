@@ -38,56 +38,69 @@ async function deletePastAppointments() {
       });
 
     console.log(
-      delTime +
-        ": Checking " +
+      "Checking " +
         appointments.length +
         " appointments for deletion or revision"
     );
 
-    if (appointments.length > 0) {
-      // for each appointment check to see if they need to have start time updated or be deleted
-      for (let j = 0; j < appointments.length; j++) {
-        let appointment = appointments[j];
+    // for each appointment check to see if they need to have start time updated or be deleted
+    for (let j = 0; j < appointments.length; j++) {
+      let appointment = appointments[j].dataValues;
+      appointment.students = appointment.personappointment.filter(
+        (pa) => !pa.isTutor
+      );
+      console.log(appointment);
+
+      // should not try to change time of group appointment, should just delete those
+      if (appointment.type === "Private") {
+        console.log("in private part");
         let startTime = Time.addMinsToTime(
-          appointment.group.timeInterval,
+          group.timeInterval,
           appointment.startTime
         );
-        // should not try to change time of group appointment, should just delete those
-        if (appointment.type === "Private") {
-          if (
-            startTime < appointment.endTime &&
-            appointment.endTime > delTime &&
-            delTime - startTime > appointment.group.minApptTime &&
-            appointment.group.allowSplittingAppointments
-          ) {
-            appointment.startTime = startTime;
-            let newAppointment = appointment.dataValues;
-            await Appointment.updateAppointment(
-              newAppointment,
-              newAppointment.id
-            ).catch((err) => {
-              console.log("Could not update appointment: " + err);
-            });
-          } else {
-            await Appointment.deleteAppointment(appointment.id).catch((err) => {
-              console.log("Could not delete appointment: " + err);
-            });
-          }
-        } else if (appointment.type === "Group") {
-          // need to delete from Google first and then delete the actual appointment
-          await AppointmentActions.deleteFromGoogle(appointment.id).catch(
-            (err) => {
-              console.log("Could not delete appointment from Google " + err);
-            }
-          );
-
+        let delTimePlusBuffer = Time.subtractMinsFromTime(
+          group.bookPastMinutes,
+          new Date().toLocaleTimeString("it-IT")
+        );
+        // if the appointment is today and the start and end times line up, then update the appointment
+        if (
+          appointment.date === new Date().setHours(0, 0, 0) &&
+          startTime < appointment.endTime &&
+          appointment.endTime > delTimePlusBuffer &&
+          delTimePlusBuffer - startTime > group.minApptTime &&
+          group.allowSplittingAppointments
+        ) {
+          appointment.startTime = startTime;
+          let newAppointment = appointment.dataValues;
+          await Appointment.updateAppointment(
+            newAppointment,
+            newAppointment.id
+          ).catch((err) => {
+            console.log("Could not update appointment: " + err);
+          });
+        } else {
           await Appointment.deleteAppointment(appointment.id).catch((err) => {
             console.log("Could not delete appointment: " + err);
           });
         }
+      } else if (
+        appointment.type === "Group" &&
+        appointment.students.length === 0
+      ) {
+        // need to delete from Google first and then delete the actual appointment
+        await AppointmentActions.deleteFromGoogle(appointment.id).catch(
+          (err) => {
+            console.log("Could not delete appointment from Google " + err);
+          }
+        );
+
+        await Appointment.deleteAppointment(appointment.id).catch((err) => {
+          console.log("Could not delete appointment: " + err);
+        });
       }
     }
   }
+
   await PersonAppointment.destroy({
     where: {
       appointmentId: null,
@@ -99,7 +112,7 @@ async function deletePastAppointments() {
           " past person appointments before " +
           Time.Date(new Date(delDate)) +
           " at " +
-          delTime +
+          delTimePlusBuffer +
           " were deleted successfully!"
       );
     })

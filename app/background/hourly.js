@@ -76,112 +76,82 @@ async function checkGoogleEvents() {
 
 // this gets appointments around 2 hours from now
 async function notifyUpcomingAppointments() {
-  let personAppointments = [];
-  //get all of the appointments for today that start after now
-  await PersonAppointment.findUpcomingPrivatePersonAppointments()
-    .then((pap) => {
-      console.log(pap.length + " people found with booked appointments");
-      if (pap.length > 0) {
-        for (let i = 0; i < pap.length; i++) {
-          personAppointments.push(pap[i]);
-        }
-      }
+  let appointments = [];
+
+  await Appointment.findAllUpcomingToNotify()
+    .then((data) => {
+      appointments = data;
     })
     .catch((err) => {
-      console.log("Error getting upcoming private appointments: " + err);
+      console.log("Could not find upcoming appointments to notify: " + err);
     });
 
-  await PersonAppointment.findUpcomingGroupPersonAppointments()
-    .then((morePap) => {
-      console.log(morePap.length + " people found with group appointments");
-      if (morePap.length > 0) {
-        for (let i = 0; i < morePap.length; i++) {
-          personAppointments.push(morePap[i]);
-        }
-      }
-    })
-    .catch((err) => {
-      console.log("Error getting upcoming group appointments: " + err);
-    });
-
-  for (let i = 0; i < personAppointments.length; i++) {
-    let pap = personAppointments[i];
-    let appointment = {};
-
-    await Appointment.findOneAppointmentInfo(pap.appointmentId)
-      .then((data) => {
-        appointment = data[0];
-        appointment.students = appointment.personappointment.filter(
-          (pa) => pa.isTutor === false
-        );
-        appointment.tutors = appointment.personappointment.filter(
-          (pa) => pa.isTutor === true
-        );
-      })
-      .catch((err) => {
-        console.log("An error occurred: " + err);
-      });
+  for (let i = 0; i < appointments.length; i++) {
+    let appointment = appointments[i].dataValues;
+    appointment.students = appointment.personappointment.filter(
+      (pa) => !pa.isTutor
+    );
+    appointment.tutors = appointment.personappointment.filter(
+      (pa) => pa.isTutor
+    );
 
     let textInfo = {
+      appointmentId: appointment.id,
       appointmentType: appointment.type,
       toPhoneNum: "",
       toPersonRoleId: "",
       date: Time.formatDate(appointment.date),
       startTime: Time.calcTime(appointment.startTime),
       topicName: appointment.topic.name,
-      locationName: appointment.location.name,
-      fromFirstName: fromUser.fName,
-      fromLastName: fromUser.lName,
+      locationName:
+        appointment.location.type === "Online" && appointment.URL !== null
+          ? appointment.URL
+          : appointment.location.name,
       roleType: "",
       people: "",
     };
 
-    if (pap.isTutor) {
-      if (appointment.students.length > 1) {
-        textInfo.people += "\n    Students: ";
-        for (let j = 0; j < appointment.students.length; j++) {
-          textInfo.people += "\n              ";
-          textInfo.people +=
-            appointment.students[j].person.fName +
-            " " +
-            appointment.students[j].person.lName;
-        }
-      } else if (appointment.students.length === 1) {
-        textInfo.people +=
-          "\n    Student: " +
-          appointment.students[0].person.fName +
-          " " +
-          appointment.students[0].person.lName;
-      }
-    } else {
-      if (appointment.tutors.length > 1) {
-        textInfo.people += "\n    Tutors: ";
-        for (let j = 0; j < appointment.tutors.length; j++) {
-          textInfo.people += "\n              ";
-          textInfo.people +=
-            appointment.tutors[j].person.fName +
-            " " +
-            appointment.tutors[j].person.lName;
-        }
-      } else if (appointment.tutors.length === 1) {
-        textInfo.people +=
-          "\n    Tutor: " +
-          appointment.tutors[0].person.fName +
-          " " +
-          appointment.tutors[0].person.lName;
-      }
+    let peopleStringForStudent =
+      "\nTutors: " +
+      appointment.tutors[0].person.fName +
+      " " +
+      appointment.tutors[0].person.lName;
+    for (let j = 1; j < appointment.tutors.length; j++) {
+      peopleStringForStudent +=
+        ", " +
+        appointment.tutors[j].person.fName +
+        " " +
+        appointment.tutors[j].person.lName;
     }
 
-    await Twilio.sendUpcomingMessage(textInfo)
-      .then((message) => {
-        if (message.sid !== undefined) {
-          console.log("Sent text " + message.sid);
-        } else {
-          console.log(message);
-        }
-      })
-      .catch((err) => {
-        console.log("Error sending upcoming appointment message: " + err);
-      });
+    let peopleStringForTutor;
+
+    if (appointment.type === "Group") {
+      peopleStringForTutor = peopleStringForStudent;
+    }
+
+    peopleStringForTutor +=
+      "\nStudents: " +
+      appointment.students[0].person.fName +
+      " " +
+      appointment.students[0].person.lName;
+    for (let j = 1; j < appointment.students.length; j++) {
+      peopleStringForTutor +=
+        ", " +
+        appointment.students[j].person.fName +
+        " " +
+        appointment.students[j].person.lName;
+    }
+
+    for (let j = 0; j < appointment.personappointment.length; j++) {
+      let pap = appointment.personappointment[j];
+      textInfo.people = pap.isTutor
+        ? peopleStringForTutor
+        : peopleStringForStudent;
+      textInfo.toPhoneNum = pap.person.phoneNum;
+      textInfo.toPersonRoleId = pap.person.personrole[0].id;
+
+      await Twilio.sendUpcomingMessage(textInfo);
+    }
   }
 }

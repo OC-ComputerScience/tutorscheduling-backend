@@ -72,36 +72,29 @@ exports.findAllToDeleteForGroup = async (group) => {
   );
   console.log(delTimePlusBuffer);
 
-  // here we are finding private available and group available with no students
+  // here we are available appointments, including group appointments that may have students, so we need to check that later
 
   return await Appointment.findAll({
     where: {
       [Op.or]: [
-        { type: "Private" },
         {
           [Op.and]: [
-            { type: "Group" },
-            {
-              id: {
-                [Op.in]: db.sequelize.literal(
-                  "(SELECT COUNT(spa.id) FROM roles AS sr, personroles as spr, personappointments as spa, appointments a WHERE spr.roleId = sr.id AND spr.personId = spa.personId AND spa.id = a.id AND sr.type = 'Student') = 0"
-                ),
-              },
-            },
+            { startTime: { [Op.lt]: delTimePlusBuffer } },
+            { date: { [Op.eq]: delDate } },
           ],
+        },
+        {
+          date: { [Op.lt]: delDate },
         },
       ],
       status: "available",
-      date: { [Op.eq]: delDate },
-      startTime: { [Op.lt]: delTimePlusBuffer },
       groupId: group.id,
     },
     include: [
       {
-        model: Group,
-        as: "group",
+        model: PersonAppointment,
+        as: "personappointment",
         required: true,
-        where: { id: group.id },
       },
     ],
   });
@@ -172,6 +165,119 @@ exports.findAllUpcomingWithGoogleId = async () => {
       [Op.and]: [
         { googleEventId: { [Op.ne]: "" } },
         { googleEventId: { [Op.ne]: null } },
+      ],
+    },
+    include: [
+      {
+        model: Location,
+        as: "location",
+        required: false,
+      },
+      {
+        model: Topic,
+        as: "topic",
+        required: false,
+      },
+      {
+        model: PersonAppointment,
+        as: "personappointment",
+        required: true,
+        include: [
+          {
+            model: Person,
+            as: "person",
+            required: true,
+            right: true,
+            include: [
+              {
+                model: PersonTopic,
+                as: "persontopic",
+                required: false,
+                include: [
+                  {
+                    model: Topic,
+                    as: "topic",
+                    required: true,
+                    right: true,
+                  },
+                ],
+              },
+              {
+                model: PersonRole,
+                as: "personrole",
+                required: true,
+                include: [
+                  {
+                    model: Role,
+                    as: "role",
+                    required: true,
+                    right: true,
+                    where: {
+                      type: [
+                        db.sequelize.literal(
+                          "IF(personappointment.isTutor = 1, 'Tutor', 'Student')"
+                        ),
+                      ],
+                      groupId: [db.sequelize.literal("appointment.groupId")],
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+};
+
+exports.findAllUpcomingToNotify = async () => {
+  const date = new Date();
+  date.setHours(date.getHours() - date.getTimezoneOffset() / 60);
+  date.setHours(0, 0, 0, 0);
+
+  let startTime = new Date();
+  startTime.setHours(startTime.getHours() + 1);
+  let tempHours = startTime.getHours();
+  let tempMins = startTime.getMinutes();
+  let tempSecs = startTime.getSeconds();
+  if (tempHours < 10) {
+    tempHours = "0" + tempHours;
+  }
+  if (tempMins < 10) {
+    tempMins = "0" + tempMins;
+  }
+  if (tempSecs < 10) {
+    tempSecs = "0" + tempSecs;
+  }
+  startTime = tempHours + ":" + tempMins + ":" + tempSecs;
+
+  let endTime = new Date();
+  endTime.setHours(endTime.getHours() + 2);
+  tempHours = endTime.getHours();
+  tempMins = endTime.getMinutes();
+  tempSecs = endTime.getSeconds();
+  if (tempHours < 10) {
+    tempHours = "0" + tempHours;
+  }
+  if (tempMins < 10) {
+    tempMins = "0" + tempMins;
+  }
+  if (tempSecs < 10) {
+    tempSecs = "0" + tempSecs;
+  }
+  endTime = tempHours + ":" + tempMins + ":" + tempSecs;
+
+  return await Appointment.findAll({
+    where: {
+      date: { [Op.eq]: date },
+      startTime: {
+        [Op.and]: [{ [Op.gt]: startTime }, { [Op.lt]: endTime }],
+      },
+      [Op.or]: [{ status: "booked" }, { type: "Group" }],
+      [Op.and]: [
+        { status: { [Op.ne]: "studentCancel" } },
+        { status: { [Op.ne]: "tutorCancel" } },
       ],
     },
     include: [

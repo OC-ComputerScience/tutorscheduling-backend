@@ -85,6 +85,7 @@ exports.sendApplicationMessage = async (textInfo) => {
   let text = {
     phoneNum: textInfo.adminPhoneNum,
     message:
+      "👤 Approve Tutor Application\n" +
       "You have a new tutor application from " +
       textInfo.fromFirstName +
       " " +
@@ -105,6 +106,7 @@ exports.sendRequestMessage = async (textInfo) => {
   let text = {
     phoneNum: textInfo.adminPhoneNum,
     message:
+      "❗️Respond to Student Request\n" +
       "You have a new request from " +
       textInfo.fromFirstName +
       " " +
@@ -125,6 +127,9 @@ exports.sendFeedbackMessage = async (textInfo) => {
   let text = {
     phoneNum: textInfo.toPhoneNum,
     message:
+      "💬 Provide Feedback for " +
+      textInfo.appointmentCount +
+      " Appointments\n" +
       "Please leave feedback for " +
       textInfo.appointmentCount +
       " appointment(s) that you " +
@@ -143,18 +148,19 @@ exports.sendUpcomingMessage = async (textInfo) => {
   let text = {
     phoneNum: textInfo.toPhoneNum,
     message:
-      "You have an upcoming " +
-      textInfo.appointmentType.toLowerCase() +
-      " appointment:" +
-      "\n    Date: " +
+      "⏰ Upcoming " +
+      textInfo.appointmentType +
+      " Appointment Reminder\n" +
+      "\nDate: " +
       textInfo.date +
-      "\n    Time: " +
+      "\nTime: " +
       textInfo.startTime +
-      "\n    Location: " +
+      "\nLocation: " +
       textInfo.locationName +
-      "\n    Topic: " +
+      "\nTopic: " +
       textInfo.topicName +
-      "\nPlease review the changes: " +
+      textInfo.people +
+      "\n\nPlease review before attending: " +
       process.env.URL +
       "/home/" +
       textInfo.toPersonRoleId +
@@ -170,29 +176,27 @@ exports.sendMessageFromAdmin = async (textInfo) => {
     phoneNum: textInfo.tutorPhoneNum,
     message:
       (textInfo.appointmentType === "Private"
-        ? "You have a new booked private appointment."
+        ? "🔵 Admin Booked\n"
         : textInfo.appointmentType === "Group"
-        ? "A student has joined your group appointment."
+        ? "🔵 Student Joined Group\n"
         : "") +
-      "\n    Date: " +
+      "\nDate: " +
       textInfo.date +
-      "\n    Time: " +
+      "\nTime: " +
       textInfo.startTime +
-      "\n    Location: " +
+      "\nLocation: " +
       textInfo.locationName +
-      "\n    Topic: " +
+      "\nTopic: " +
       textInfo.topicName +
-      "\n    Student: " +
+      "\nStudent: " +
       textInfo.studentFirstName +
       " " +
       textInfo.studentLastName +
-      "\n    Booked by: " +
+      "\nBooked by: " +
       textInfo.adminFirstName +
       " " +
       textInfo.adminLastName +
-      "\nPlease view this " +
-      textInfo.appointmentType.toLowerCase() +
-      " appointment: " +
+      "\n\nPlease view this appointment: " +
       process.env.URL +
       "/home/" +
       textInfo.tutorPersonRoleId +
@@ -206,24 +210,24 @@ exports.sendGroupMessage = async (textInfo) => {
   let text = {
     phoneNum: textInfo.tutorPhoneNum,
     message:
-      "A " +
-      textInfo.roleType.toLowerCase() +
-      " has joined your group appointment." +
-      "\n    Date: " +
+      "🔵 " +
+      textInfo.roleType +
+      " Joined Group\n" +
+      "\nDate: " +
       textInfo.date +
-      "\n    Time: " +
+      "\nTime: " +
       textInfo.startTime +
-      "\n    Location: " +
+      "\nLocation: " +
       textInfo.locationName +
-      "\n    Topic: " +
+      "\nTopic: " +
       textInfo.topicName +
-      "\n    " +
+      "\n" +
       textInfo.roleType +
       ": " +
       textInfo.fromFirstName +
       " " +
       textInfo.fromLastName +
-      "\nPlease view this group appointment: " +
+      "\n\nPlease view this appointment: " +
       process.env.URL +
       "/home/" +
       textInfo.tutorPersonRoleId +
@@ -237,20 +241,20 @@ exports.sendPendingMessage = async (textInfo) => {
   let text = {
     phoneNum: textInfo.tutorPhoneNum,
     message:
-      "You have a new pending private appointment." +
-      "\n    Date: " +
+      "🟡 Confirm or Reject Your Pending Appointment\n" +
+      "\nDate: " +
       textInfo.date +
-      "\n    Time: " +
+      "\nTime: " +
       textInfo.startTime +
-      "\n    Location: " +
+      "\nLocation: " +
       textInfo.locationName +
-      "\n    Topic: " +
+      "\nTopic: " +
       textInfo.topicName +
-      "\n    Student: " +
+      "\nStudent: " +
       textInfo.studentFirstName +
       " " +
       textInfo.studentLastName +
-      "\nPlease confirm or reject this pending appointment: " +
+      "\n\nPlease confirm or reject this pending appointment: " +
       process.env.URL +
       "/home/" +
       textInfo.tutorPersonRoleId +
@@ -264,6 +268,7 @@ exports.sendConfirmedMessage = async (textInfo) => {
   let text = {
     phoneNum: textInfo.studentPhoneNum,
     message:
+      "🔵 Tutor Confirmed \n" +
       "The " +
       textInfo.appointmentType.toLowerCase() +
       " appointment you booked for " +
@@ -290,6 +295,7 @@ exports.sendEditedMessage = async (textInfo) => {
   let text = {
     phoneNum: textInfo.toPhoneNum,
     message:
+      "🟠 Appointment Edited \n" +
       "Your " +
       textInfo.appointmentType.toLowerCase() +
       " appointment for " +
@@ -332,6 +338,9 @@ exports.sendCanceledMessage = async (textInfo) => {
       textInfo.owner)
   ) {
     text.message =
+      "🔴 " +
+      textInfo.fromRoleType +
+      " Canceled \n" +
       "Your " +
       textInfo.appointmentType.toLowerCase() +
       " appointment for " +
@@ -352,18 +361,18 @@ exports.sendCanceledMessage = async (textInfo) => {
       (textInfo.fromRoleType === "Tutor" && !textInfo.owner))
   ) {
     text.message =
-      "A " +
-      textInfo.fromRoleType.toLowerCase() +
-      " has left your group appointment." +
-      "\n    Date: " +
+      "🔴 " +
+      textInfo.fromRoleType +
+      " Left Group\n" +
+      "\nDate: " +
       textInfo.date +
-      "\n    Time: " +
+      "\nTime: " +
       textInfo.startTime +
-      "\n    Location: " +
+      "\nLocation: " +
       textInfo.locationName +
-      "\n    Topic: " +
+      "\nTopic: " +
       textInfo.topicName +
-      "\n    " +
+      "\n" +
       textInfo.fromRoleType +
       ": " +
       textInfo.fromFirstName +
