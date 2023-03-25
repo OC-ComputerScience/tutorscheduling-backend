@@ -129,7 +129,9 @@ exports.sendFeedbackMessage = async (textInfo) => {
     message:
       "💬 Provide Feedback for " +
       textInfo.appointmentCount +
-      " Appointments\n" +
+      " Appointment" +
+      (textInfo.appointmentCount > 1 ? "s" : "") +
+      "\n" +
       "Please leave feedback for " +
       textInfo.appointmentCount +
       " appointment(s) that you " +
@@ -268,7 +270,7 @@ exports.sendConfirmedMessage = async (textInfo) => {
   let text = {
     phoneNum: textInfo.studentPhoneNum,
     message:
-      "🔵 Tutor Confirmed \n" +
+      "🔵 Tutor Confirmed\n" +
       "The " +
       textInfo.appointmentType.toLowerCase() +
       " appointment you booked for " +
@@ -295,7 +297,7 @@ exports.sendEditedMessage = async (textInfo) => {
   let text = {
     phoneNum: textInfo.toPhoneNum,
     message:
-      "🟠 Appointment Edited \n" +
+      "🟠 Appointment Edited\n" +
       "Your " +
       textInfo.appointmentType.toLowerCase() +
       " appointment for " +
@@ -340,7 +342,7 @@ exports.sendCanceledMessage = async (textInfo) => {
     text.message =
       "🔴 " +
       textInfo.fromRoleType +
-      " Canceled \n" +
+      " Canceled\n" +
       "Your " +
       textInfo.appointmentType.toLowerCase() +
       " appointment for " +
