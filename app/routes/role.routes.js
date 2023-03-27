@@ -14,21 +14,8 @@ module.exports = (app) => {
   // Retrieve all Role
   router.get("/", [authenticate], role.findAll);
 
-  // Retrieve a single Role with id
-  router.get("/:id", [authenticate], role.findOne);
-
   // Retrieve roles for a specific group
   router.get("/group/:groupId", [authenticate], role.findAllForGroup);
-
-  // Retrieve roles for a specific person including personrole
-  router.get("/person/:personId", [authenticate], role.findRoleForPerson);
-
-  // Retrieve roles by group for a specific type
-  router.get(
-    "/group/:groupId/type/:type",
-    [authenticate],
-    role.findRoleByGroupForType
-  );
 
   // Retrieve roles by group for a specific person including personroles
   router.get(
@@ -37,12 +24,25 @@ module.exports = (app) => {
     role.findRoleByGroupForPerson
   );
 
+  // Retrieve roles by group for a specific type
+  router.get(
+    "/group/:groupId/type/:type",
+    [authenticate],
+    role.findRoleByGroupForType
+  );
+
+  // Retrieve roles for a specific person including personrole
+  router.get("/person/:personId", [authenticate], role.findRoleForPerson);
+
   // Retrieve incomplete roles for a specific person including personrole
   router.get(
     "/personIn/:personId",
     [authenticate],
     role.findIncompleteRoleForPerson
   );
+
+  // Retrieve a single Role with id
+  router.get("/:id", [authenticate], role.findOne);
 
   // Update a Role with id
   router.put("/:id", [authenticate, isSuperAdmin], role.update);

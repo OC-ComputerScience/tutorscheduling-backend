@@ -13,29 +13,11 @@ module.exports = (app) => {
   // Retrieve all Appointment
   router.get("/", [authenticate], appointment.findAll);
 
-  // Retrieve all Appointment
-  router.get("/person/:personId", [authenticate], appointment.findAllForPerson);
-
   // Retrieve all Appointment for reporting (literally all)
   router.get("/group/:groupId", [authenticate], appointment.findAllForGroup);
 
-  // Retrieve all Appointment for reporting (literally all)
-  router.get("/text/:id", [authenticate], appointment.findOneForText);
-
-  // -------------------------------------------- FOR GROUP ---------------------------------------
-  // Retrieve all appointment hour count
-  router.get(
-    "/group/:groupId/hours/week/:currWeek",
-    [authenticate],
-    appointment.getAppointmentHourCount
-  );
-
   // Retrieve all Appointment for calendar (one month behind)
-  router.get(
-    "/allGroup/:groupId",
-    [authenticate],
-    appointment.findAppointmentsForGroup
-  );
+  router.get("/allGroup/:groupId", [authenticate], appointment.findAllForGroup);
 
   // Retrieve all upcoming Appointment
   router.get(
@@ -45,11 +27,7 @@ module.exports = (app) => {
   );
 
   // Retrieve all Appointment
-  router.get(
-    "/group/:groupId/person/:personId",
-    [authenticate],
-    appointment.findAllForPersonForGroup
-  );
+  router.get("/person/:personId", [authenticate], appointment.findAllForPerson);
 
   // Retrieve all upcoming Appointments for a person
   router.get(
@@ -58,49 +36,30 @@ module.exports = (app) => {
     appointment.findAllUpcomingForPerson
   );
 
-  // Retrieve all upcoming Appointment
+  // Retrieve all Appointment
   router.get(
-    "/upGroup/:groupId/person/:personId",
+    "/group/:groupId/person/:personId",
     [authenticate],
-    appointment.findAllUpcomingForPersonForGroup
+    appointment.findAllForPersonForGroup
   );
 
-  // Retrieve all upcoming Appointment
+  // Retrieve all appointment hour count
   router.get(
-    "/passGroupTutor/:groupId/person/:personId",
+    "/group/:groupId/hours/week/:currWeek",
     [authenticate],
-    appointment.findAllPassedForPersonForGroupTutor
+    appointment.getAppointmentHourCount
   );
 
-  // Retrieve all upcoming Appointment
-  router.get(
-    "/passGroupStudent/:groupId/person/:personId",
-    [authenticate],
-    appointment.findAllPassedForPersonForGroupStudent
-  );
-
-  // Retrieve tutor for an appointment
-  router.get(
-    "/tutorAppointment/:id",
-    [authenticate],
-    appointment.getTutorForAppointment
-  );
-
-  // Retrieve appointment for feedback
-  router.get(
-    "/feedback/:appointmentId",
-    [authenticate],
-    appointment.findFeedbackApptForPerson
-  );
+  router.get("/info/:id", [authenticate], appointment.findOneForInfo);
 
   // Retrieve a single Appointment with id
   router.get("/:id", [authenticate], appointment.findOne);
 
+  // cancel an appointment
+  router.post("/cancel/:id", [authenticate], appointment.cancel);
+
   // Update a Appointment with id
   router.put("/:id", [authenticate], appointment.update);
-
-  // Update a Appointment for google stuff
-  router.put("/google/:id", [authenticate], appointment.updateForGoogle);
 
   // Delete a Appointment with id
   router.delete("/:id", [authenticate], appointment.delete);

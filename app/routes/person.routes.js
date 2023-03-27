@@ -12,18 +12,8 @@ module.exports = (app) => {
   // Retrieve all People
   router.get("/", [authenticate], person.findAll);
 
-  // Retrieve first tutor for appointment
-  router.get(
-    "/appointment/:appointmentId",
-    [authenticate],
-    person.findFirstTutorForAppointment
-  );
-
   // Retrieve all People for group
   router.get("/group/:groupId", [authenticate], person.findAllForGroup);
-
-  // retrieve person for email
-  router.get("/email/:email", [authenticate], person.findByEmail);
 
   // Retrieve all pending tutors for group
   router.get(
@@ -44,6 +34,26 @@ module.exports = (app) => {
     "/group/:groupId/hours/week/:currWeek",
     person.getAppointmentHourCount
   );
+
+  // Retrieve first tutor for appointment
+  router.get(
+    "/appointment/:appointmentId",
+    [authenticate],
+    person.findFirstTutorForAppointment
+  );
+
+  // retrieve student for person and group
+  router.get(
+    "/student/:email/group/:groupId",
+    [authenticate],
+    person.findStudentForPersonForGroup
+  );
+
+  // retrieve person for email
+  router.get("/email/:email", [authenticate], person.findByEmail);
+
+  // retrieve person for phoneNum
+  router.get("/phoneNum/:phoneNum", [authenticate], person.findByPhoneNumber);
 
   // Retrieve a single Person with id
   router.get("/:id", [authenticate], person.findOne);

@@ -5,9 +5,6 @@ module.exports = (sequelize, Sequelize) => {
       autoIncrement: true,
       primaryKey: true,
     },
-    googleEventId: {
-      type: Sequelize.STRING,
-    },
     date: {
       type: Sequelize.DATE,
       allowNull: false,
@@ -28,16 +25,13 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.STRING,
       allowNull: false,
     },
-    tutorStart: {
-      type: Sequelize.TIME,
-    },
-    tutorEnd: {
-      type: Sequelize.TIME,
-    },
     URL: {
       type: Sequelize.STRING,
     },
     preSessionInfo: {
+      type: Sequelize.STRING,
+    },
+    googleEventId: {
       type: Sequelize.STRING,
     },
   });

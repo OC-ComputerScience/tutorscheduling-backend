@@ -13,11 +13,11 @@ module.exports = (app) => {
   // Retrieve all PersonRole
   router.get("/", [authenticate], personrole.findAll);
 
+  // Retrieve personroles for a specific person
+  router.get("/person/:personId", [authenticate], personrole.findAllForPerson);
+
   // Retrieve a group and role based on a PersonRole
   router.get("/group/:id", [authenticate], personrole.findGroupByPersonRole);
-
-  // Retrieve a single PersonRole with id
-  router.get("/:id", [authenticate], personrole.findOne);
 
   // Retrieve a single PersonRole with role and person
   router.get(
@@ -26,8 +26,8 @@ module.exports = (app) => {
     personrole.findOneForType
   );
 
-  // Retrieve personroles for a specific person
-  router.get("/person/:personId", [authenticate], personrole.findAllForPerson);
+  // Retrieve a single PersonRole with id
+  router.get("/:id", [authenticate], personrole.findOne);
 
   // Update a PersonRole with id
   router.put("/:id", [authenticate], personrole.update);

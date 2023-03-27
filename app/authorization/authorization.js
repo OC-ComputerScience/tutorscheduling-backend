@@ -1,32 +1,36 @@
 const db = require("../models");
-const Session = db.session;
+const Session = require("../utils/session.js");
 const PersonRole = db.personrole;
 const Role = db.role;
 
-authenticate = (req, res, next) => {
+authenticate = async (req, res, next) => {
   let token = null;
   console.log("authenticate");
   let authHeader = req.get("authorization");
   if (authHeader != null) {
     if (authHeader.startsWith("Bearer ")) {
       token = authHeader.slice(7);
-      Session.findAll({ where: { token: token } })
-        .then((data) => {
+      await Session.findAllSessionsByToken(token)
+        .then(async (data) => {
           let session = data[0];
-          console.log(session.expirationDate);
           if (session != null) {
             if (session.expirationDate >= Date.now()) {
               next();
               return;
             } else {
-              return res.status(401).send({
-                message: "Unauthorized! Expired Token, Logout and Login again",
+              session.token = "";
+              // clear session's token if it's expired
+              await Session.updateSession(session, session.id);
+              res.statusMessage = "Expired token";
+              return res.status(498).send({
+                message: "Unauthorized! Expired or invalid token.",
               });
             }
           }
           // if session is null, they are also unauthorized
           else {
-            return res.status(401).send({
+            res.statusMessage = "Invalid session";
+            return res.status(440).send({
               message: "Unauthorized! No active session found.",
             });
           }
@@ -42,26 +46,26 @@ authenticate = (req, res, next) => {
   }
 };
 
-isAdmin = (req, res, next) => {
+isAdmin = async (req, res, next) => {
   let authHeader = req.get("authorization");
   let token = "";
+  let roles = [];
 
   if (authHeader != null) {
     if (authHeader.startsWith("Bearer ")) {
       token = authHeader.slice(7);
     } else
       return res.status(401).send({
-        message: "Unauthorized! missing Bearer",
+        message: "Unauthorized! No authentication header.",
       });
   }
-  Session.findAll({
-    where: { token: token },
-  })
-    .then((data) => {
+
+  await Session.findAllSessionsByToken(token)
+    .then(async (data) => {
       let session = data[0];
-      console.log(session.personId);
       if (session.personId != null) {
-        PersonRole.findAll({
+        console.log(session.personId);
+        await PersonRole.findAll({
           where: { personId: session.personId, status: "approved" },
           as: "personrole",
           include: [
@@ -80,46 +84,47 @@ isAdmin = (req, res, next) => {
                 return;
               }
             }
-            res.status(403).send({
-              message: "Requires Admin Role",
+            return res.status(403).send({
+              message: "Forbidden! Requires Admin role.",
             });
           })
           .catch((error) => {
             console.log(error);
-            return res.status(401).send({
-              message: "Error finding Roles",
+            return res.status(500).send({
+              message:
+                "There was an error finding roles to authenticate an admin.",
             });
           });
       }
     })
     .catch((error) => {
       console.log(error);
-      return res.status(401).send({
-        message: "Error finding Session",
+      return res.status(500).send({
+        message: "There was an error find sessions to authenticate an admin.",
       });
     });
 };
 
-isSuperAdmin = (req, res, next) => {
+isSuperAdmin = async (req, res, next) => {
   let authHeader = req.get("authorization");
   let token = "";
+  let roles = [];
 
   if (authHeader != null) {
     if (authHeader.startsWith("Bearer ")) {
       token = authHeader.slice(7);
     } else
       return res.status(401).send({
-        message: "Unauthorized! missing Bearer",
+        message: "Unauthorized! No authentication header.",
       });
   }
-  Session.findAll({
-    where: { token: token },
-  })
-    .then((data) => {
+
+  await Session.findAllSessionsByToken(token)
+    .then(async (data) => {
       let session = data[0];
-      console.log(session.personId);
       if (session.personId != null) {
-        PersonRole.findAll({
+        console.log(session.personId);
+        await PersonRole.findAll({
           where: { personId: session.personId, status: "approved" },
           as: "personrole",
           include: [
@@ -138,22 +143,24 @@ isSuperAdmin = (req, res, next) => {
                 return;
               }
             }
-            res.status(403).send({
-              message: "Requires SuperAdmin Role",
+            return res.status(403).send({
+              message: "Forbidden! Requires SuperAdmin role.",
             });
           })
           .catch((error) => {
             console.log(error);
-            return res.status(401).send({
-              message: "Error finding Roles",
+            return res.status(500).send({
+              message:
+                "There was an error finding roles to authenticate a super admin.",
             });
           });
       }
     })
     .catch((error) => {
       console.log(error);
-      return res.status(401).send({
-        message: "Error finding Session",
+      return res.status(500).send({
+        message:
+          "There was an error find sessions to authenticate a super admin.",
       });
     });
 };

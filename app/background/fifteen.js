@@ -1,97 +1,101 @@
 const cron = require("node-cron");
-const db = require("../models");
-const Appointment = db.appointment;
-const PersonAppointment = db.personappointment;
-const Op = db.Sequelize.Op;
-const Group = db.group;
-let appointments = [];
+const Appointment = require("../utils/appointment.js");
+const AppointmentActions = require("../utils/appointmentActions");
+const Group = require("../utils/group.js");
+const PersonAppointment = require("../utils/personAppointment.js");
+const Time = require("../utils/timeFunctions.js");
 
 // Schedule tasks to be run on the server 12:01 am.
-// From : https://www.digitalocean.com/community/tutorials/nodejs-cron-jobs-by-examples
+// From: https://www.digitalocean.com/community/tutorials/nodejs-cron-jobs-by-examples
 
 exports.fifteenMinuteTasks = () => {
   // for prod, runs at 3 minutes before every 15 minutes every hour
   cron.schedule("12,27,42,57 * * * *", async function () {
     // for testing, runs every minute
     // cron.schedule("* * * * *", async function () {
-    console.log("Every 15-Minute Tasks:");
+    console.log(
+      "15-Minute Tasks for " + new Date().toLocaleTimeString("it-IT") + ":"
+    );
     await deletePastAppointments();
   });
 };
 
 async function deletePastAppointments() {
-  let delDate = new Date().setHours(0, 0, 0);
-  let delTime = new Date().toLocaleTimeString("it-IT");
+  let appointments = [];
+  let groups = await Group.findAllGroups();
 
-  //get all of the appointments for today that start before now
-  await Appointment.findAll({
-    where: {
-      [Op.or]: [
-        { type: "Private" },
-        {
-          [Op.and]: [
-            { type: "Group" },
-            {
-              id: {
-                [Op.in]: db.sequelize.literal(
-                  "(SELECT COUNT(spa.id) FROM roles AS sr, personroles as spr, personappointments as spa, appointments a WHERE spr.roleId = sr.id AND spr.personId = spa.personId AND spa.id = a.id AND sr.type = 'Student') = 0"
-                ),
-              },
-            },
-          ],
-        },
-      ],
-      status: "available",
-      date: { [Op.eq]: delDate },
-      startTime: { [Op.lt]: delTime },
-    },
-    include: [
-      {
-        model: Group,
-        as: "group",
-        required: true,
-      },
-    ],
-  })
-    .then((data) => {
-      appointments = data;
-    })
-    .catch((err) => {
-      console.log("Could not find past appointments: " + err);
-    });
+  // need to get appointments outside of the book past minutes buffer
+  for (let i = 0; i < groups.length; i++) {
+    let group = groups[i].dataValues;
+    await Appointment.findAllToDeleteForGroup(group)
+      .then((data) => {
+        appointments = data;
+      })
+      .catch((err) => {
+        console.log(
+          "Could not find past appointments to delete for group: " + err
+        );
+      });
 
-  console.log(
-    delTime +
-      ": Checking " +
-      appointments.length +
-      " appointments for deletion or revision"
-  );
-  if (appointments.length > 0) {
-    // for each appointment check to see if the need to have start time update or be deleted
-    for (let i = 0; i < appointments.length; i++) {
-      let appointment = appointments[i];
-      let startTime = addMinsToTime(
-        appointment.group.timeInterval,
-        appointment.startTime
+    console.log(
+      "Checking " +
+        appointments.length +
+        " appointments for deletion or revision"
+    );
+
+    // for each appointment check to see if they need to have start time updated or be deleted
+    for (let j = 0; j < appointments.length; j++) {
+      let appointment = appointments[j].dataValues;
+      appointment.students = appointment.personappointment.filter(
+        (pa) => !pa.isTutor
       );
-      if (
-        startTime < appointment.endTime &&
-        appointment.endTime > delTime &&
-        appointment.type === "Private" &&
-        appointment.group.allowSplittingAppointments
+      console.log(appointment);
+
+      // should not try to change time of group appointment, should just delete those
+      if (appointment.type === "Private") {
+        console.log("in private part");
+        let startTime = Time.addMinsToTime(
+          group.timeInterval,
+          appointment.startTime
+        );
+        let delTimePlusBuffer = Time.subtractMinsFromTime(
+          group.bookPastMinutes,
+          new Date().toLocaleTimeString("it-IT")
+        );
+        // if the appointment is today and the start and end times line up, then update the appointment
+        if (
+          appointment.date === new Date().setHours(0, 0, 0) &&
+          startTime < appointment.endTime &&
+          appointment.endTime > delTimePlusBuffer &&
+          delTimePlusBuffer - startTime > group.minApptTime &&
+          group.allowSplittingAppointments
+        ) {
+          appointment.startTime = startTime;
+          let newAppointment = appointment.dataValues;
+          await Appointment.updateAppointment(
+            newAppointment,
+            newAppointment.id
+          ).catch((err) => {
+            console.log("Could not update appointment: " + err);
+          });
+        } else {
+          await Appointment.deleteAppointment(appointment.id).catch((err) => {
+            console.log("Could not delete appointment: " + err);
+          });
+        }
+      } else if (
+        appointment.type === "Group" &&
+        appointment.students.length === 0
       ) {
-        appointment.startTime = startTime;
-        let newAppointment = appointment.dataValues;
-        await Appointment.update(newAppointment, {
-          where: { id: appointment.id },
-        }).catch((err) => {
-          console.log("Could not update appointment " + err);
-        });
-      } else {
-        await Appointment.destroy({
-          where: { id: appointment.id },
-        }).catch((err) => {
-          console.log("Could not delete appointment " + err);
+        // need to delete from Google first and then delete the actual appointment
+        await AppointmentActions.deleteFromGoogle(appointment.id).catch(
+          (err) => {
+            console.log("Could not delete appointment from Google " + err);
+          }
+        );
+
+        await Appointment.deleteAppointment(appointment.id).catch((err) => {
+          console.log("Could not delete appointment: " + err);
         });
       }
     }
@@ -106,43 +110,13 @@ async function deletePastAppointments() {
       console.log(
         num +
           " past person appointments before " +
-          delDate +
+          Time.Date(new Date(delDate)) +
+          " at " +
+          delTimePlusBuffer +
           " were deleted successfully!"
       );
     })
     .catch((err) => {
-      console.log("Could not delete past person appointments" + err);
+      console.log("Could not delete past person appointments " + err);
     });
-}
-
-function addMinsToTime(mins, time) {
-  // get the times hour and min value
-  var [timeHrs, timeMins] = getHoursAndMinsFromTime(time);
-
-  // time arithmetic (addition)
-  if (timeMins + mins >= 60) {
-    var addedHrs = parseInt((timeMins + mins) / 60);
-    timeMins = (timeMins + mins) % 60;
-    if (timeHrs + addedHrs > 23) {
-      timeHrs = (timeHrs + addedHrs) % 24;
-    } else {
-      timeHrs += addedHrs;
-    }
-  } else {
-    timeMins += mins;
-  }
-
-  // make sure the time slots are padded correctly
-  return (
-    String("00" + timeHrs).slice(-2) +
-    ":" +
-    String("00" + timeMins).slice(-2) +
-    ":00"
-  );
-}
-
-function getHoursAndMinsFromTime(time) {
-  return time.split(":").map(function (str) {
-    return parseInt(str);
-  });
 }
