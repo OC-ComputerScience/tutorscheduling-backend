@@ -124,7 +124,7 @@ async function notifyUpcomingAppointments() {
         appointment.tutors[j].person.lName;
     }
 
-    let peopleStringForTutor;
+    let peopleStringForTutor = "";
 
     if (appointment.type === "Group") {
       peopleStringForTutor = peopleStringForStudent;
