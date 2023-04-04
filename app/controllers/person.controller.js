@@ -1,4 +1,4 @@
-const Person = require("../utils/person.js");
+const Person = require("../sequelizeUtils/person.js");
 
 exports.create = async (req, res) => {
   await Person.createPerson(req.body)

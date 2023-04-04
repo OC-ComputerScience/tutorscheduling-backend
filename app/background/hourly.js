@@ -1,8 +1,7 @@
 const cron = require("node-cron");
-const Appointment = require("../utils/appointment.js");
-const AppointmentActions = require("../utils/appointmentActions");
-const PersonAppointment = require("../utils/personappointment.js");
-const Time = require("../utils/timeFunctions.js");
+const Appointment = require("../sequelizeUtils/appointment.js");
+const Calendar = require("../utils/calendar.js");
+const Time = require("../utils/time.js");
 const Twilio = require("../utils/twilio.js");
 
 // Schedule tasks to be run on the server 12:01 am.
@@ -33,7 +32,7 @@ async function checkGoogleEvents() {
   // all of these appointments need to be added to Google calendar
   for (let i = 0; i < appointmentsNeedingGoogle.length; i++) {
     let appointment = appointmentsNeedingGoogle[i];
-    await AppointmentActions.addAppointmentToGoogle(appointment.id).catch(
+    await Calendar.addAppointmentToGoogle(appointment.id).catch(
       (err) => {
         console.log(err);
       }
@@ -57,14 +56,14 @@ async function checkGoogleEvents() {
     appointment.tutors = appointment.personappointment.filter(
       (pa) => pa.isTutor
     );
-    let event = await AppointmentActions.getAppointmentFromGoogle(
+    let event = await Calendar.getAppointmentFromGoogle(
       appointment
     ).catch((err) => {
       console.log("Error getting appointment from Google: " + err);
     });
 
     if (event.data !== undefined) {
-      await AppointmentActions.updateAppointmentFromGoogle(
+      await Calendar.updateAppointmentFromGoogle(
         appointment,
         event
       ).catch((err) => {

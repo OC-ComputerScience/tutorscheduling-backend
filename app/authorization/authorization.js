@@ -1,5 +1,5 @@
 const db = require("../models");
-const Session = require("../utils/session.js");
+const Session = require("../sequelizeUtils/session.js");
 const PersonRole = db.personrole;
 const Role = db.role;
 

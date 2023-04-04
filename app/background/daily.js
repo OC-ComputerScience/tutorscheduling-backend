@@ -1,5 +1,5 @@
 const cron = require("node-cron");
-const Person = require("../utils/person.js");
+const Person = require("../sequelizeUtils/person.js");
 const Twilio = require("../utils/twilio.js");
 
 // Schedule tasks to be run on the server 12:01 am.

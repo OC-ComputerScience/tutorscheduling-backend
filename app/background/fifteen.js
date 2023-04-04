@@ -1,9 +1,9 @@
 const cron = require("node-cron");
-const Appointment = require("../utils/appointment.js");
-const AppointmentActions = require("../utils/appointmentActions");
-const Group = require("../utils/group.js");
-const PersonAppointment = require("../utils/personAppointment.js");
-const Time = require("../utils/timeFunctions.js");
+const Appointment = require("../sequelizeUtils/appointment.js");
+const Calendar = require("../utils/calendar.js");
+const Group = require("../sequelizeUtils/group.js");
+const PersonAppointment = require("../sequelizeUtils/personAppointment.js");
+const Time = require("../utils/time.js");
 
 // Schedule tasks to be run on the server 12:01 am.
 // From: https://www.digitalocean.com/community/tutorials/nodejs-cron-jobs-by-examples
@@ -88,7 +88,7 @@ async function deletePastAppointments() {
         appointment.students.length === 0
       ) {
         // need to delete from Google first and then delete the actual appointment
-        await AppointmentActions.deleteFromGoogle(appointment.id).catch(
+        await Calendar.deleteFromGoogle(appointment.id).catch(
           (err) => {
             console.log("Could not delete appointment from Google " + err);
           }

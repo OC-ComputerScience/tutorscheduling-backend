@@ -1,4 +1,4 @@
-const Location = require("../utils/location.js");
+const Location = require("../sequelizeUtils/location.js");
 
 exports.create = async (req, res) => {
   await Location.createLocation(req.body)

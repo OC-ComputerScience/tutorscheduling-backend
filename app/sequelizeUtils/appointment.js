@@ -9,7 +9,7 @@ const Role = db.role;
 const PersonTopic = db.persontopic;
 const PersonRole = db.personrole;
 const Op = db.Sequelize.Op;
-const Time = require("./timeFunctions.js");
+const Time = require("../utils/time.js");
 
 exports.createAppointment = async (appointmentData) => {
   if (appointmentData.date === undefined) {

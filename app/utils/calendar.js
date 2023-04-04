@@ -1,8 +1,8 @@
-const Appointment = require("./appointment.js");
-const PersonAppointment = require("./personappointment.js");
-const Person = require("./person.js");
+const Appointment = require("../sequelizeUtils/appointment.js");
+const PersonAppointment = require("../sequelizeUtils/personappointment.js");
+const Person = require("../sequelizeUtils/person.js");
 const Twilio = require("./twilio.js");
-const Time = require("./timeFunctions.js");
+const Time = require("./time.js");
 
 const { google } = require("googleapis");
 

@@ -1,6 +1,6 @@
-const Group = require("../utils/group.js");
-const Person = require("../utils/person.js");
-const Session = require("../utils/session.js");
+const Group = require("../sequelizeUtils/group.js");
+const Person = require("../sequelizeUtils/person.js");
+const Session = require("../sequelizeUtils/session.js");
 const { google } = require("googleapis");
 const google_id = process.env.GOOGLE_AUDIENCE;
 var jwt = require("jsonwebtoken");
