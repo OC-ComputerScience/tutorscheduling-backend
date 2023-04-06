@@ -471,6 +471,7 @@ exports.updateForGoogle = async (id) => {
       sendUpdates: "all",
     })
     .then(async (event) => {
+      await this.updateGoogleInfoForAppointment(id, event.data);
       return event;
     })
     .catch((error) => {
