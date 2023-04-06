@@ -1,5 +1,6 @@
 const cron = require("node-cron");
-const Person = require("../utils/person.js");
+const Group = require("../utils/group.js");
+// const Person = require("../utils/person.js");
 const Twilio = require("../utils/twilio.js");
 
 // Schedule tasks to be run on the server 12:01 am.
@@ -17,17 +18,33 @@ exports.dailyTasks = () => {
 
 async function notifyForFeedback() {
   console.log("Finding appointments needing feedback");
+  let feedbackAppointments = [];
 
-  // notify tutors for appointments that have passed
-  await Person.findTutorsForPassedAppointments()
+  await Group.findPassedAppointmentsByGroupAndRole()
     .then(async (response) => {
-      let tutors = response;
-      for (let i = 0; i < tutors.length; i++) {
-        let textInfo = {
-          toPhoneNum: tutors[i].phoneNum,
-          roleType: "Tutor",
-          appointmentCount: tutors[i].personappointment.length,
-        };
+      feedbackAppointments = response;
+    })
+    .catch((err) => {
+      console.log("Failed to get passed appointments: " + err);
+    });
+
+  for (let i = 0; i < feedbackAppointments.length; i++) {
+    let group = feedbackAppointments[i];
+    let textInfo = {
+      toPhoneNum: "",
+      toPersonRoleId: "",
+      roleType: "",
+      groupName: group.name,
+      appointmentCount: 0,
+    };
+    for (let j = 0; j < group.role.length; j++) {
+      let role = group.role[j];
+      textInfo.roleType = role.type;
+      for (let k = 0; k < role.personrole.length; k++) {
+        let person = role.personrole[k].person;
+        textInfo.toPersonRoleId = role.personrole[k].id;
+        textInfo.toPhoneNum = person.phoneNum;
+        textInfo.appointmentCount = person.personappointment.length;
         await Twilio.sendFeedbackMessage(textInfo)
           .then((message) => {
             if (message.sid !== undefined) {
@@ -36,39 +53,11 @@ async function notifyForFeedback() {
               console.log(message);
             }
           })
-          .catch((err) => {
-            console.log("Error sending feedback text: " + err);
-          });
-      }
-    })
-    .catch((err) => {
-      console.log("Failed to get tutors for passed appointments: " + err);
-    });
 
-  // notify students for appointments that have passed
-  await Person.findStudentsForPassedAppointments()
-    .then(async (response) => {
-      let students = response;
-      for (let i = 0; i < students.length; i++) {
-        let textInfo = {
-          toPhoneNum: students[i].phoneNum,
-          roleType: "Student",
-          appointmentCount: students[i].personappointment.length,
-        };
-        await Twilio.sendFeedbackMessage(textInfo)
-          .then((message) => {
-            if (message.sid !== undefined) {
-              console.log("Sent text " + message.sid);
-            } else {
-              console.log(message);
-            }
-          })
           .catch((err) => {
             console.log("Error sending feedback text: " + err);
           });
       }
-    })
-    .catch((err) => {
-      console.log("Failed to get students for passed appointments: " + err);
-    });
+    }
+  }
 }
