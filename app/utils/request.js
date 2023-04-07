@@ -4,8 +4,20 @@ const Person = db.person;
 const Topic = db.topic;
 
 exports.createRequest = async (requestData) => {
-  if (requestData.description === undefined) {
+  if (requestData.problem === undefined) {
+    const error = new Error("Problem cannot be empty for request!");
+    error.statusCode = 400;
+    throw error;
+  } else if (requestData.description === undefined) {
     const error = new Error("Description cannot be empty for request!");
+    error.statusCode = 400;
+    throw error;
+  } else if (requestData.groupId === undefined) {
+    const error = new Error("Group ID cannot be empty for request!");
+    error.statusCode = 400;
+    throw error;
+  } else if (requestData.personId === undefined) {
+    const error = new Error("Person ID cannot be empty for request!");
     error.statusCode = 400;
     throw error;
   }
@@ -15,7 +27,7 @@ exports.createRequest = async (requestData) => {
     id: requestData.id,
     courseNum: requestData.courseNum,
     description: requestData.description,
-    status: requestData.status,
+    status: requestData.status ? requestData.status : "Received",
     problem: requestData.problem,
     groupId: requestData.groupId,
     personId: requestData.personId,
