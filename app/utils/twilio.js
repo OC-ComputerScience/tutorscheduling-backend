@@ -115,7 +115,7 @@ exports.sendRequestMessage = async (textInfo) => {
       textInfo.groupName +
       ".\nPlease view this request: " +
       process.env.URL +
-      "/adminRequests/" +
+      "/requestList/" +
       textInfo.adminPersonRoleId +
       "?requestId=" +
       textInfo.requestId,
