@@ -1,18 +1,3 @@
-exports.calcTime = (time) => {
-  if (time == null) {
-    return null;
-  }
-  let temp = time.split(":");
-  let milHours = parseInt(temp[0]);
-  let minutes = temp[1];
-  let hours = milHours % 12;
-  if (hours == 0) {
-    hours = 12;
-  }
-  let dayTime = ~~(milHours / 12) > 0 ? "PM" : "AM";
-  return "" + hours + ":" + minutes + " " + dayTime;
-};
-
 exports.addMinsToTime = (mins, time) => {
   let temp = new Date();
   var [timeHrs, timeMins] = this.getHoursAndMinsFromTime(time);
@@ -85,4 +70,44 @@ exports.formatDate = (date) => {
     "-" +
     date.toISOString().substring(0, 4);
   return formattedDate;
+};
+
+exports.formatReadableMonth = (date) => {
+  return new Date(date).toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+  });
+};
+
+exports.formatReadableDate = (date) => {
+  return new Date(date).toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+};
+
+exports.formatReadableTimeFromSQL = (time) => {
+  return new Date(time).toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
+
+exports.formatTimeFromString = (time) => {
+  let modST = time.toString().substring(0, 2) % 12;
+  let formattedTime = modST + ":" + time.toString().substring(3, 5);
+
+  if (time.toString().substring(0, 2) > 12) {
+    formattedTime = formattedTime + " P.M.";
+  } else if (modST == 0 && time.toString().substring(0, 2) == "12") {
+    formattedTime = "12:" + time.toString().substring(3, 5) + " PM";
+  } else if (modST == 0) {
+    formattedTime = "12:" + time.toString().substring(3, 5) + " AM";
+  } else {
+    formattedTime = formattedTime + " AM";
+  }
+
+  return formattedTime;
 };
