@@ -82,11 +82,12 @@ exports.deleteAllPersonTopics = async () => {
 };
 
 exports.disablePersonTopicsForGroup = async (personId, groupId) => {
+  console.log(personId, groupId);
   return await PersonTopic.destroy({
     where: {
       personId: personId,
       topicId: [
-        db.sequelize.literal(`SELECT groupId FROM topics AS topic WHERE topic.groupId = ${groupId}`)
+        db.sequelize.literal(`SELECT id FROM topics AS topic WHERE topic.groupId = ${groupId}`)
       ]
     },
   });
