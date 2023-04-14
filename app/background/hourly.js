@@ -100,7 +100,7 @@ async function notifyUpcomingAppointments() {
       toPhoneNum: "",
       toPersonRoleId: "",
       date: Time.formatDate(appointment.date),
-      startTime: Time.calcTime(appointment.startTime),
+      startTime: Time.formatTimeFromString(appointment.startTime),
       topicName: appointment.topic.name,
       locationName:
         appointment.location.type === "Online" && appointment.URL !== null
@@ -123,7 +123,7 @@ async function notifyUpcomingAppointments() {
         appointment.tutors[j].person.lName;
     }
 
-    let peopleStringForTutor;
+    let peopleStringForTutor = "";
 
     if (appointment.type === "Group") {
       peopleStringForTutor = peopleStringForStudent;

@@ -534,11 +534,28 @@ exports.findAllUpcomingForPerson = async (personId) => {
     },
     include: [
       {
+        model: Topic,
+        as: "topic",
+        required: false,
+      },
+      {
         where: { "$personappointment.personId$": personId },
         model: PersonAppointment,
         as: "personappointment",
         required: true,
+        include: [
+          {
+            model: Person,
+            as: "person",
+            required: true,
+            right: true,
+          },
+        ],
       },
+    ],
+    order: [
+      ["date", "ASC"],
+      ["startTime", "ASC"],
     ],
   });
 };

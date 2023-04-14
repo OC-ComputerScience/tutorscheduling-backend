@@ -115,7 +115,7 @@ exports.sendRequestMessage = async (textInfo) => {
       textInfo.groupName +
       ".\nPlease view this request: " +
       process.env.URL +
-      "/adminRequests/" +
+      "/requestList/" +
       textInfo.adminPersonRoleId +
       "?requestId=" +
       textInfo.requestId,
@@ -129,17 +129,17 @@ exports.sendFeedbackMessage = async (textInfo) => {
     message:
       "💬 Provide Feedback for " +
       textInfo.appointmentCount +
-      " Appointments\n" +
-      "Please leave feedback for " +
-      textInfo.appointmentCount +
-      " appointment(s) that you " +
-      (textInfo.roleType === "Tutor"
-        ? "tutored"
-        : textInfo.roleType === "Student"
-        ? "attended"
-        : "") +
-      ".\n" +
-      process.env.URL,
+      " Appointment" +
+      (textInfo.appointmentCount > 1 ? "s" : "") +
+      "\n" +
+      "In the " +
+      textInfo.groupName +
+      " As a " +
+      textInfo.roleType +
+      "\nPlease review these appointments: " +
+      process.env.URL +
+      "/home/" +
+      textInfo.toPersonRoleId,
   };
   return await this.sendText(text);
 };
@@ -268,7 +268,7 @@ exports.sendConfirmedMessage = async (textInfo) => {
   let text = {
     phoneNum: textInfo.studentPhoneNum,
     message:
-      "🔵 Tutor Confirmed \n" +
+      "🔵 Tutor Confirmed\n" +
       "The " +
       textInfo.appointmentType.toLowerCase() +
       " appointment you booked for " +
@@ -295,7 +295,7 @@ exports.sendEditedMessage = async (textInfo) => {
   let text = {
     phoneNum: textInfo.toPhoneNum,
     message:
-      "🟠 Appointment Edited \n" +
+      "🟠 Appointment Edited\n" +
       "Your " +
       textInfo.appointmentType.toLowerCase() +
       " appointment for " +
@@ -340,7 +340,7 @@ exports.sendCanceledMessage = async (textInfo) => {
     text.message =
       "🔴 " +
       textInfo.fromRoleType +
-      " Canceled \n" +
+      " Canceled\n" +
       "Your " +
       textInfo.appointmentType.toLowerCase() +
       " appointment for " +

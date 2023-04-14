@@ -117,7 +117,7 @@ exports.pendingStudentCancel = async (appointment) => {
     toPhoneNum: appointment.tutors[0].person.phoneNum,
     toPersonRoleId: appointment.tutors[0].person.personrole[0].id,
     date: Time.formatDate(appointment.date),
-    startTime: Time.calcTime(appointment.startTime),
+    startTime: Time.formatTimeFromString(appointment.startTime),
     topicName: appointment.topic.name,
     fromFirstName: appointment.students[0].person.fName,
     fromLastName: appointment.students[0].person.lName,
@@ -156,7 +156,7 @@ exports.bookedStudentCancel = async (appointment) => {
     toPhoneNum: appointment.tutors[0].person.phoneNum,
     toPersonRoleId: appointment.tutors[0].person.personrole[0].id,
     date: Time.formatDate(appointment.date),
-    startTime: Time.calcTime(appointment.startTime),
+    startTime: Time.formatTimeFromString(appointment.startTime),
     topicName: appointment.topic.name,
     fromFirstName: appointment.students[0].person.fName,
     fromLastName: appointment.students[0].person.lName,
@@ -206,7 +206,7 @@ exports.groupStudentTutorCancel = async (appointment, fromUser) => {
     toPhoneNum: "",
     toPersonRoleId: "",
     date: Time.formatDate(appointment.date),
-    startTime: Time.calcTime(appointment.startTime),
+    startTime: Time.formatTimeFromString(appointment.startTime),
     topicName: appointment.topic.name,
     locationName: appointment.location.name,
     fromFirstName: fromUser.fName,
@@ -266,7 +266,7 @@ exports.oneTutorCancel = async (appointment) => {
     toPhoneNum: "",
     toPersonRoleId: "",
     date: Time.formatDate(appointment.date),
-    startTime: Time.calcTime(appointment.startTime),
+    startTime: Time.formatTimeFromString(appointment.startTime),
     topicName: appointment.topic.name,
     fromFirstName: appointment.tutors[0].person.fName,
     fromLastName: appointment.tutors[0].person.lName,
@@ -302,7 +302,7 @@ exports.swapTutorCancel = async (appointment, fromUser) => {
     toPhoneNum: "",
     toPersonRoleId: "",
     date: Time.formatDate(appointment.date),
-    startTime: Time.calcTime(appointment.startTime),
+    startTime: Time.formatTimeFromString(appointment.startTime),
     topicName: appointment.topic.name,
     locationName: appointment.location.name,
     fromFirstName: fromUser.fName,
@@ -471,6 +471,7 @@ exports.updateForGoogle = async (id) => {
       sendUpdates: "all",
     })
     .then(async (event) => {
+      await this.updateGoogleInfoForAppointment(id, event.data);
       return event;
     })
     .catch((error) => {
