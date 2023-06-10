@@ -115,7 +115,7 @@ exports.sendRequestMessage = async (textInfo) => {
       textInfo.groupName +
       ".\nPlease view this request: " +
       process.env.URL +
-      "/adminRequests/" +
+      "/requestList/" +
       textInfo.adminPersonRoleId +
       "?requestId=" +
       textInfo.requestId,
@@ -132,16 +132,14 @@ exports.sendFeedbackMessage = async (textInfo) => {
       " Appointment" +
       (textInfo.appointmentCount > 1 ? "s" : "") +
       "\n" +
-      "Please leave feedback for " +
-      textInfo.appointmentCount +
-      " appointment(s) that you " +
-      (textInfo.roleType === "Tutor"
-        ? "tutored"
-        : textInfo.roleType === "Student"
-        ? "attended"
-        : "") +
-      ".\n" +
-      process.env.URL,
+      "In the " +
+      textInfo.groupName +
+      " As a " +
+      textInfo.roleType +
+      "\nPlease review these appointments: " +
+      process.env.URL +
+      "/home/" +
+      textInfo.toPersonRoleId,
   };
   return await this.sendText(text);
 };

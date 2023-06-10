@@ -62,7 +62,7 @@ jobs:
       - name: Command via ssh
         uses: garygrossgarten/github-action-ssh@release
         with:
-          command: '.\deploy-backend'
+          command: '.\deploy-tutor-backend'
           host: "tutorscheduling.oc.edu"
           username: "david.north"
           privateKey: ${{ secrets.PROD_WIN_SERVER_SSH_KEY  }}
