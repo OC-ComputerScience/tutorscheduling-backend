@@ -1,5 +1,5 @@
 const cron = require("node-cron");
-const Group = require("../utils/group.js");
+const Group = require("../sequelizeUtils/group.js");
 // const Person = require("../utils/person.js");
 const Twilio = require("../utils/twilio.js");
 
