@@ -1,4 +1,4 @@
-const Availability = require("../utils/availability.js");
+const Availability = require("../sequelizeUtils/availability.js");
 
 exports.create = async (req, res) => {
   await Availability.createAvailability(req.body)

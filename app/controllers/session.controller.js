@@ -1,4 +1,4 @@
-const Session = require("../utils/session.js");
+const Session = require("../sequelizeUtils/session.js");
 
 exports.create = async (req, res) => {
   await Session.createSession(req.body)

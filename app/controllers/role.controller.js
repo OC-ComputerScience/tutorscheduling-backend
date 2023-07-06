@@ -1,4 +1,4 @@
-const Role = require("../utils/role.js");
+const Role = require("../sequelizeUtils/role.js");
 
 exports.create = async (req, res) => {
   await Role.createRole(req.body)
