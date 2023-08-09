@@ -32,6 +32,8 @@ module.exports = (app) => {
   // Update a PersonRole with id
   router.put("/:id", [authenticate], personrole.update);
 
+  router.post("/disable", [authenticate], personrole.disablePersonRole);
+
   // Delete a PersonRole with id
   router.delete("/:id", [authenticate], personrole.delete);
 

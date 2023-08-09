@@ -1,4 +1,4 @@
-const Request = require("../utils/request.js");
+const Request = require("../sequelizeUtils/request.js");
 
 exports.create = async (req, res) => {
   await Request.createRequest(req.body)

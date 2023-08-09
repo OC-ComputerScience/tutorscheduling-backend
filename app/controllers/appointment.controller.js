@@ -1,7 +1,5 @@
-const Appointment = require("../utils/appointment.js");
-const AppointmentActions = require("../utils/appointmentActions.js");
-const Group = require("../utils/group.js");
-const Time = require("../utils/timeFunctions.js");
+const Appointment = require("../sequelizeUtils/appointment.js");
+const Calendar = require("../utils/calendar.js");
 
 exports.create = async (req, res) => {
   await Appointment.createAppointment(req.body)
@@ -164,7 +162,7 @@ exports.findOne = async (req, res) => {
 };
 
 exports.cancel = async (req, res) => {
-  await AppointmentActions.cancelAppointment(req.params.id, req.body)
+  await Calendar.cancelAppointment(req.params.id, req.body)
     .then(() => {
       res.send({
         message: "Appointment was canceled successfully.",
@@ -181,7 +179,7 @@ exports.cancel = async (req, res) => {
 };
 
 exports.update = async (req, res) => {
-  await AppointmentActions.updateAppointment(req.body)
+  await Calendar.updateAppointment(req.body)
     .then(() => {
       res.send({
         message: "Appointment was updated successfully.",

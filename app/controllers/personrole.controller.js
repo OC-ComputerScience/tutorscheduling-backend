@@ -1,4 +1,5 @@
-const PersonRole = require("../utils/personrole.js");
+const PersonRole = require("../sequelizeUtils/personrole.js");
+const Disabling = require("../utils/disabling.js");
 
 exports.create = async (req, res) => {
   await PersonRole.createPersonRole(req.body)
@@ -110,6 +111,25 @@ exports.update = async (req, res) => {
       });
     });
 };
+
+exports.disablePersonRole = async (req, res) => {
+  await Disabling.disablePersonRole(req.body).then((data) => {
+    if (data) {
+      res.send({
+        message: "Person role was disabled successfully.",
+      });
+    } else {
+      res.send({
+        message: `Cannot disable person role.`,
+      });
+    }
+  }).catch((err) => {
+    console.log(err);
+    res.status(500).send({
+      message: "Error disabling person role",
+    });
+  });
+}
 
 exports.delete = async (req, res) => {
   await PersonRole.deletePersonRole(req.params.id)

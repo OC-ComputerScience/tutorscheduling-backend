@@ -1,4 +1,4 @@
-const PersonAppointment = require("../utils/personappointment.js");
+const PersonAppointment = require("../sequelizeUtils/personappointment.js");
 
 // Create and Save a new PersonAppointment
 exports.create = async (req, res) => {

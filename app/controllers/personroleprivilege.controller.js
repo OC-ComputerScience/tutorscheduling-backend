@@ -1,4 +1,4 @@
-const PersonRolePrivilege = require("../utils/personroleprivilege.js");
+const PersonRolePrivilege = require("../sequelizeUtils/personroleprivilege.js");
 
 exports.create = async (req, res) => {
   await PersonRolePrivilege.createPrivilege(req.body)

@@ -1,5 +1,5 @@
-const Topic = require("../utils/topic.js");
-const PersonTopic = require("../utils/persontopic.js");
+const Topic = require("../sequelizeUtils/topic.js");
+const PersonTopic = require("../sequelizeUtils/persontopic.js");
 
 exports.create = async (req, res) => {
   await Topic.createTopic(req.body)

@@ -1,8 +1,7 @@
-const { group } = require("../models");
 const db = require("../models");
 const Topic = db.topic;
 const PersonTopic = db.persontopic;
-const Time = require("./timeFunctions.js");
+const Time = require("../utils/time.js");
 
 exports.createTopic = async (topicData) => {
   if (topicData.name === undefined) {

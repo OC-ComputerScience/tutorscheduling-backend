@@ -1,4 +1,4 @@
-const Group = require("../utils/group.js");
+const Group = require("../sequelizeUtils/group.js");
 
 exports.create = async (req, res) => {
   await Group.createGroup(req.body)

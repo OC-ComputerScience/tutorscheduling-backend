@@ -1,4 +1,4 @@
-const Person = require("./person.js");
+const Person = require("../sequelizeUtils/person.js");
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken =
   process.env.TWILIO_AUTH_TOKEN1 + process.env.TWILIO_AUTH_TOKEN2;

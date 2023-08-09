@@ -1,5 +1,5 @@
 const db = require("../models");
-const Time = require("./timeFunctions.js");
+const Time = require("../utils/time.js");
 const Person = db.person;
 const PersonRole = db.personrole;
 const PersonTopic = db.persontopic;
