@@ -209,14 +209,14 @@ exports.findPassedAppointmentsByGroupAndRole = async () => {
                                 {
                                   status: [
                                     db.sequelize.literal(
-                                      "IF(role.type = 'Student' OR role.type = 'Tutor', 'complete', false)"
+                                      "IF(role.type = 'Student' , 'complete', false)"
                                     ),
                                   ],
                                 },
                                 {
                                   status: [
                                     db.sequelize.literal(
-                                      "IF(role.type = 'Tutor', 'available', false)"
+                                      "IF(role.type = 'Tutor', 'pending', false)"
                                     ),
                                   ],
                                 },
