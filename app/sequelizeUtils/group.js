@@ -227,6 +227,13 @@ exports.findPassedAppointmentsByGroupAndRole = async () => {
                                     ),
                                   ],
                                 },
+                                {
+                                  status: [
+                                    db.sequelize.literal(
+                                      "IF(role.type = 'Tutor' and appointmentType='Group', 'available', false)"
+                                    ),
+                                  ],
+                                },
                               ],
                             },
                           ],
