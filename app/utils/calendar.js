@@ -36,7 +36,8 @@ exports.updateAppointment = async (appointment) => {
       return await this.addAppointmentToGoogle(appointment.id);
     } else if (
       appointment.type === "Private" &&
-      (appointment.status === "pending" ||
+      (appointment.status === "complete" ||
+        appointment.status === "pending" ||
         appointment.status === "noShow" ||
         appointment.status === "noAccept")
     ) {
