@@ -37,19 +37,12 @@ async function deletePastAppointments() {
         );
       });
 
-    console.log(
-      "Checking " +
-        appointments.length +
-        " appointments for deletion or revision"
-    );
-
     // for each appointment check to see if they need to have start time updated or be deleted
     for (let j = 0; j < appointments.length; j++) {
       let appointment = appointments[j].dataValues;
       appointment.students = appointment.personappointment.filter(
         (pa) => !pa.isTutor
       );
-      console.log(appointment);
 
       // should not try to change time of group appointment, should just delete those
       if (appointment.type === "Private") {
@@ -88,11 +81,9 @@ async function deletePastAppointments() {
         appointment.students.length === 0
       ) {
         // need to delete from Google first and then delete the actual appointment
-        await Calendar.deleteFromGoogle(appointment.id).catch(
-          (err) => {
-            console.log("Could not delete appointment from Google " + err);
-          }
-        );
+        await Calendar.deleteFromGoogle(appointment.id).catch((err) => {
+          console.log("Could not delete appointment from Google " + err);
+        });
 
         await Appointment.deleteAppointment(appointment.id).catch((err) => {
           console.log("Could not delete appointment: " + err);
