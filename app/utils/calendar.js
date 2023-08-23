@@ -23,6 +23,7 @@ exports.getAppointmentInfo = async (appointmentId) => {
 };
 
 exports.updateAppointment = async (appointment) => {
+  console.log(appointment);
   if (
     appointment.googleEventId === "" ||
     appointment.googleEventId === undefined ||
@@ -34,13 +35,17 @@ exports.updateAppointment = async (appointment) => {
     ) {
       await Appointment.updateAppointment(appointment, appointment.id);
       return await this.addAppointmentToGoogle(appointment.id);
-    } else if (
+    } else {
+      /* Not sure why we need a test in this situtaion (want to update but no google event id)
+      if (
+   
       appointment.type === "Private" &&
       (appointment.status === "complete" ||
         appointment.status === "pending" ||
         appointment.status === "noShow" ||
         appointment.status === "noAccept")
-    ) {
+       
+    ) */
       return await Appointment.updateAppointment(appointment, appointment.id);
     }
   } else {
