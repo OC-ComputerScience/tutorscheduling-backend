@@ -230,7 +230,7 @@ exports.findPassedAppointmentsByGroupAndRole = async () => {
                                 {
                                   status: [
                                     db.sequelize.literal(
-                                      "IF(role.type = 'Tutor' and 'role.personrole.person.personappointment.appointment.type' ='Group', 'available', false)"
+                                      "IF(role.type = 'Tutor' and  `role->personrole->person->personappointment->appointment`.`type` = 'Group', 'available', false)"
                                     ),
                                   ],
                                 },

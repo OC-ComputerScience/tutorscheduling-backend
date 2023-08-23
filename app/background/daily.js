@@ -8,9 +8,9 @@ const Twilio = require("../utils/twilio.js");
 
 exports.dailyTasks = () => {
   // for prod, runs at every day at 9AM.
-  cron.schedule("00 09 * * *", async function () {
-    // for testing, runs every minute
-    //cron.schedule("* * * * *", async function () {
+  //cron.schedule("00 09 * * *", async function () {
+  // for testing, runs every minute
+  cron.schedule("* * * * *", async function () {
     console.log("Daily 9AM Tasks:");
     await notifyForFeedback();
   });
@@ -49,6 +49,8 @@ async function notifyForFeedback() {
           .then((message) => {
             if (message.sid !== undefined) {
               console.log("Sent text " + message.sid);
+              console.log("To: " + textInfo.toPhoneNum);
+              console.log("Message: " + message.body);
             } else {
               console.log(message);
             }
