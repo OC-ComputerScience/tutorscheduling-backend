@@ -56,7 +56,7 @@ exports.respondToStop = async (body, from) => {
   if (stoptext || starttext) {
     let phoneNum = from.substring(2);
     console.log(phoneNum);
-    //we need to update person to opt out of texts
+    //we need to update person to opt in or out
     let person = await Person.findOnePersonByPhoneNumber(phoneNum).catch(
       (err) => {
         console.log(
@@ -67,7 +67,7 @@ exports.respondToStop = async (body, from) => {
     if (person === undefined) {
       return "Could not find person by phone number";
     } else {
-      person.textOptIn = stopText ? false : startText ? true : false;
+      person.textOptIn = stoptext ? false : starttext ? true : false;
 
       await Person.updatePerson(person.dataValues, person.id);
 
