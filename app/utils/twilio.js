@@ -73,9 +73,15 @@ exports.respondToStop = async (body, from) => {
 
       const twiml = new MessagingResponse();
 
-      twiml.message(
-        "You have successfully unsubscribed from OC Tutor Scheduling text notifications."
-      );
+      if (stoptext) {
+        twiml.message(
+          "You have successfully unsubscribed from OC Tutor Scheduling text notifications."
+        );
+      } else {
+        twiml.message(
+          "You have successfully subscribed to OC Tutor Scheduling text notifications."
+        );
+      }
 
       return twiml.toString();
     }
