@@ -53,7 +53,7 @@ exports.respondToStop = async (body, from) => {
   let stoptext = false;
   if (body.toUpperCase().includes("STOP")) stoptext === true;
   if (body.toUpperCase().includes("START")) starttext === true;
-  if (starttext === true || stoptext === true) {
+  if (body === "STOP") {
     let phoneNum = from.substring(2);
     console.log(phoneNum);
     //we need to update person to opt out of texts
