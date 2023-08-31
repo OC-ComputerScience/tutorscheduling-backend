@@ -49,6 +49,14 @@ exports.sendText = async (text) => {
 exports.respondToStop = async (body, from) => {
   console.log("twilio request");
   console.log(body);
+  if (
+    body === undefined ||
+    body == null ||
+    from === undefined ||
+    from == null
+  ) {
+    return "No message or phone number provided.";
+  }
   var starttext = false;
   var stoptext = false;
   if (body.toUpperCase() === "STOP") stoptext = true;
@@ -82,7 +90,7 @@ exports.respondToStop = async (body, from) => {
           "You have successfully subscribed to OC Tutor Scheduling text notifications."
         );
       }
-
+      console.log(twiml.toString());
       return twiml.toString();
     }
   } else {
