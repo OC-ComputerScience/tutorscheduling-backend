@@ -51,8 +51,8 @@ exports.respondToStop = async (body, from) => {
   console.log(body);
   var starttext = false;
   var stoptext = false;
-  if (body.toUpperCase().includes("STOP")) stoptext = true;
-  if (body.toUpperCase().includes("START")) starttext = true;
+  if (body.toUpperCase() === "STOP") stoptext = true;
+  if (body.toUpperCase() === "START") starttext = true;
   if (stoptext || starttext) {
     let phoneNum = from.substring(2);
     console.log(phoneNum);
