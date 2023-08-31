@@ -49,10 +49,10 @@ exports.sendText = async (text) => {
 exports.respondToStop = async (body, from) => {
   console.log("twilio request");
   console.log(body);
-  let starttext = false;
-  let stoptext = false;
-  if (body === "STOP") stoptext = true;
-  if (body === "START") starttext = true;
+  var starttext = false;
+  var stoptext = false;
+  if (body.toUpperCase().includes("STOP")) stoptext = true;
+  if (body.toUpperCase().includes("START")) starttext = true;
   if (stoptext || starttext) {
     let phoneNum = from.substring(2);
     console.log(phoneNum);
