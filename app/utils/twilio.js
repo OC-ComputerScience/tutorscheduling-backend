@@ -5,12 +5,11 @@ const authToken =
 const phoneNum = process.env.TWILIO_NUMBER;
 const client = require("twilio")(accountSid, authToken);
 const MessagingResponse = require("twilio/lib/twiml/MessagingResponse");
-let prefix = "OC Tutor Scheduling:\n";
-// let postfix = "\nReply STOP to unsubscribe.";
+let prefix = "OC Tutor Sched:\n";
+let postfix = "\nReply STOP to unsubscribe.";
 
 exports.sendText = async (text) => {
-  let finalMessage = prefix + text.message;
-  // + postfix;
+  let finalMessage = prefix + text.message + postfix;
 
   let person = await Person.findOnePersonByPhoneNumber(text.phoneNum).catch(
     (err) => {
@@ -50,10 +49,22 @@ exports.sendText = async (text) => {
 exports.respondToStop = async (body, from) => {
   console.log("twilio request");
   console.log(body);
-  if (body === "STOP") {
+  if (
+    body === undefined ||
+    body == null ||
+    from === undefined ||
+    from == null
+  ) {
+    return "No message or phone number provided.";
+  }
+  var starttext = false;
+  var stoptext = false;
+  if (body.toUpperCase() === "STOP") stoptext = true;
+  if (body.toUpperCase() === "START") starttext = true;
+  if (stoptext || starttext) {
     let phoneNum = from.substring(2);
     console.log(phoneNum);
-    //we need to update person to opt out of texts
+    //we need to update person to opt in or out
     let person = await Person.findOnePersonByPhoneNumber(phoneNum).catch(
       (err) => {
         console.log(
@@ -64,16 +75,22 @@ exports.respondToStop = async (body, from) => {
     if (person === undefined) {
       return "Could not find person by phone number";
     } else {
-      person.textOptIn = false;
-      console.log(person);
+      person.textOptIn = stoptext ? false : starttext ? true : false;
+
       await Person.updatePerson(person.dataValues, person.id);
 
       const twiml = new MessagingResponse();
 
-      twiml.message(
-        "You have successfully unsubscribed from OC Tutor Scheduling text notifications."
-      );
-
+      if (stoptext) {
+        twiml.message(
+          "You have successfully unsubscribed from OC Tutor Scheduling text notifications."
+        );
+      } else {
+        twiml.message(
+          "You have successfully subscribed to OC Tutor Scheduling text notifications."
+        );
+      }
+      console.log(twiml.toString());
       return twiml.toString();
     }
   } else {
