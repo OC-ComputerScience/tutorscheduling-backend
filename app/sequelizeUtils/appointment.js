@@ -70,7 +70,9 @@ exports.findAllToDeleteForGroup = async (group) => {
     group.bookPastMinutes,
     delTime
   );
-  console.log(delTimePlusBuffer);
+
+  // fix if time is close to midnight and subtration causes before midnight time
+  if (delTimePlusBuffer > delTime) delTimePlusBuffer = delTime;
 
   // here we are available appointments, including group appointments that may have students, so we need to check that later
 
