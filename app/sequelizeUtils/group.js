@@ -52,7 +52,13 @@ exports.findGroupsForPerson = async (personId) => {
         model: Role,
         include: [
           {
-            where: { "$role->personrole.personId$": personId },
+            where: {
+              [Op.and]: [
+                { "$role->personrole.personId$": personId }, 
+                {status: ["approved" ,"disabled", "pending"]},
+              ]
+            },
+            
             model: PersonRole,
             as: "personrole",
             required: true,
