@@ -28,6 +28,10 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.BOOLEAN,
       allowNull: false,
     },
+    status: {
+      type: Sequelize.STRING,
+      allowNull: false,
+    },
   });
 
   return Group;
