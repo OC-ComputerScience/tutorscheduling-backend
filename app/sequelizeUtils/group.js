@@ -58,7 +58,7 @@ exports.findGroupsForPerson = async (personId) => {
             where: {
               [Op.and]: [
                 { "$role->personrole.personId$": personId }, 
-                {status: ["approved" ,"disabled", "pending"]},
+                {status: ["approved" ,"disabled", "applied"]},
               ]
             },
             
