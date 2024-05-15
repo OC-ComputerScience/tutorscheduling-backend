@@ -66,7 +66,7 @@ exports.cancelAppointment = async (id, fromUser) => {
     } else if (appointment.type === "Group") {
       return await this.groupStudentTutorCancel(appointment, fromUser);
     }
-  } else if (fromUser.type === "Tutor") {
+  } else if (fromUser.type === "Tutor"  || fromUser.type === "Admin"  ) {
     if (appointment.tutors.length === 1 && appointment.students.length === 0) {
       return await this.emptyTutorCancel(appointment);
     } else if (
