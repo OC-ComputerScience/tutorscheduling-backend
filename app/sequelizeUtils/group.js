@@ -35,6 +35,7 @@ exports.createGroup = async (groupData) => {
       allowSplittingAppointments: groupData.allowSplittingAppointments
         ? groupData.allowSplittingAppointments
         : true,
+      status: groupData.status ? groupData.status : "active",
     };
     // Save Group in the database
     return await Group.create(group);
@@ -42,7 +43,9 @@ exports.createGroup = async (groupData) => {
 };
 
 exports.findAllGroups = async () => {
-  return await Group.findAll({ order: [["name", "ASC"]] });
+  return await Group.findAll({ 
+    where: { status: "active" },
+    order: [["name", "ASC"]] });
 };
 
 exports.findGroupsForPerson = async (personId) => {
@@ -52,7 +55,13 @@ exports.findGroupsForPerson = async (personId) => {
         model: Role,
         include: [
           {
-            where: { "$role->personrole.personId$": personId },
+            where: {
+              [Op.and]: [
+                { "$role->personrole.personId$": personId }, 
+                {status: ["approved" ,"disabled", "applied"]},
+              ]
+            },
+            
             model: PersonRole,
             as: "personrole",
             required: true,

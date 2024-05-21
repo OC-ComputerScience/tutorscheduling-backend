@@ -43,12 +43,12 @@ exports.findAllPersonRoles = async () => {
 };
 
 exports.findAllPersonRolesForPerson = async (personId) => {
-  return await PersonRole.findAll({ where: { personId: personId } });
+  return await PersonRole.findAll({ where: { personId: personId} });
 };
 
 exports.findGroupByPersonRole = async (id) => {
   return await PersonRole.findAll({
-    where: { id: id },
+    where: { id: id, status: ["approved", "disabled", "pending"]},
     include: [
       {
         model: Role,
