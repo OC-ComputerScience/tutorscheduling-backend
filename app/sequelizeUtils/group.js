@@ -87,7 +87,7 @@ exports.findActiveGroupsForPerson = async (personId) => {
           {
             where: {
               "$role->personrole.personId$": personId,
-              status: { [Op.ne]: "disabled" },
+              status: ['approved','pending']
             },
             model: PersonRole,
             as: "personrole",
