@@ -178,6 +178,21 @@ exports.cancel = async (req, res) => {
     });
 };
 
+exports.checkOverlappingAppointments = async (req, res) => {
+  await Appointment.checkOverlappingAppointments(req.body)
+    .then((data) => {
+      res.send(data);
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).send({
+        message:
+          err.message ||
+          "Error checking overlaping apointment",
+      });
+    });
+  }
+
 exports.update = async (req, res) => {
   await Calendar.updateAppointment(req.body)
     .then(() => {

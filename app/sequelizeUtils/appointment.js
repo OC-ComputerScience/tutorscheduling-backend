@@ -48,6 +48,7 @@ exports.createAppointment = async (appointmentData) => {
     groupId: appointmentData.groupId,
     locationId: appointmentData.locationId,
     topicId: appointmentData.topicId,
+    tutorSetLocation: appointmentData.tutorSetLocation  
   };
 
   // Save Appointment in the database

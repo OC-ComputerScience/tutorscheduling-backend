@@ -120,6 +120,7 @@ exports.pendingStudentCancel = async (appointment) => {
     groupId: appointment.groupId,
     topicId: null,
     locationId: appointment.tutorSetLocation ? appointment.locationId : null,
+    tutorSetLocation: appointment.tutorSetLocation,
   };
   let textInfo = {
     appointmentType: appointment.type,
@@ -158,6 +159,7 @@ exports.bookedStudentCancel = async (appointment) => {
     groupId: appointment.groupId,
     topicId: appointment.topicId,
     locationId: appointment.locationId,
+    tutorSetLocation: appointment.tutorSetLocation,
     googleEventId: null,
   };
   let textInfo = {
@@ -193,6 +195,7 @@ exports.bookedStudentCancel = async (appointment) => {
     groupId: appointment.groupId,
     topicId: null,
     locationId: appointment.tutorSetLocation ? appointment.locationId : null,
+    tutorSetLocation: appointment.tutorSetLocation,
     googleEventId: null,
   };
   await Appointment.createAppointment(newAppointment).then(async (response) => {
@@ -268,6 +271,7 @@ exports.oneTutorCancel = async (appointment) => {
     groupId: appointment.groupId,
     topicId: appointment.topicId,
     locationId: appointment.locationId,
+    tutorSetLocation: appointment.tutorSetLocation,
     googleEventId: null,
   };
   let textInfo = {

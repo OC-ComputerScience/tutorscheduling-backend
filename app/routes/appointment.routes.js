@@ -67,16 +67,7 @@ module.exports = (app) => {
   // Delete all Appointment
   router.delete("/", [authenticate], appointment.deleteAll);
 
-  router.post("/check-overlapping", async (req, res) => {
-    try {
-      const overlappingAppointments = await Appointment.checkOverlappingAppointments(req.body);
-      res.send(overlappingAppointments);
-    } catch (err) {
-      res.status(500).send({
-        message: err.message || "Some error occurred while checking for overlapping appointments."
-      });
-    }
-  });
+  router.post("/check-overlapping",appointment.checkOverlappingAppointments) ;
 
   app.use("/appointment", router);
 };
