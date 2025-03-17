@@ -17,6 +17,8 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.TIME,
       allowNull: false,
     },
+
+    
   });
 
   return Availability;

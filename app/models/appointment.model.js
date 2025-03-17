@@ -34,6 +34,11 @@ module.exports = (sequelize, Sequelize) => {
     googleEventId: {
       type: Sequelize.STRING,
     },
+    tutorSetLocation: {
+      type: Sequelize.BOOLEAN,
+      allowNull: false,
+      defaultValue: false
+    }
   });
 
   return Appointment;

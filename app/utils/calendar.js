@@ -56,6 +56,7 @@ exports.updateAppointment = async (appointment) => {
 
 exports.cancelAppointment = async (id, fromUser) => {
   let appointment = await this.getAppointmentInfo(id);
+  appointment.tutorSetLocation = fromUser.tutorSetLocation;
   if (fromUser.type === "Student") {
     if (appointment.type === "Private") {
       if (appointment.status === "pending") {
@@ -118,7 +119,8 @@ exports.pendingStudentCancel = async (appointment) => {
     preSessionInfo: "",
     groupId: appointment.groupId,
     topicId: null,
-    locationId: null,
+    locationId: appointment.tutorSetLocation ? appointment.locationId : null,
+    tutorSetLocation: appointment.tutorSetLocation,
   };
   let textInfo = {
     appointmentType: appointment.type,
@@ -157,6 +159,7 @@ exports.bookedStudentCancel = async (appointment) => {
     groupId: appointment.groupId,
     topicId: appointment.topicId,
     locationId: appointment.locationId,
+    tutorSetLocation: appointment.tutorSetLocation,
     googleEventId: null,
   };
   let textInfo = {
@@ -191,7 +194,8 @@ exports.bookedStudentCancel = async (appointment) => {
     preSessionInfo: "",
     groupId: appointment.groupId,
     topicId: null,
-    locationId: null,
+    locationId: appointment.tutorSetLocation ? appointment.locationId : null,
+    tutorSetLocation: appointment.tutorSetLocation,
     googleEventId: null,
   };
   await Appointment.createAppointment(newAppointment).then(async (response) => {
@@ -267,6 +271,7 @@ exports.oneTutorCancel = async (appointment) => {
     groupId: appointment.groupId,
     topicId: appointment.topicId,
     locationId: appointment.locationId,
+    tutorSetLocation: appointment.tutorSetLocation,
     googleEventId: null,
   };
   let textInfo = {

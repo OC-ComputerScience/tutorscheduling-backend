@@ -48,6 +48,7 @@ exports.createAppointment = async (appointmentData) => {
     groupId: appointmentData.groupId,
     locationId: appointmentData.locationId,
     topicId: appointmentData.topicId,
+    tutorSetLocation: appointmentData.tutorSetLocation  
   };
 
   // Save Appointment in the database
@@ -777,5 +778,53 @@ exports.deleteAllAppointments = async () => {
   return await Appointment.destroy({
     where: {},
     truncate: false,
+  });
+};
+
+exports.checkOverlappingAppointments = async (params) => {
+  const { tutorId, date, startTime, endTime, excludeAppointmentId } = params;
+  
+  return await Appointment.findAll({
+    where: {
+      id: { [Op.ne]: excludeAppointmentId },
+      date: date,
+      type: 'Private', // Only check private appointments
+      [Op.or]: [
+        {
+          [Op.and]: [
+            { startTime: { [Op.lte]: startTime } },
+            { endTime: { [Op.gt]: startTime } }
+          ]
+        },
+        {
+          [Op.and]: [
+            { startTime: { [Op.lt]: endTime } },
+            { endTime: { [Op.gte]: endTime } }
+          ]
+        },
+        {
+          [Op.and]: [
+            { startTime: { [Op.gte]: startTime } },
+            { endTime: { [Op.lte]: endTime } }
+          ]
+        }
+      ],
+      [Op.and]: [
+        { status: { [Op.ne]: 'studentCancel' } },
+        { status: { [Op.ne]: 'tutorCancel' } },
+        { status: { [Op.ne]: 'available' } }
+      ]
+    },
+    include: [
+      {
+        model: PersonAppointment,
+        as: "personappointment",
+        where: {
+          personId: tutorId,
+          isTutor: true
+        },
+        required: true
+      }
+    ]
   });
 };
