@@ -67,5 +67,7 @@ module.exports = (app) => {
   // Delete all Appointment
   router.delete("/", [authenticate], appointment.deleteAll);
 
+  router.post("/check-overlapping",appointment.checkOverlappingAppointments) ;
+
   app.use("/appointment", router);
 };
