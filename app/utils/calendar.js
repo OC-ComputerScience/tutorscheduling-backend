@@ -3,6 +3,7 @@ const PersonAppointment = require("../sequelizeUtils/personappointment.js");
 const Person = require("../sequelizeUtils/person.js");
 const Twilio = require("./twilio.js");
 const Time = require("./time.js");
+const OverlappingAvailability = require("./overlappingAvailability.js");
 
 const { google } = require("googleapis");
 
@@ -24,6 +25,7 @@ exports.getAppointmentInfo = async (appointmentId) => {
 
 exports.updateAppointment = async (appointment) => {
   console.log(appointment);
+  let result;
   if (
     appointment.googleEventId === "" ||
     appointment.googleEventId === undefined ||
@@ -34,7 +36,7 @@ exports.updateAppointment = async (appointment) => {
       (appointment.type === "Private" && appointment.status === "booked")
     ) {
       await Appointment.updateAppointment(appointment, appointment.id);
-      return await this.addAppointmentToGoogle(appointment.id);
+      result = await this.addAppointmentToGoogle(appointment.id);
     } else {
       /* Not sure why we need a test in this situtaion (want to update but no google event id)
       if (
@@ -46,12 +48,23 @@ exports.updateAppointment = async (appointment) => {
         appointment.status === "noAccept")
        
     ) */
-      return await Appointment.updateAppointment(appointment, appointment.id);
+      result = await Appointment.updateAppointment(appointment, appointment.id);
     }
   } else {
     await Appointment.updateAppointment(appointment, appointment.id);
-    return await this.updateForGoogle(appointment.id);
+    result = await this.updateForGoogle(appointment.id);
   }
+
+  await OverlappingAvailability.adjustOverlappingAvailabilityForAppointment(
+    appointment.id
+  ).catch((err) => {
+    console.log("Could not adjust overlapping availability: " + err);
+    if (err && err.stack) {
+      console.log(err.stack);
+    }
+  });
+
+  return result;
 };
 
 exports.cancelAppointment = async (id, fromUser) => {

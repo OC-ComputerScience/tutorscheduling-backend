@@ -42,6 +42,39 @@ exports.getHoursAndMinsFromTime = (time) => {
   });
 };
 
+exports.normalizeTime = (time) => {
+  if (time === undefined || time === null) {
+    return "00:00:00";
+  }
+  let value = time.toString();
+  if (value.length >= 8) {
+    value = value.substring(0, 8);
+  } else if (value.length === 5) {
+    value = value + ":00";
+  }
+  return value;
+};
+
+exports.timeToMinutes = (time) => {
+  const [hours, minutes] = this.normalizeTime(time)
+    .split(":")
+    .map(function (str) {
+      return parseInt(str);
+    });
+  return hours * 60 + minutes;
+};
+
+exports.timesOverlap = (startA, endA, startB, endB) => {
+  return (
+    this.timeToMinutes(endA) > this.timeToMinutes(startB) &&
+    this.timeToMinutes(startA) < this.timeToMinutes(endB)
+  );
+};
+
+exports.durationMinutes = (start, end) => {
+  return this.timeToMinutes(end) - this.timeToMinutes(start);
+};
+
 exports.getWeekFromDate = (date) => {
   var year = parseInt(date.substring(0, 4));
   var month = parseInt(date.substring(5, 7));

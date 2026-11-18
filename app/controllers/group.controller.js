@@ -113,7 +113,7 @@ exports.findOne = async (req, res) => {
 };
 
 exports.update = async (req, res) => {
-  await Group.updateGroup(req.params.id)
+  await Group.updateGroup(req.body, req.params.id)
     .then((num) => {
       if (num == 1) {
         res.send({

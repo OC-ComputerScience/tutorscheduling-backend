@@ -79,14 +79,14 @@ exports.findAllDisabledTopics = async (id) => {
 exports.findTopicsForPersonForGroup = async (groupId, personId) => {
   return await Topic.findAll({
     where: {
-      "$persontopic.personId$": personId,
       groupId: groupId,
     },
     include: [
       {
         model: PersonTopic,
         as: "persontopic",
-        right: true,
+        required: true,
+        where: { personId: personId },
       },
     ],
     order: [
