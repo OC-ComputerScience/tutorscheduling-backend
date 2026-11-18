@@ -273,7 +273,20 @@ exports.findOneGroup = async (id) => {
 };
 
 exports.updateGroup = async (group, id) => {
-  return await Group.update(group, {
+  const groupData = {
+    name: group.name,
+    description: group.description,
+    timeInterval: group.timeInterval,
+    minApptTime: group.minApptTime,
+    bookPastMinutes: group.bookPastMinutes,
+    allowSplittingAppointments:
+      group.allowSplittingAppointments === true ||
+      group.allowSplittingAppointments === 1 ||
+      group.allowSplittingAppointments === "1" ||
+      group.allowSplittingAppointments === "true",
+    status: group.status,
+  };
+  return await Group.update(groupData, {
     where: { id: id },
   });
 };

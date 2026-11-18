@@ -381,7 +381,6 @@ exports.findAllAppointmentsForGroup = async (groupId) => {
                     model: Topic,
                     as: "topic",
                     required: true,
-                    right: true,
                     where: { groupId: groupId },
                   },
                 ],
@@ -470,7 +469,6 @@ exports.findAllAppointmentsFromOneMonthAgoForGroup = async (groupId) => {
                     model: Topic,
                     as: "topic",
                     required: true,
-                    right: true,
                     where: { groupId: groupId },
                   },
                 ],
@@ -513,8 +511,20 @@ exports.findAllUpcomingForPerson = async (personId) => {
     ":" +
     checkTime.getSeconds();
 
+  const safePersonId = parseInt(personId, 10);
+  if (!safePersonId) {
+    return [];
+  }
+
   return await Appointment.findAll({
     where: {
+      id: {
+        [Op.in]: db.sequelize.literal(
+          "(SELECT appointmentId FROM personappointments WHERE personId = " +
+            safePersonId +
+            ")"
+        ),
+      },
       [Op.or]: [
         {
           [Op.and]: [
@@ -542,7 +552,6 @@ exports.findAllUpcomingForPerson = async (personId) => {
         required: false,
       },
       {
-        where: { "$personappointment.personId$": personId },
         model: PersonAppointment,
         as: "personappointment",
         required: true,
@@ -683,7 +692,6 @@ exports.findOneAppointmentInfo = async (id) => {
                     model: Topic,
                     as: "topic",
                     required: true,
-                    right: true,
                   },
                 ],
               },
@@ -783,37 +791,73 @@ exports.deleteAllAppointments = async () => {
 
 exports.checkOverlappingAppointments = async (params) => {
   const { tutorId, date, startTime, endTime, excludeAppointmentId } = params;
-  
+  const safeTutorId = parseInt(tutorId, 10);
+  if (!safeTutorId) {
+    return [];
+  }
+
   return await Appointment.findAll({
     where: {
-      id: { [Op.ne]: excludeAppointmentId },
+      id: {
+        [Op.and]: [
+          {
+            [Op.in]: db.sequelize.literal(
+              "(SELECT appointmentId FROM personappointments WHERE personId = " +
+                safeTutorId +
+                " AND isTutor = 1)"
+            ),
+          },
+          { [Op.ne]: excludeAppointmentId },
+        ],
+      },
       date: date,
-      type: 'Private', // Only check private appointments
-      [Op.or]: [
-        {
-          [Op.and]: [
-            { startTime: { [Op.lte]: startTime } },
-            { endTime: { [Op.gt]: startTime } }
-          ]
-        },
-        {
-          [Op.and]: [
-            { startTime: { [Op.lt]: endTime } },
-            { endTime: { [Op.gte]: endTime } }
-          ]
-        },
-        {
-          [Op.and]: [
-            { startTime: { [Op.gte]: startTime } },
-            { endTime: { [Op.lte]: endTime } }
-          ]
-        }
-      ],
       [Op.and]: [
-        { status: { [Op.ne]: 'studentCancel' } },
-        { status: { [Op.ne]: 'tutorCancel' } },
-        { status: { [Op.ne]: 'available' } }
-      ]
+        {
+          [Op.or]: [
+            {
+              [Op.and]: [
+                { startTime: { [Op.lte]: startTime } },
+                { endTime: { [Op.gt]: startTime } },
+              ],
+            },
+            {
+              [Op.and]: [
+                { startTime: { [Op.lt]: endTime } },
+                { endTime: { [Op.gte]: endTime } },
+              ],
+            },
+            {
+              [Op.and]: [
+                { startTime: { [Op.gte]: startTime } },
+                { endTime: { [Op.lte]: endTime } },
+              ],
+            },
+          ],
+        },
+        { status: { [Op.ne]: "studentCancel" } },
+        { status: { [Op.ne]: "tutorCancel" } },
+        {
+          [Op.or]: [
+            {
+              status: {
+                [Op.notIn]: ["available"],
+              },
+            },
+            {
+              [Op.and]: [
+                { type: "Group" },
+                { status: "available" },
+                db.sequelize.where(
+                  db.sequelize.literal(
+                    "(SELECT COUNT(*) FROM personappointments AS pa_stu WHERE pa_stu.appointmentId = `appointment`.`id` AND pa_stu.isTutor = 0)"
+                  ),
+                  { [Op.gt]: 0 }
+                ),
+              ],
+            },
+          ],
+        },
+      ],
     },
     include: [
       {
@@ -821,10 +865,10 @@ exports.checkOverlappingAppointments = async (params) => {
         as: "personappointment",
         where: {
           personId: tutorId,
-          isTutor: true
+          isTutor: true,
         },
-        required: true
-      }
-    ]
+        required: true,
+      },
+    ],
   });
 };
